@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - contexts/*
+  - packages/*
+
+# Supply chain: no instalar versiones publicadas hace menos de 7 días
+# (ventana típica en que se detectan paquetes comprometidos).
+minimumReleaseAge: 10080
+
+# Scripts de instalación bloqueados salvo lista explícita.
+allowBuilds:
+  lefthook: true

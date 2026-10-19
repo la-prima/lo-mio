@@ -1,0 +1,106 @@
+/**
+ * Reglas de arquitectura (ver AGENTS.md#arquitectura). Resuelve cada import de cada archivo
+ * y verifica que respete los límites entre contextos, capas y apps.
+ */
+import { globSync, readFileSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const ROOT = resolve(import.meta.dirname, "..");
+const FRONTS = new Set(["mobile", "guest-web"]);
+const SERVER_ONLY_LIBS = /^(fastify|@fastify\/|pg$|pg-boss|kysely|node:)/;
+const IMPORT_RE = /(?:from|import|export\s*\*\s*from)\s*\(?\s*["']([^"']+)["']/g;
+
+type Zone = {
+  kind: "kernel" | "package" | "context" | "app" | "other";
+  name: string;
+  layer: string;
+};
+
+function zoneOfPath(path: string): Zone {
+  const [top = "", name = "", layer = ""] = relative(ROOT, path).split("/");
+  if (top === "packages") return { kind: name === "kernel" ? "kernel" : "package", name, layer };
+  if (top === "contexts") return { kind: "context", name, layer };
+  if (top === "apps") return { kind: "app", name, layer };
+  return { kind: "other", name: top, layer };
+}
+
+function zoneOfSpecifier(spec: string, fromFile: string): Zone | undefined {
+  if (spec.startsWith(".")) return zoneOfPath(resolve(dirname(fromFile), spec));
+  const m = spec.match(/^@lo-mio\/([^/]+)\/?(.*)$/);
+  if (!m) return undefined;
+  const [, name = "", layer = ""] = m;
+  if (name === "kernel") return { kind: "kernel", name, layer };
+  const isContext = globSync(`contexts/${name}`, { cwd: ROOT }).length > 0;
+  return { kind: isContext ? "context" : "package", name, layer };
+}
+
+/** Devuelve el motivo si el import está prohibido. */
+function violation(from: Zone, to: Zone | undefined, spec: string): string | undefined {
+  if (from.kind === "kernel") {
+    if (to?.kind !== "kernel" && spec !== "vitest")
+      return "kernel es puro: solo se importa a sí mismo";
+    return undefined;
+  }
+  if (from.kind === "context") return contextViolation(from, to, spec);
+  if (from.kind === "app") return appViolation(from, to, spec);
+  if (from.kind === "package" && (to?.kind === "app" || to?.layer === "server")) {
+    return "packages/ no importa apps ni capas server";
+  }
+  return undefined;
+}
+
+function contextViolation(from: Zone, to: Zone | undefined, spec: string): string | undefined {
+  const pureLayers: Record<string, RegExp> = {
+    domain: /^vitest$/,
+    contracts: /^(vitest|zod)$/,
+  };
+  const allowedLibs = pureLayers[from.layer];
+  if (allowedLibs && !to && !allowedLibs.test(spec))
+    return `${from.layer}/ no usa la librería ${spec}`;
+  if (!to || to.kind === "kernel") return undefined;
+  if (to.kind === "app") return "un contexto nunca importa de apps/";
+  if (to.kind === "context" && to.name !== from.name && to.layer !== "contracts") {
+    return `entre contextos solo se importa @lo-mio/${to.name}/contracts`;
+  }
+  if (to.name === from.name && from.layer === "domain" && to.layer !== "domain") {
+    return "domain/ no depende de contracts/ ni server/";
+  }
+  if (to.name === from.name && from.layer === "contracts" && to.layer === "server") {
+    return "contracts/ no depende de server/";
+  }
+  return undefined;
+}
+
+function appViolation(from: Zone, to: Zone | undefined, spec: string): string | undefined {
+  if (to?.kind === "app" && to.name !== from.name)
+    return "una app no importa de otra: usar packages/";
+  if (to?.layer === "server" && from.name !== "api") return "solo apps/api monta capas server";
+  if (FRONTS.has(from.name) && SERVER_ONLY_LIBS.test(spec))
+    return `librería de servidor en front: ${spec}`;
+  return undefined;
+}
+
+function* imports() {
+  const files = globSync("{apps,contexts,packages}/**/*.{ts,tsx}", {
+    cwd: ROOT,
+    exclude: (f) => f.includes("node_modules"),
+  });
+  for (const file of files) {
+    const abs = resolve(ROOT, file);
+    for (const [, spec = ""] of readFileSync(abs, "utf8").matchAll(IMPORT_RE)) {
+      yield { file, abs, spec };
+    }
+  }
+}
+
+describe("arquitectura", () => {
+  it("todos los imports respetan los límites", () => {
+    const errors: string[] = [];
+    for (const { file, abs, spec } of imports()) {
+      const reason = violation(zoneOfPath(abs), zoneOfSpecifier(spec, abs), spec);
+      if (reason) errors.push(`${file} → ${spec}: ${reason}`);
+    }
+    expect(errors).toEqual([]);
+  });
+});

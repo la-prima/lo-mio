@@ -1,0 +1,6 @@
+# Excepciones de SCA. Cada una: motivo + vencimiento (máx. 90 días). Al vencer, CI vuelve a fallar.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2027-01-15
+reason = "braces (DoS por patrón anidado) solo llega vía @fission-ai/openspec (devDependency, CLI local); procesa patrones nuestros, no input de usuarios. Sin versión corregida al 2026-10-19."

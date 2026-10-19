@@ -1,0 +1,46 @@
+schema: spec-driven
+
+context: |
+  Language: es
+  All artifacts must be written in es.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Producto: lo-mio. Capa entre el sistema del local (POS), los meseros y los clientes
+  que lleva la cuenta individual de cada comensal en mesas compartidas con rotación de
+  personas. No reemplaza al POS: el pedido a cocina/barra y el cobro siguen en el
+  sistema del local salvo que el restaurante active lo contrario por configuración.
+  Visión completa: docs/vision.md. Glosario: docs/glosario.md.
+
+  Mercado inicial: Chile (CLP, sin decimales, IVA incluido en precio, boleta electrónica SII).
+  Piloto: un restaurante con POS Fudo. Diseñar para multi-país (moneda, impuestos,
+  documento tributario y ley de datos son configuración por país, nunca hardcode).
+
+  Stack: monorepo TypeScript (pnpm workspaces, Node >= 24 con type stripping).
+  Monolito modular DDD: contexts/<ctx> (venues, staff, tables, claims, pos, settlement),
+  cada uno con domain/ (puro), contracts/ (API pública y eventos versionados) y server/.
+  Entre contextos solo eventos asíncronos (pg-boss detrás del puerto EventBus) y contracts.
+  API Fastify + Postgres. Fronts: apps/mobile (Expo) y apps/guest-web (React + Vite).
+  Dinero siempre en enteros de unidad mínima.
+  Calidad y prácticas obligatorias: AGENTS.md.
+
+  Principios de producto, en orden de prioridad:
+  1. No agregar trabajo al mesero en el momento de tomar el pedido.
+  2. Nunca perder ni inventar dinero: toda asignación es auditable (quién, cuándo, por qué).
+  3. El comensal es anónimo por defecto; datos personales solo con consentimiento explícito.
+  4. Funcionar con wifi malo: las acciones del mesero no se pierden si cae la red.
+
+rules:
+  proposal:
+    - Incluir sección "Fuera de alcance" explícita.
+    - Si contradice un principio de producto, decirlo y justificarlo.
+  specs:
+    - Cada capability pertenece a un solo contexto (ver design.md D1); si cruza contextos, describir los eventos que la conectan.
+    - Cada requirement tiene al menos un scenario de error o caso de borde, no solo el camino feliz.
+    - Nada específico de un POS o país en specs de dominio; eso va en specs de adaptador.
+  design:
+    - Incluir modos de falla (red, POS caído, dispositivo sin batería) y cómo se recupera.
+    - Antes de proponer código nuevo, listar qué se reutiliza de packages/ y contexts/.
+    - Listar los eventos nuevos o modificados (tópico, versión, emisor, consumidores).
+  tasks:
+    - Cada tarea de comportamiento incluye su prueba (unit, integración o e2e según AGENTS.md).
+    - Tareas de máximo ~2 horas de trabajo de un agente.

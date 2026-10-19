@@ -1,0 +1,33 @@
+# Rápido (<10s) a propósito: lo pesado corre en CI. Ver AGENTS.md#calidad.
+pre-commit:
+  parallel: true
+  jobs:
+    - name: secrets
+      run: gitleaks git --staged --redact --no-banner
+    - name: biome
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css}"
+      run: pnpm biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    - name: typecheck
+      glob: "*.{ts,tsx}"
+      run: pnpm typecheck
+    - name: tests
+      glob: "*.{ts,tsx}"
+      run: pnpm vitest related --run --passWithNoTests {staged_files}
+    - name: architecture
+      glob: "*.{ts,tsx}"
+      run: pnpm vitest run tests/architecture.test.ts
+    - name: specs
+      glob: "openspec/**"
+      run: pnpm spec
+
+commit-msg:
+  jobs:
+    - name: conventional-commit
+      run: |
+        head -1 {1} | grep -qE '^(feat|fix|docs|refactor|test|chore|ci|perf|build|spec)(\([a-z0-9-]+\))?!?: .{3,}' \
+          || { echo "Formato: tipo(scope): descripción  — ej. feat(claims): reclamar ítem compartido"; exit 1; }
+
+pre-push:
+  jobs:
+    - run: pnpm verify

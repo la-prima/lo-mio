@@ -1,0 +1,28 @@
+{
+  "name": "lo-mio",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0+sha512.c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prepare": "lefthook install",
+    "check": "biome check .",
+    "fix": "biome check --write .",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "deadcode": "knip",
+    "spec": "openspec validate --all --strict --no-interactive",
+    "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@fission-ai/openspec": "^1.14.1",
+    "@types/node": "^26.6.5",
+    "knip": "^6.41.0",
+    "lefthook": "^2.2.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4"
+  }
+}
