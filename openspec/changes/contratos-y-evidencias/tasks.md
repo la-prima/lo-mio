@@ -23,8 +23,8 @@
 
 - [x] 5.1 Schemathesis contra la API en kind (JUnit → Allure); verificar que detecta un desvío introducido a propósito (un campo no declarado ya no puede salir desde 3.1, así que se verificó con un código de estado no declarado: detectado como "Undocumented HTTP status code")
 - [x] 5.2 Playwright para flujos API con la convención dominio → flujo → escenario → paso y primer flujo "Plataforma › Salud del sistema"; verificar el reporte HTML con request/response adjuntos
-- [ ] 5.3 Allure 3 con allure-playwright, allure-vitest y JUnit, helper de jerarquía y job `report` que publica un solo HTML con resumen en el PR; agregar `contracts` y `api-flows` a los checks requeridos; verificar abriendo el reporte del PR
+- [x] 5.3 Allure 3 con allure-playwright, allure-vitest y JUnit, helper de jerarquía y job `report` que publica un solo HTML con resumen en el PR; agregar `contracts` y `api-flows` a los checks requeridos; verificar abriendo el reporte del PR
 
 ## 6. Documentación
 
-- [ ] 6.1 `AGENTS.md` (contract-first, convención de nombres de pruebas, evidencias); verificar que el reporte del PR se entiende sin leer el código
+- [x] 6.1 `AGENTS.md` (contract-first, convención de nombres de pruebas, evidencias); verificar que el reporte del PR se entiende sin leer el código
