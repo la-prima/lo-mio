@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!.claude", "!.agents", "!openspec"]
+    "includes": [
+      "**",
+      "!.claude",
+      "!.agents",
+      "!openspec",
+      "!**/generated",
+      "!apps/api/openapi.yaml"
+    ]
   },
   "formatter": {
     "indentStyle": "space",

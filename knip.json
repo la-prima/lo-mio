@@ -4,5 +4,9 @@
     "apps/api": {
       "entry": ["src/migrate.ts"]
     }
+  },
+  "ignoreDependencies": ["@redocly/cli"],
+  "ignoreIssues": {
+    "**/generated/**": ["exports", "types", "duplicates"]
   }
 }

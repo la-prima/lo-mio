@@ -1,0 +1,13 @@
+{
+  "name": "@lo-mio/codegen",
+  "private": true,
+  "type": "module",
+  "description": "Generación de código desde los contratos. Aislado porque hey-api necesita la API JS de TypeScript 6 (TS 7 no la tiene).",
+  "scripts": {
+    "generate": "openapi-ts"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
+    "typescript": "6.0.3"
+  }
+}

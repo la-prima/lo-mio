@@ -1,0 +1,21 @@
+{
+  "name": "@lo-mio/client",
+  "private": true,
+  "type": "module",
+  "description": "Cliente de la API para todos los fronts y los flujos de prueba. Generado desde apps/api/openapi.yaml.",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.104.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  }
+}

@@ -4,7 +4,6 @@
     "module": "nodenext",
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
