@@ -18,7 +18,7 @@ type TablesTables = {
     joined_at: Generated<Date>;
   };
 };
-export const db = (tx: Db) => tx.withTables<TablesTables>();
+const db = (tx: Db) => tx.withTables<TablesTables>();
 
 export type Registered = TablesTables["tables_registry"];
 
