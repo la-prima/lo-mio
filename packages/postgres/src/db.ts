@@ -5,6 +5,14 @@ import pg from "pg";
 export type PlatformTables = {
   schema_migrations: { name: string; applied_at: Generated<Date> };
   inbox: { subscriber: string; event_id: string; processed_at: Generated<Date> };
+  idempotency_keys: {
+    scope: string;
+    key: string;
+    request_hash: string;
+    status: number;
+    body: unknown;
+    created_at: Generated<Date>;
+  };
 };
 
 export type Db = Kysely<PlatformTables>;

@@ -27,6 +27,7 @@ describe("Migraciones de base de datos", () => {
   it("migra una base vacía en orden y no repite lo aplicado", async () => {
     expect(await migrate(db, { venues: moduleDir })).toEqual([
       "platform/001_inbox.sql",
+      "platform/002_idempotency.sql",
       "venues/001_tables.sql",
     ]);
     expect(await migrate(db, { venues: moduleDir })).toEqual([]);

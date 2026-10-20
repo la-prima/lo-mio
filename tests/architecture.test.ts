@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const FRONTS = new Set(["mobile", "guest-web"]);
-const SERVER_ONLY_LIBS = /^(fastify|@fastify\/|pg$|pg-boss|kysely|node:)/;
+const SERVER_ONLY_LIBS =
+  /^(fastify|@fastify\/|pg$|pg-boss|kysely|node:|@lo-mio\/(server|postgres))/;
 const IMPORT_RE = /(?:from|import|export\s*\*\s*from)\s*\(?\s*["']([^"']+)["']/g;
 
 type Zone = {

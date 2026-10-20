@@ -2,15 +2,20 @@ import { join } from "node:path";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import { registerMethodNotAllowed, registerProblemHandlers } from "@lo-mio/server";
 import Fastify, { type FastifyInstance, type RouteHandlerMethod } from "fastify";
 import openapiGlue from "fastify-openapi-glue";
 import type { Env } from "./env.ts";
-import { registerMethodNotAllowed, registerProblemHandlers } from "./problem.ts";
 
 /** Contrato unificado (plataforma + contextos) que genera `pnpm contracts`. */
 const SPECIFICATION = join(import.meta.dirname, "../openapi.yaml");
 
-export type Handlers = Record<string, RouteHandlerMethod>;
+/**
+ * Handler de una operación del contrato. El request se tipa en cada contexto con el body y los
+ * params del contrato (glue ya los validó), por eso aquí se acepta cualquier tipo de request.
+ */
+export type Handler = (req: never, reply: never) => unknown;
+export type Handlers = Record<string, Handler>;
 
 /**
  * Arma la API sin escuchar en un puerto (los tests usan `inject`). Las rutas salen del contrato:
@@ -51,7 +56,7 @@ export async function buildApp(
       const handler = handlers[operationId];
       if (!handler) throw new Error(`la operación ${operationId} del contrato no tiene handler`);
       mounted.add(operationId);
-      return handler;
+      return handler as RouteHandlerMethod;
     },
   });
   registerMethodNotAllowed(app, new Map(routes));
