@@ -10,7 +10,8 @@ rm -rf "$out" && mkdir -p "$out"
 ca="$out/ca.crt"
 kubectl get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$ca"
 
-docker run --rm --add-host "$host:host-gateway" \
+# Con el usuario actual: en Linux el contenedor no podría escribir el reporte en la carpeta montada.
+docker run --rm --user "$(id -u):$(id -g)" --add-host "$host:host-gateway" \
   -e API_URL="$url" -e CA_BUNDLE=/out/ca.crt -e REPORT_DIR=/out \
   -v "$PWD/apps/api/openapi.yaml:/spec/openapi.yaml:ro" \
   -v "$PWD/tests/contract/schemathesis.toml:/spec/schemathesis.toml:ro" \
