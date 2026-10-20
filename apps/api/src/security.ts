@@ -20,5 +20,3 @@ export const securityHandlers = (db: Db) => ({
     req.actor = actor;
   },
 });
-
-export type SecurityHandlers = ReturnType<typeof securityHandlers>;

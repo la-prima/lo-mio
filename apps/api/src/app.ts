@@ -15,7 +15,7 @@ const SPECIFICATION = join(import.meta.dirname, "../openapi.yaml");
  * Handler de una operación del contrato. El request se tipa en cada contexto con el body y los
  * params del contrato (glue ya los validó), por eso aquí se acepta cualquier tipo de request.
  */
-export type Handler = (req: never, reply: never) => unknown;
+type Handler = (req: never, reply: never) => unknown;
 /** Un handler, o un handler con límite de solicitudes propio (ej. login). */
 export type Handlers = Record<
   string,

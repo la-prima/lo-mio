@@ -8,7 +8,6 @@
       "entry": ["allurerc.mjs", "tests/contract/labels.ts"]
     }
   },
-  "ignoreDependencies": ["@redocly/cli"],
   "ignoreIssues": {
     "**/generated/**": ["exports", "types", "duplicates"]
   }
