@@ -11,6 +11,7 @@
     "@fastify/cors": "^11.3.1",
     "@fastify/helmet": "^13.1.2",
     "@fastify/rate-limit": "^11.2.1",
+    "@fastify/websocket": "^11.3.4",
     "@lo-mio/claims": "workspace:*",
     "@lo-mio/kernel": "workspace:*",
     "@lo-mio/pos": "workspace:*",
@@ -24,11 +25,13 @@
     "ajv-formats": "^3.0.1",
     "fastify": "^5.12.5",
     "fastify-openapi-glue": "^4.11.5",
+    "pg": "^8.23.1",
     "pg-boss": "^12.37.1",
     "yaml": "^2.9.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "kysely": "^0.29.6"
   }
 }

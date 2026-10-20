@@ -84,7 +84,12 @@ export async function buildApp(env: Env, options: AppOptions): Promise<FastifyIn
   // ponytail: límites en memoria de cada pod (con N réplicas el límite efectivo es N veces);
   // pasar a un contador compartido en Postgres si hace falta un límite exacto.
   // Global por IP; los endpoints sensibles (login, PIN) suman el suyo.
-  await app.register(rateLimit, { max: 300, timeWindow: "1 minute" });
+  await app.register(rateLimit, {
+    max: 300,
+    timeWindow: "1 minute",
+    // Sin IP de origen (ej. inyección en tests) el generador por defecto falla; nunca debe tumbar la request.
+    keyGenerator: (req) => req.ip || req.socket?.remoteAddress || "sin-ip",
+  });
 
   const mounted = new Set<string>();
   const securityOf = securityByOperation(specification);

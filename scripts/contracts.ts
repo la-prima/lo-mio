@@ -53,6 +53,15 @@ for (const file of globSync(
   writeFileSync(path, readFileSync(path, "utf8").replaceAll("z.object(", "z.strictObject("));
 }
 
+// AsyncAPI de la API (tiempo real): solo validación oficial.
+for (const file of globSync("apps/api/asyncapi/*.yaml", { cwd: ROOT })) {
+  const path = resolve(ROOT, file);
+  const { diagnostics } = await new Parser().parse(readFileSync(path, "utf8"), { source: path });
+  const errors = diagnostics.filter((d) => d.severity === 0);
+  for (const e of errors) process.stderr.write(`${file}: ${e.message} (${e.path.join(".")})\n`);
+  if (errors.length > 0) process.exit(1);
+}
+
 // AsyncAPI de cada contexto: validación oficial y catálogo de eventos (después de hey-api, que
 // limpia la carpeta generated/).
 for (const file of globSync("contexts/*/contracts/asyncapi.yaml", { cwd: ROOT }).sort()) {

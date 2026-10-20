@@ -205,3 +205,8 @@ export async function renameGuest(
     return { guest: guest && guestView(guest) };
   });
 }
+
+/** Local al que pertenece una sesión (lo usa el tiempo real para validar al personal). */
+export async function sessionVenue(db: Db, sessionId: string): Promise<string | undefined> {
+  return (await repo.sessionById(db, sessionId))?.venue_id;
+}

@@ -28,7 +28,7 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 6. Tiempo real y cliente
 
-- [ ] 6.1 Gateway WebSocket (suscripción por sesión, reanudación por último `event.id`) y su conexión en `packages/client` (el cliente HTTP y los hooks se generan del contrato); verificar con un test de integración con 2 instancias de la API
+- [x] 6.1 Gateway WebSocket (suscripción por sesión, reanudación por último `event.id`) y su conexión en `packages/client` (el cliente HTTP y los hooks se generan del contrato); verificar con un test de integración con 2 instancias de la API
 - [ ] 6.2 Flujos API en `tests/flows/` (unirse, reclamar, compartir, ver saldo) agrupados por contexto y flujo; verificar en el reporte Allure
 
 ## 7. `apps/guest-web`

@@ -113,3 +113,10 @@ export async function insertGuest(
 export async function renameGuest(tx: Db, guestId: string, alias: string) {
   await db(tx).updateTable("guests").set({ alias }).where("id", "=", guestId).execute();
 }
+
+export const sessionById = (tx: Db, sessionId: string) =>
+  db(tx)
+    .selectFrom("table_sessions")
+    .select(["id", "venue_id"])
+    .where("id", "=", sessionId)
+    .executeTakeFirst();

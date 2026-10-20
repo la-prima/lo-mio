@@ -1,0 +1,47 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · tiempo real
+  version: 1.0.0
+  description: >-
+    WebSocket del feed de una mesa. Al conectarse (o reconectarse) el servidor envía un `snapshot`
+    con el feed y los saldos completos, y luego cada cambio como `event`. Cada ítem trae su
+    `version`: el cliente descarta lo que ya tiene, así una reconexión nunca duplica acciones.
+    Autenticación: la cookie del comensal de esa sesión, o la sesión del personal del local.
+servers:
+  api:
+    host: api.lo-mio.localhost
+    protocol: wss
+channels:
+  sessionEvents:
+    address: /v1/sessions/{sessionId}/events
+    parameters:
+      sessionId:
+        description: Sesión de mesa.
+    messages:
+      snapshot:
+        name: snapshot
+        payload:
+          type: object
+          additionalProperties: false
+          required: [type, items, balances]
+          properties:
+            type: { type: string, const: snapshot }
+            items: { type: array, description: "Igual que GET /v1/sessions/{sessionId}/items." }
+            balances: { type: array, description: "Igual que GET /v1/sessions/{sessionId}/balances." }
+      event:
+        name: event
+        payload:
+          type: object
+          additionalProperties: false
+          required: [type, id, topic, data]
+          properties:
+            type: { type: string, const: event }
+            id: { type: string, format: uuid }
+            topic:
+              type: string
+              enum: [claims.item.changed.v1, settlement.balance.changed.v1, tables.guest.joined.v1, tables.guest.renamed.v1]
+            data: { type: object, description: Payload del evento, según el asyncapi.yaml de su contexto. }
+operations:
+  receiveSessionEvents:
+    action: send
+    channel: { $ref: "#/channels/sessionEvents" }
