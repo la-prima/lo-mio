@@ -17,7 +17,7 @@
 
 ## 4. Mocks
 
-- [ ] 4.1 Microcks en el chart local cargando contratos propios y externos, y helper de Testcontainers; verificar que el mock de `/health` responde el ejemplo del contrato en kind y en un test de integración
+- [x] 4.1 Microcks en el chart local cargando contratos propios y externos, y helper de Testcontainers; verificar que el mock de `/health` responde el ejemplo del contrato en kind y en un test de integración
 
 ## 5. Pruebas desde el contrato y evidencias
 

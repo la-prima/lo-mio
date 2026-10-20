@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "@testcontainers/postgresql": "^12.2.0",
-    "@types/pg": "^8.23.1"
+    "@types/pg": "^8.23.1",
+    "testcontainers": "^12.2.1"
   },
   "dependencies": {
     "@lo-mio/kernel": "workspace:*",

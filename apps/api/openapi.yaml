@@ -13,6 +13,10 @@ paths:
   /health/live:
     get:
       operationId: getLiveness
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
       tags:
         - plataforma
       summary: El proceso responde (liveness). No consulta dependencias.
@@ -24,13 +28,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
-              example:
-                status: ok
+              examples:
+                ok:
+                  value:
+                    status: ok
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /health:
     get:
       operationId: getReadiness
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
       tags:
         - plataforma
       summary: Puede atender tráfico (readiness). Consulta la base de datos.
@@ -42,8 +52,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
-              example:
-                status: ok
+              examples:
+                ok:
+                  value:
+                    status: ok
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '503':
@@ -52,10 +64,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-              example:
-                type: https://lo-mio.cl/problems/dependency-unavailable
-                title: Dependencia no disponible
-                status: 503
+              examples:
+                dependency-unavailable:
+                  value:
+                    type: https://lo-mio.cl/problems/dependency-unavailable
+                    title: Dependencia no disponible
+                    status: 503
 components:
   responses:
     TooManyRequests:
@@ -64,10 +78,12 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-          example:
-            type: https://lo-mio.cl/problems/rate-limited
-            title: Demasiadas solicitudes
-            status: 429
+          examples:
+            rate-limited:
+              value:
+                type: https://lo-mio.cl/problems/rate-limited
+                title: Demasiadas solicitudes
+                status: 429
   schemas:
     HealthStatus:
       type: object

@@ -42,6 +42,9 @@ Hoy `apps/api` define rutas a mano y `contracts/` está vacío. Los tests son Vi
 - En kind se instala en modo liviano (*uber*), con `values-local.yaml`, y carga los contratos propios y los externos al arrancar.
 - En los tests de integración se usa `@microcks/microcks-testcontainers` para mockear un contexto o sistema externo dentro de un solo test.
 - Los mocks responden **los ejemplos del contrato**, así que un ejemplo inválido rompe el lint, no el test.
+- **Ejemplos con nombre** (`examples`, no `example`): Microcks empareja request y respuesta por el nombre del ejemplo; con `example` singular no genera el mock. Lo exige la regla `response-has-example`.
+- **Respuesta por defecto declarada en el contrato:** con varias respuestas y sin parámetros, Microcks elige una de forma no determinista (en kind devolvía el 429). Cada operación así declara `x-microcks-operation` con dispatcher `SCRIPT`, que responde el ejemplo `ok` o el que pida el header `X-Mock-Example` (así un consumidor prueba sus caminos de error con ejemplos reales del contrato).
+- **Helper propio en vez de `@microcks/microcks-testcontainers`:** fija `Content-Length` a mano y el `fetch` de Node 24 lo rechaza. `startMicrocks` hace lo mismo con `GenericContainer` y la API de Microcks.
 
 ### Conformidad: Schemathesis
 

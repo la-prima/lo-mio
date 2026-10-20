@@ -48,6 +48,18 @@ local_resource(
     labels=["infra"],
 )
 
+# Mocks desde los contratos (Microcks), recargados cuando cambia un contrato.
+k8s_yaml("deploy/kind/infra/microcks.yaml")
+k8s_resource("microcks", resource_deps=["platform"], labels=["mocks"])
+local_resource(
+    "microcks-contracts",
+    cmd="deploy/kind/microcks-load.sh",
+    deps=["apps/api/openapi", "contexts", "contracts/external"],
+    ignore=["**/generated/**", "**/*.ts"],
+    resource_deps=["microcks"],
+    labels=["mocks"],
+)
+
 # ---------- app: el mismo chart e imagen que en producción ----------
 # Sin live update a propósito: el contenedor tiene el sistema de archivos de solo lectura
 # (igual que en producción), así que cada cambio reconstruye la imagen (con caché de capas).

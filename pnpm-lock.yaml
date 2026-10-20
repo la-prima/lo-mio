@@ -229,6 +229,10 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+    devDependencies:
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   contexts/venues: {}
 
@@ -278,6 +282,9 @@ importers:
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
+      testcontainers:
+        specifier: ^12.2.1
+        version: 12.2.1
 
   tools/codegen:
     devDependencies:
@@ -2870,8 +2877,8 @@ packages:
   temporal-spec@1.0.1:
     resolution: {integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==}
 
-  testcontainers@12.2.0:
-    resolution: {integrity: sha512-Pd0c2eU0DdIuK+Pb3c+vmBUdKjDLgxZmPecQGESFAKyn5LTqSaSw8l7htfMlLwabb/QsUILe6XkxMJw8Ly/ThA==}
+  testcontainers@12.2.1:
+    resolution: {integrity: sha512-JfbCyOvLdzatwgqUI3AvYCwRW0P5mCkKQVBPO8U5qSH1efC2kHvnfWmi9VHloy1rAFG2MEqWZObRH4bq0gU1kQ==}
     engines: {node: '>= 22.22'}
 
   text-decoder@1.2.7:
@@ -3893,7 +3900,7 @@ snapshots:
 
   '@testcontainers/postgresql@12.2.0':
     dependencies:
-      testcontainers: 12.2.0
+      testcontainers: 12.2.1
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -5779,7 +5786,7 @@ snapshots:
 
   temporal-spec@1.0.1: {}
 
-  testcontainers@12.2.0:
+  testcontainers@12.2.1:
     dependencies:
       '@balena/dockerignore': 1.0.2
       '@types/dockerode': 4.0.2
