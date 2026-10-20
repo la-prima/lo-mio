@@ -50,7 +50,14 @@ local_resource(
 
 # Mocks desde los contratos (Microcks), recargados cuando cambia un contrato.
 k8s_yaml("deploy/kind/infra/microcks.yaml")
-k8s_resource("microcks", resource_deps=["platform"], labels=["mocks"])
+# El namespace y el HTTPRoute van con el workload: si quedaran "uncategorized", Tilt los aplicaría
+# antes de que Envoy Gateway instale los CRDs de Gateway API (en un clúster nuevo, falla).
+k8s_resource(
+    "microcks",
+    objects=["mocks:namespace", "microcks:httproute:mocks"],
+    resource_deps=["platform"],
+    labels=["mocks"],
+)
 local_resource(
     "microcks-contracts",
     cmd="deploy/kind/microcks-load.sh",

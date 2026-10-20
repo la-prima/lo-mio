@@ -142,7 +142,10 @@ jobs:
         with:
           name: reporte-de-pruebas
           path: reports/allure-report/index.html
-      - run: node deploy/ci/report-summary.ts reports/allure-report/summary.json "${{ steps.upload.outputs.artifact-url }}" > summary.md
+      # NEEDS: si un job falló o no corrió, sus pruebas no están en el reporte; el resumen lo dice.
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: node deploy/ci/report-summary.ts reports/allure-report/summary.json "${{ steps.upload.outputs.artifact-url }}" > summary.md
       - run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
       - if: github.event_name == 'pull_request'
         env:

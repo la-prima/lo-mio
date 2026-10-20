@@ -8,10 +8,11 @@ type AsyncApiDoc = { channels?: Record<string, Channel> };
 
 const PAYLOAD_REF = /^\.\/openapi\.yaml#\/components\/schemas\/([A-Za-z][A-Za-z0-9]*)$/;
 
+const TOPIC = /^([a-z][a-z0-9-]*)\.[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*\.v[1-9][0-9]*$/;
+
 function topicOf(context: string, name: string, channel: Channel): string {
   const topic = String(channel.address ?? "");
-  const segment = "[a-z][a-z0-9-]*";
-  if (!new RegExp(`^${context}\\.${segment}\\.${segment}\\.v[1-9][0-9]*$`).test(topic)) {
+  if (TOPIC.exec(topic)?.[1] !== context) {
     throw new Error(
       `${context}: el canal "${name}" debe tener address ${context}.<agregado>.<hecho>.v<n> (tiene "${topic}")`,
     );

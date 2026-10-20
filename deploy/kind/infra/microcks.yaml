@@ -19,11 +19,19 @@ spec:
       labels: { app: microcks }
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: microcks
           image: quay.io/microcks/microcks-uber:1.15.0
           ports:
             - { name: http, containerPort: 8080 }
+          # ponytail: la imagen uber intenta exportar logs OTLP a un host fijo (o11y_otel) y loguea
+          # "Failed to export"; es inofensivo (no afecta los mocks) y no se apaga con OTEL_* ni con
+          # propiedades de Spring. Montar un application.properties propio si el ruido molesta.
           readinessProbe:
             httpGet: { path: /api/health, port: http }
             periodSeconds: 5
@@ -31,6 +39,7 @@ spec:
             requests: { cpu: 100m, memory: 384Mi }
             limits: { memory: 768Mi }
           securityContext:
+            runAsNonRoot: true
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
 ---
