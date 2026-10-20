@@ -24,6 +24,8 @@ COPY --from=build /app/packages ./packages
 COPY --from=build /app/contexts ./contexts
 COPY --from=build /app/apps/api ./apps/api
 WORKDIR /app/apps/api
+# Explícito aunque la base `:nonroot` ya lo define: si se cambia la base, sigue sin ser root.
+USER 65532:65532
 EXPOSE 3000
 # El entrypoint de la imagen es node. Migraciones: CMD ["src/migrate.ts"].
 CMD ["src/main.ts"]
