@@ -7,6 +7,13 @@ packages:
 # (ventana típica en que se detectan paquetes comprometidos).
 minimumReleaseAge: 10080
 
+# Dependencias transitivas solo desde el registry (nunca git ni URLs).
+blockExoticSubdeps: true
+
+# Rechaza una versión que llegue con menos garantías de procedencia que la anterior
+# (patrón típico de un paquete secuestrado).
+trustPolicy: no-downgrade
+
 # Scripts de instalación bloqueados salvo lista explícita.
 allowBuilds:
   lefthook: true
