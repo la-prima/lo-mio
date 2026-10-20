@@ -12,6 +12,7 @@
     "@fastify/helmet": "^13.1.2",
     "@fastify/rate-limit": "^11.2.1",
     "@lo-mio/kernel": "workspace:*",
+    "@lo-mio/pos": "workspace:*",
     "@lo-mio/postgres": "workspace:*",
     "@lo-mio/server": "workspace:*",
     "@lo-mio/staff": "workspace:*",

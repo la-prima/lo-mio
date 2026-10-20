@@ -9,7 +9,7 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 2. Contexto `pos`
 
-- [ ] 2.1 Contrato `PosAdapter` con capacidades, suite de contrato reutilizable y adaptador manual que publica `pos.item.received.v1`; verificar que el adaptador manual pasa la suite y con un test de integración del evento
+- [x] 2.1 Contrato `PosAdapter` con capacidades, suite de contrato reutilizable y adaptador manual que publica `pos.item.received.v1`; verificar que el adaptador manual pasa la suite y con un test de integración del evento
 
 ## 3. Contexto `tables`
 

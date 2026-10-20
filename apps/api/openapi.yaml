@@ -9,6 +9,8 @@ servers:
 tags:
   - name: plataforma
     description: Salud del sistema.
+  - name: pos
+    description: Ítems que llegan del punto de venta.
   - name: staff
     description: Sesiones del personal.
   - name: venues
@@ -74,6 +76,70 @@ paths:
                     type: https://lo-mio.cl/problems/dependency-unavailable
                     title: Dependencia no disponible
                     status: 503
+  /v1/pos/manual/items:
+    post:
+      operationId: loadManualItems
+      tags:
+        - pos
+      summary: El mesero carga ítems en una mesa (adaptador manual).
+      description: Nombre y precio vienen del catálogo elegido en la app
+        (`listProducts`). Una cantidad de N crea N ítems en la mesa, uno por
+        unidad.
+      security:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
+            - waiter
+            - manager
+            - admin
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualItems"
+            examples:
+              ok:
+                value:
+                  tableId: 0199f0a0-0000-7000-8000-000000000005
+                  name: Schop Kunstmann
+                  unitPrice:
+                    amount: 4500
+                    currency: CLP
+                  quantity: 2
+      responses:
+        "202":
+          description: Ítems recibidos. Aparecen en la mesa de forma asíncrona (`tables`
+            los asigna a la sesión abierta, abriéndola si hace falta).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceivedItems"
+              examples:
+                ok:
+                  value:
+                    posItemIds:
+                      - manual:0199f0a0-0000-7000-8000-0000000000c1
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ItemsRejected"
+        "429":
+          $ref: "#/components/responses/RateLimited"
   /v1/staff/sessions:
     post:
       operationId: createStaffSession
@@ -470,6 +536,78 @@ components:
         instance:
           type: string
           description: Identificador de esta ocurrencia.
+    ManualItems:
+      type: object
+      additionalProperties: false
+      required:
+        - tableId
+        - name
+        - unitPrice
+        - quantity
+      properties:
+        tableId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: ^[^\u0000-\u001F\u007F-\u009F]+$
+        unitPrice:
+          $ref: "#/components/schemas/Money"
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 20
+    ReceivedItems:
+      type: object
+      additionalProperties: false
+      required:
+        - posItemIds
+      properties:
+        posItemIds:
+          type: array
+          items:
+            type: string
+            description: Id del ítem en el POS (`manual:<uuid>` en el adaptador manual).
+    ItemReceived:
+      type: object
+      additionalProperties: false
+      required:
+        - posItemId
+        - tableId
+        - name
+        - unitPrice
+        - quantity
+      properties:
+        posItemId:
+          type: string
+          minLength: 1
+        tableId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        unitPrice:
+          $ref: "#/components/schemas/Money"
+        quantity:
+          type: integer
+          minimum: 1
+    Money:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+          maximum: 1000000000000
+          description: Tope de un billón de unidades mínimas.
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
     Credentials:
       type: object
       additionalProperties: false
@@ -620,6 +758,7 @@ components:
         - tableId
         - label
         - qrCode
+        - currency
       properties:
         tableId:
           type: string
@@ -628,6 +767,9 @@ components:
           type: string
         qrCode:
           type: string
+        currency:
+          type: string
+          description: Moneda del local (en la que se cobra en la mesa).
     TableQrRotated:
       type: object
       additionalProperties: false
@@ -640,21 +782,6 @@ components:
           format: uuid
         qrCode:
           type: string
-    Money:
-      type: object
-      additionalProperties: false
-      required:
-        - amount
-        - currency
-      properties:
-        amount:
-          type: integer
-          minimum: 0
-          maximum: 1000000000000
-          description: Tope de un billón de unidades mínimas.
-        currency:
-          type: string
-          pattern: ^[A-Z]{3}$
   responses:
     RateLimited:
       description: Se superó el límite de solicitudes.
@@ -668,18 +795,24 @@ components:
                 type: https://lo-mio.cl/problems/rate-limited
                 title: Demasiadas solicitudes
                 status: 429
-    InvalidCredentials:
-      description: Email o contraseña incorrectos (no se distingue cuál).
+    ItemsRejected:
+      description: El precio no está en la moneda del local o la Idempotency-Key se
+        reutilizó.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           examples:
-            invalid-credentials:
+            currency-mismatch:
               value:
-                type: https://lo-mio.cl/problems/invalid-credentials
-                title: Email o contraseña incorrectos
-                status: 401
+                type: https://lo-mio.cl/problems/currency-mismatch
+                title: El precio no está en la moneda del local
+                status: 422
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
     InvalidRequest:
       description: La solicitud no cumple el contrato.
       content:
@@ -703,6 +836,42 @@ components:
               value:
                 type: https://lo-mio.cl/problems/unauthenticated
                 title: Sesión requerida
+                status: 401
+    Forbidden:
+      description: La sesión no tiene permiso para esta operación.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            forbidden:
+              value:
+                type: https://lo-mio.cl/problems/forbidden
+                title: Sin permiso
+                status: 403
+    NotFound:
+      description: El recurso no existe.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            not-found:
+              value:
+                type: https://lo-mio.cl/problems/not-found
+                title: Recurso no encontrado
+                status: 404
+    InvalidCredentials:
+      description: Email o contraseña incorrectos (no se distingue cuál).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalid-credentials:
+              value:
+                type: https://lo-mio.cl/problems/invalid-credentials
+                title: Email o contraseña incorrectos
                 status: 401
     TableRejected:
       description: Nombre de mesa inválido (ej. solo espacios) o Idempotency-Key
@@ -757,30 +926,6 @@ components:
                 type: https://lo-mio.cl/problems/table-label-taken
                 title: Ya existe una mesa con ese nombre
                 status: 409
-    Forbidden:
-      description: La sesión no tiene permiso para esta operación.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          examples:
-            forbidden:
-              value:
-                type: https://lo-mio.cl/problems/forbidden
-                title: Sin permiso
-                status: 403
-    NotFound:
-      description: El recurso no existe.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          examples:
-            not-found:
-              value:
-                type: https://lo-mio.cl/problems/not-found
-                title: Recurso no encontrado
-                status: 404
     IdempotencyKeyReused:
       description: La misma Idempotency-Key se usó con otra solicitud.
       content:
@@ -803,6 +948,16 @@ components:
       type: http
       scheme: bearer
       description: "Sesión del personal en la app (`Authorization: Bearer <token>`)."
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Identificador único del comando (UUIDv7). Reintentar con la misma
+        clave no lo aplica dos veces.
+      schema:
+        type: string
+        format: uuid
   examples:
     StaffSession:
       value:
@@ -831,13 +986,3 @@ components:
         price:
           amount: 4500
           currency: CLP
-  parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: true
-      description: Identificador único del comando (UUIDv7). Reintentar con la misma
-        clave no lo aplica dos veces.
-      schema:
-        type: string
-        format: uuid

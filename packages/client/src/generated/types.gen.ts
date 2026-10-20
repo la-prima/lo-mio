@@ -28,6 +28,33 @@ export type Problem = {
     instance?: string;
 };
 
+export type ManualItems = {
+    tableId: string;
+    name: string;
+    unitPrice: Money;
+    quantity: number;
+};
+
+export type ReceivedItems = {
+    posItemIds: Array<string>;
+};
+
+export type ItemReceived = {
+    posItemId: string;
+    tableId: string;
+    name: string;
+    unitPrice: Money;
+    quantity: number;
+};
+
+export type Money = {
+    /**
+     * Tope de un billón de unidades mínimas.
+     */
+    amount: number;
+    currency: string;
+};
+
 export type Credentials = {
     email: string;
     password: string;
@@ -98,19 +125,15 @@ export type TableRegistered = {
     tableId: string;
     label: string;
     qrCode: string;
+    /**
+     * Moneda del local (en la que se cobra en la mesa).
+     */
+    currency: string;
 };
 
 export type TableQrRotated = {
     tableId: string;
     qrCode: string;
-};
-
-export type Money = {
-    /**
-     * Tope de un billón de unidades mínimas.
-     */
-    amount: number;
-    currency: string;
 };
 
 /**
@@ -171,6 +194,57 @@ export type GetReadinessResponses = {
 };
 
 export type GetReadinessResponse = GetReadinessResponses[keyof GetReadinessResponses];
+
+export type LoadManualItemsData = {
+    body: ManualItems;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/pos/manual/items';
+};
+
+export type LoadManualItemsErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El precio no está en la moneda del local o la Idempotency-Key se reutilizó.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type LoadManualItemsError = LoadManualItemsErrors[keyof LoadManualItemsErrors];
+
+export type LoadManualItemsResponses = {
+    /**
+     * Ítems recibidos. Aparecen en la mesa de forma asíncrona (`tables` los asigna a la sesión abierta, abriéndola si hace falta).
+     */
+    202: ReceivedItems;
+};
+
+export type LoadManualItemsResponse = LoadManualItemsResponses[keyof LoadManualItemsResponses];
 
 export type CreateStaffSessionData = {
     body: Credentials;

@@ -1,4 +1,5 @@
 import type { EventBus, EventCatalog } from "@lo-mio/kernel";
+import { pos } from "@lo-mio/pos/server";
 import type { Db, Tx } from "@lo-mio/postgres";
 import { staff } from "@lo-mio/staff/server";
 import { venues } from "@lo-mio/venues/server";
@@ -19,7 +20,7 @@ type ServerContext = {
   subscribe?: (deps: ContextDeps) => Promise<void>;
 };
 
-export const contexts: ServerContext[] = [staff, venues];
+export const contexts: ServerContext[] = [staff, venues, pos];
 
 /** Catálogo de todos los eventos declarados: el bus rechaza cualquier otro. */
 export const eventCatalog = (): EventCatalog => Object.assign({}, ...contexts.map((c) => c.events));

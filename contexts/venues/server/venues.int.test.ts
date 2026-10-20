@@ -44,7 +44,10 @@ describe("Locales, mesas y catálogo", () => {
     expect(result).toMatchObject({ status: 201, body: { label: "5" } });
     const body = "body" in result ? (result.body as { id: string; qrCode: string }) : undefined;
     expect(bus.published.map((e) => [e.type, e.data])).toEqual([
-      ["venues.table.registered", { tableId: body?.id, label: "5", qrCode: body?.qrCode }],
+      [
+        "venues.table.registered",
+        { tableId: body?.id, label: "5", qrCode: body?.qrCode, currency: "CLP" },
+      ],
     ]);
     expect(await service.listTables(deps(), staff(venueA, "waiter"))).toEqual([body]);
   });

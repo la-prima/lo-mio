@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: lo-mio · pos
+  version: 1.0.0
+  description: >-
+    Integración con el punto de venta del local (capa anticorrupción). En el MVP, el adaptador
+    manual: el mesero carga los ítems en lo-mio. Fudo llega con `integracion-fudo` y publica el
+    mismo evento, así que el resto del sistema no distingue de dónde viene un ítem.
+servers:
+  - url: /
+tags:
+  - name: pos
+    description: Ítems que llegan del punto de venta.
+x-common:
+  dispatcher: &defaultExample
+    dispatcher: SCRIPT
+    dispatcherRules: |
+      return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+paths:
+  /v1/pos/manual/items:
+    post:
+      operationId: loadManualItems
+      tags: [pos]
+      summary: El mesero carga ítems en una mesa (adaptador manual).
+      description: >-
+        Nombre y precio vienen del catálogo elegido en la app (`listProducts`). Una cantidad de N
+        crea N ítems en la mesa, uno por unidad.
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
+      parameters: [{ $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }]
+      x-microcks-operation: *defaultExample
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ManualItems" }
+            examples:
+              ok:
+                value:
+                  tableId: 0199f0a0-0000-7000-8000-000000000005
+                  name: Schop Kunstmann
+                  unitPrice: { amount: 4500, currency: CLP }
+                  quantity: 2
+      responses:
+        "202":
+          description: >-
+            Ítems recibidos. Aparecen en la mesa de forma asíncrona (`tables` los asigna a la
+            sesión abierta, abriéndola si hace falta).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReceivedItems" }
+              examples:
+                ok:
+                  value: { posItemIds: ["manual:0199f0a0-0000-7000-8000-0000000000c1"] }
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
+        "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ItemsRejected" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+components:
+  securitySchemes:
+    staffCookie: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffCookie" }
+    staffBearer: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffBearer" }
+  schemas:
+    ManualItems:
+      type: object
+      additionalProperties: false
+      required: [tableId, name, unitPrice, quantity]
+      properties:
+        tableId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 80, pattern: "^[^\\u0000-\\u001F\\u007F-\\u009F]+$" }
+        unitPrice: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
+        quantity: { type: integer, minimum: 1, maximum: 20 }
+    ReceivedItems:
+      type: object
+      additionalProperties: false
+      required: [posItemIds]
+      properties:
+        posItemIds:
+          type: array
+          items: { type: string, description: "Id del ítem en el POS (`manual:<uuid>` en el adaptador manual)." }
+    # Payload de pos.item.received.v1 (asyncapi.yaml).
+    ItemReceived:
+      type: object
+      additionalProperties: false
+      required: [posItemId, tableId, name, unitPrice, quantity]
+      properties:
+        posItemId: { type: string, minLength: 1 }
+        tableId: { type: string, format: uuid }
+        name: { type: string }
+        unitPrice: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
+        quantity: { type: integer, minimum: 1 }
+  responses:
+    ItemsRejected:
+      description: El precio no está en la moneda del local o la Idempotency-Key se reutilizó.
+      content:
+        application/problem+json:
+          schema: { $ref: "../../../contracts/common.yaml#/components/schemas/Problem" }
+          examples:
+            currency-mismatch:
+              value:
+                type: https://lo-mio.cl/problems/currency-mismatch
+                title: El precio no está en la moneda del local
+                status: 422
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422

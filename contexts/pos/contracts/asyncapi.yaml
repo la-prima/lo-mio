@@ -1,0 +1,17 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · pos (eventos)
+  version: 1.0.0
+  description: >-
+    Eventos que publica el contexto pos. Cualquier adaptador (manual, Fudo) publica los mismos.
+channels:
+  itemReceived:
+    address: pos.item.received.v1
+    description: Llegó un ítem del POS para una mesa (cantidad N = N unidades).
+    messages:
+      itemReceived:
+        payload: { $ref: "./openapi.yaml#/components/schemas/ItemReceived" }
+operations:
+  publishItemReceived:
+    action: send
+    channel: { $ref: "#/channels/itemReceived" }

@@ -226,6 +226,9 @@ importers:
       '@lo-mio/kernel':
         specifier: workspace:*
         version: link:../../packages/kernel
+      '@lo-mio/pos':
+        specifier: workspace:*
+        version: link:../../contexts/pos
       '@lo-mio/postgres':
         specifier: workspace:*
         version: link:../../packages/postgres
@@ -256,6 +259,24 @@ importers:
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  contexts/pos:
+    dependencies:
+      '@lo-mio/kernel':
+        specifier: workspace:*
+        version: link:../../packages/kernel
+      '@lo-mio/postgres':
+        specifier: workspace:*
+        version: link:../../packages/postgres
+      '@lo-mio/server':
+        specifier: workspace:*
+        version: link:../../packages/server
+      fastify:
+        specifier: ^5.12.5
+        version: 5.12.5
       zod:
         specifier: ^4.6.7
         version: 4.6.7

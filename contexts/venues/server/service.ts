@@ -82,7 +82,12 @@ export async function addTable(
       return problem(409, "table-label-taken", "Ya existe una mesa con ese nombre");
     }
     const { id: tableId, label, qrCode } = table.value;
-    await publish(deps, tx, actor, "venues.table.registered", tableId, { tableId, label, qrCode });
+    await publish(deps, tx, actor, "venues.table.registered", tableId, {
+      tableId,
+      label,
+      qrCode,
+      currency: venue.currency,
+    });
     return { status: 201, body: tableView(table.value) };
   });
 }

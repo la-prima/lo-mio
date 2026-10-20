@@ -48,6 +48,10 @@ export type TableRegistered = {
     tableId: string;
     label: string;
     qrCode: string;
+    /**
+     * Moneda del local (en la que se cobra en la mesa).
+     */
+    currency: string;
 };
 
 export type TableQrRotated = {

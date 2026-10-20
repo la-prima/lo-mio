@@ -198,11 +198,12 @@ components:
     TableRegistered:
       type: object
       additionalProperties: false
-      required: [tableId, label, qrCode]
+      required: [tableId, label, qrCode, currency]
       properties:
         tableId: { type: string, format: uuid }
         label: { type: string }
         qrCode: { type: string }
+        currency: { type: string, description: Moneda del local (en la que se cobra en la mesa). }
     TableQrRotated:
       type: object
       additionalProperties: false
