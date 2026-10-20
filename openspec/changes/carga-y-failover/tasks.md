@@ -2,7 +2,7 @@
 
 ## 1. Entorno
 
-- [ ] 1.1 `compose.load.yaml` con 2 API + Postgres + proxy y datos semilla (200 locales × 30 mesas); verificar que levanta en CI
+- [ ] 1.1 Values de carga del chart (réplicas, recursos) y datos semilla (200 locales × 30 mesas) en kind; verificar que levanta en CI
 
 ## 2. Carga
 
@@ -10,7 +10,7 @@
 
 ## 3. Failover
 
-- [ ] 3.1 Matar una instancia de la API y reiniciar la DB a mitad del flujo; verificar 0 comandos o eventos perdidos o duplicados y reconexión WebSocket en < 10 s
+- [ ] 3.1 Borrar pods de la API y forzar el failover de CloudNativePG a mitad del flujo; verificar 0 comandos o eventos perdidos o duplicados y reconexión WebSocket en < 10 s
 
 ## 4. DAST
 

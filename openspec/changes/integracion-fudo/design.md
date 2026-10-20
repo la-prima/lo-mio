@@ -16,7 +16,7 @@ Aplica `docs/arquitectura.md`: `pos` es la capa anticorrupción (sección 1) y e
 
 - **Polling por local cada 10 s**, solo mientras haya mesas abiertas, con backoff exponencial ante error. Si Fudo ofrece webhooks, se reemplaza el polling dentro del adaptador sin tocar el contrato.
 - **Deduplicación por `posItemId` en `pos/server`**, compartida por todos los adaptadores; el adaptador solo traduce.
-- **Fake de Fudo** (servidor HTTP en los tests) que pasa la misma suite de contrato que el adaptador real; se construye con la documentación oficial.
+- **Mock de Fudo en Microcks** generado desde su Swagger oficial (`contracts/external/fudo/`), en kind y en Testcontainers. No se escribe un fake a mano: el mock es tan fiel como el contrato del proveedor.
 - **Credenciales cifradas** en la base con una clave del entorno; nunca en logs.
 - **Eventos nuevos:** `pos.item.voided.v1`, `pos.item.repriced.v1`, `pos.order.sent|rejected.v1`, `pos.connection.failed.v1`.
 

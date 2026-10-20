@@ -2,7 +2,7 @@
 
 ## 1. Infraestructura
 
-- [ ] 1.1 Elegir hosting (registrar la decisión en este `design.md`) y desplegar staging con workflow de despliegue; verificar el flujo completo en staging con dispositivos reales
+- [ ] 1.1 Elegir proveedor de Kubernetes administrado (registrar la decisión en este `design.md`), registro de imágenes con firma (cosign) y desplegar staging con el chart y un workflow de despliegue; verificar el flujo completo en staging con dispositivos reales
 - [ ] 1.2 Documentar `docs/runbook.md` (despliegue, rollback, incidentes); verificar ejecutando un rollback en staging siguiendo el runbook
 - [ ] 1.3 Desplegar producción; verificar health check y alertas básicas
 

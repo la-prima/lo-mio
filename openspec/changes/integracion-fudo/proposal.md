@@ -28,5 +28,6 @@ Ninguna.
 ## Impact
 
 - Crece `contexts/pos` (adaptador Fudo, sincronizador).
+- Swagger de Fudo en `contracts/external/fudo/` como contrato del mock.
 - Credenciales de Fudo por local, guardadas cifradas.
 - **Bloqueado por:** acceso y documentación de la API de Fudo (en solicitud). Depende de `reclamo-manual`; es independiente de los demás changes.

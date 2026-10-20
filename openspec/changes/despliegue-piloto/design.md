@@ -2,7 +2,7 @@
 
 ## Context
 
-Contenedores + Postgres administrado + almacenamiento S3 corren en cualquier proveedor. Las métricas de éxito están en `docs/vision.md`.
+Producción es Kubernetes administrado con el chart de `plataforma-k8s`, Postgres administrado y almacenamiento S3. Las métricas de éxito están en `docs/vision.md`.
 
 ## Goals / Non-Goals
 
@@ -28,4 +28,4 @@ Contenedores + Postgres administrado + almacenamiento S3 corren en cualquier pro
 
 ## Open Questions
 
-- Proveedor de hosting. La candidata por latencia es la región de Santiago (GCP `southamerica-west1`).
+- Proveedor de Kubernetes administrado. El candidato por latencia es GKE Autopilot en Santiago (`southamerica-west1`).

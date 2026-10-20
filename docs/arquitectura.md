@@ -9,6 +9,7 @@ Decisiones transversales que aplican a todos los changes. Cada change documenta 
 - Los meseros trabajan con wifi irregular y no pueden perder acciones.
 - Todo lo que mueve dinero tiene que ser auditable y reconstruible.
 - El monolito tiene que poder partirse en servicios más adelante sin reescribir el dominio.
+- Producción corre en **Kubernetes administrado** (proveedor a elegir en `despliegue-piloto`).
 
 ## Objetivos
 
@@ -42,7 +43,7 @@ packages/
   client/          Cliente HTTP tipado + hooks de TanStack Query; lo usan mobile y guest-web
 contexts/<ctx>/    Un paquete por contexto, con subpaths:
   domain/          agregados, eventos de dominio, reglas puras (sin IO, sin librerías)
-  contracts/       API pública: comandos, queries y eventos de integración (schemas zod, versionados)
+  contracts/       API pública: openapi.yaml + asyncapi.yaml (fuente de verdad) y generated/ (zod y tipos generados)
   server/          casos de uso, repositorios (Kysely), rutas Fastify, handlers de eventos
 apps/
   api/             composition root: monta el server/ de cada contexto, el bus y los workers
@@ -134,7 +135,7 @@ Cada acción del personal se encola en SQLite (`expo-sqlite`) con una `idempoten
 | Evento entre contextos | p95 < 1 s |
 | Failover | Muere una instancia de la API: 0 comandos o eventos perdidos o duplicados; WebSocket reconecta en < 10 s. Reinicio de la DB: los comandos encolados en el dispositivo se aplican al volver. |
 
-Los escenarios k6 y de caos viven en `load/` y corren cada noche contra un entorno efímero (compose: 2 instancias de la API, Postgres y un proxy).
+Los escenarios k6 y de caos viven en `load/` y corren cada noche contra un clúster kind efímero con el mismo chart (sección 11).
 
 ### 10. Pruebas end-to-end
 
@@ -143,10 +144,33 @@ Los escenarios k6 y de caos viven en `load/` y corren cada noche contra un entor
 - **Flujos críticos multiusuario:** mesero en mobile y 3 comensales en guest-web sobre la misma mesa.
 - **Eventos:** las pruebas de integración de cada contexto publican los eventos de entrada y verifican los de salida, sin depender de otros contextos.
 
+### 11. Plataforma: contenedores, Helm y kind
+
+- Todo componente desplegable (API y web del comensal) es una **imagen distroless sin root**, con sistema de archivos de solo lectura, desplegada con un **único Helm chart** (`deploy/helm/lo-mio`). Mismo chart en local, CI y producción; solo cambian los values.
+- La entrada es **Gateway API** (Envoy Gateway) con TLS (cert-manager), igual que en producción.
+- **Ambiente local:** kind (3 nodos, declarado con ctlptl) + Tilt. Postgres con **CloudNativePG** (primario + réplica), que reproduce el modelo de un Postgres administrado y permite probar failover. En producción se usa el Postgres administrado del proveedor.
+- Migraciones como **Job de Helm** previo a cada despliegue.
+- Los tests de integración siguen con Testcontainers (rápidos y aislados). kind es para probar el sistema desplegado.
+- Detalle: change `plataforma-k8s`.
+
+### 12. Contract-first
+
+- **Los contratos son la fuente de verdad:** OpenAPI para HTTP y AsyncAPI para eventos, en `contexts/<ctx>/contracts/`. Los contratos de terceros (Fudo) van en `contracts/external/`.
+- **Todo lo demás se deriva:**
+  - schemas zod, tipos y cliente con hooks (`packages/client`), generados y commiteados, con verificación de drift en CI;
+  - las rutas de Fastify (una ruta sin contrato no puede existir);
+  - la validación del bus de eventos;
+  - los mocks (Microcks, desde los ejemplos del contrato).
+- **Pruebas desde el contrato:**
+  - Schemathesis verifica la conformidad de la API contra su OpenAPI.
+  - Playwright prueba los flujos funcionales usando el cliente generado.
+- **Evidencias:** un reporte Allure por run, con jerarquía contexto → flujo de usuario → escenario → paso, y traces, videos y request/response adjuntos.
+- Detalle: change `contratos-y-evidencias`.
+
 ## Reutilización (antes de escribir código)
 
 - `splitAmount` (`kernel`) para todo reparto.
-- Los schemas de `contracts/` validan rutas (Fastify), formularios (ambos fronts) y eventos (bus).
+- Los schemas generados desde los contratos validan rutas (Fastify), formularios (ambos fronts) y eventos (bus).
 - `packages/client` es el único cliente de API de ambos fronts.
 - La cola idempotente (sección 8) también envía pedidos al POS.
 - La lectura de cámara se usa para QR de mesa, tarjetas, timbre SII y voucher.
