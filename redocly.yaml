@@ -4,6 +4,8 @@ extends:
 rules:
   operation-operationId: error
   operation-summary: error
+  # Microcks responde los ejemplos: un ejemplo que no cumple su schema es un mock roto.
+  no-invalid-media-type-examples: error
   info-license: off
   # Los payloads de eventos viven en components y solo los referencia el asyncapi.yaml.
   no-unused-components: off

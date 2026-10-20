@@ -1,9 +1,10 @@
 import { join } from "node:path";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { registerMethodNotAllowed, registerProblemHandlers } from "@lo-mio/server";
-import Fastify, { type FastifyInstance, type RouteHandlerMethod } from "fastify";
+import Fastify, { type FastifyInstance, type RouteHandlerMethod, type RouteOptions } from "fastify";
 import openapiGlue from "fastify-openapi-glue";
 import type { Env } from "./env.ts";
 
@@ -15,18 +16,26 @@ const SPECIFICATION = join(import.meta.dirname, "../openapi.yaml");
  * params del contrato (glue ya los validó), por eso aquí se acepta cualquier tipo de request.
  */
 export type Handler = (req: never, reply: never) => unknown;
-export type Handlers = Record<string, Handler>;
+/** Un handler, o un handler con límite de solicitudes propio (ej. login). */
+export type Handlers = Record<
+  string,
+  Handler | { handler: Handler; rateLimit: { max: number; timeWindow: string } }
+>;
+
+export type AppOptions = {
+  handlers: Handlers;
+  /** Esquemas de seguridad del contrato (contracts/common.yaml). */
+  security: Record<string, (req: never, reply: never, roles: string[]) => Promise<void>>;
+  specification?: string;
+};
 
 /**
  * Arma la API sin escuchar en un puerto (los tests usan `inject`). Las rutas salen del contrato:
  * no existe ninguna que no esté declarada, y las respuestas se serializan con su schema.
  * No arranca si el contrato tiene una operación sin handler o si sobra un handler.
  */
-export async function buildApp(
-  env: Env,
-  handlers: Handlers,
-  specification: string = SPECIFICATION,
-): Promise<FastifyInstance> {
+export async function buildApp(env: Env, options: AppOptions): Promise<FastifyInstance> {
+  const { handlers, security, specification = SPECIFICATION } = options;
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
@@ -44,6 +53,7 @@ export async function buildApp(
     for (const m of [route.method].flat()) methods.add(m);
     routes.set(route.url, methods);
   });
+  await app.register(cookie);
   await app.register(helmet);
   await app.register(cors, { origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false });
   // ponytail: límite global por IP; los endpoints sensibles (login, PIN) suman el suyo.
@@ -52,11 +62,15 @@ export async function buildApp(
   const mounted = new Set<string>();
   await app.register(openapiGlue, {
     specification,
+    securityHandlers: security,
     operationResolver: (operationId: string) => {
-      const handler = handlers[operationId];
-      if (!handler) throw new Error(`la operación ${operationId} del contrato no tiene handler`);
+      const entry = handlers[operationId];
+      if (!entry) throw new Error(`la operación ${operationId} del contrato no tiene handler`);
       mounted.add(operationId);
-      return handler as RouteHandlerMethod;
+      if (typeof entry === "function") return entry as RouteHandlerMethod;
+      // glue completa method y url desde el contrato; su tipo igual exige RouteOptions completo.
+      const options = { handler: entry.handler, config: { rateLimit: entry.rateLimit } };
+      return options as unknown as RouteOptions;
     },
   });
   registerMethodNotAllowed(app, new Map(routes));

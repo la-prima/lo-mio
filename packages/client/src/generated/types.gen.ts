@@ -28,6 +28,32 @@ export type Problem = {
     instance?: string;
 };
 
+export type Credentials = {
+    email: string;
+    password: string;
+};
+
+export type StaffMember = {
+    id: string;
+    name: string;
+    role: 'waiter' | 'manager' | 'admin';
+    venueId: string;
+};
+
+export type StaffSession = {
+    /**
+     * Para la app: enviar como `Authorization: Bearer <token>`.
+     */
+    token: string;
+    expiresAt: string;
+    staff: StaffMember;
+};
+
+export type CurrentStaffSession = {
+    expiresAt: string;
+    staff: StaffMember;
+};
+
 export type Venue = {
     id: string;
     name: string;
@@ -142,6 +168,97 @@ export type GetReadinessResponses = {
 };
 
 export type GetReadinessResponse = GetReadinessResponses[keyof GetReadinessResponses];
+
+export type CreateStaffSessionData = {
+    body: Credentials;
+    path?: never;
+    query?: never;
+    url: '/v1/staff/sessions';
+};
+
+export type CreateStaffSessionErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Email o contraseña incorrectos (no se distingue cuál).
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type CreateStaffSessionError = CreateStaffSessionErrors[keyof CreateStaffSessionErrors];
+
+export type CreateStaffSessionResponses = {
+    /**
+     * Sesión iniciada. También se envía como cookie httpOnly `lomio_staff`.
+     */
+    201: StaffSession;
+};
+
+export type CreateStaffSessionResponse = CreateStaffSessionResponses[keyof CreateStaffSessionResponses];
+
+export type DeleteCurrentStaffSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/staff/sessions/current';
+};
+
+export type DeleteCurrentStaffSessionErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type DeleteCurrentStaffSessionError = DeleteCurrentStaffSessionErrors[keyof DeleteCurrentStaffSessionErrors];
+
+export type DeleteCurrentStaffSessionResponses = {
+    /**
+     * Sesión cerrada.
+     */
+    204: void;
+};
+
+export type DeleteCurrentStaffSessionResponse = DeleteCurrentStaffSessionResponses[keyof DeleteCurrentStaffSessionResponses];
+
+export type GetCurrentStaffSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/staff/sessions/current';
+};
+
+export type GetCurrentStaffSessionErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetCurrentStaffSessionError = GetCurrentStaffSessionErrors[keyof GetCurrentStaffSessionErrors];
+
+export type GetCurrentStaffSessionResponses = {
+    /**
+     * La sesión vigente.
+     */
+    200: CurrentStaffSession;
+};
+
+export type GetCurrentStaffSessionResponse = GetCurrentStaffSessionResponses[keyof GetCurrentStaffSessionResponses];
 
 export type GetCurrentVenueData = {
     body?: never;

@@ -14,6 +14,33 @@ export const zProblem = z.strictObject({
     instance: z.string().optional()
 });
 
+export const zCredentials = z.strictObject({
+    email: z.email().max(254),
+    password: z.string().min(1).max(200)
+});
+
+export const zStaffMember = z.strictObject({
+    id: z.uuid(),
+    name: z.string(),
+    role: z.enum([
+        'waiter',
+        'manager',
+        'admin'
+    ]),
+    venueId: z.uuid()
+});
+
+export const zStaffSession = z.strictObject({
+    token: z.string(),
+    expiresAt: z.iso.datetime(),
+    staff: zStaffMember
+});
+
+export const zCurrentStaffSession = z.strictObject({
+    expiresAt: z.iso.datetime(),
+    staff: zStaffMember
+});
+
 export const zVenue = z.strictObject({
     id: z.uuid(),
     name: z.string(),
@@ -72,6 +99,23 @@ export const zGetLivenessResponse = zHealthStatus;
  * Listo para atender tráfico.
  */
 export const zGetReadinessResponse = zHealthStatus;
+
+export const zCreateStaffSessionBody = zCredentials;
+
+/**
+ * Sesión iniciada. También se envía como cookie httpOnly `lomio_staff`.
+ */
+export const zCreateStaffSessionResponse = zStaffSession;
+
+/**
+ * Sesión cerrada.
+ */
+export const zDeleteCurrentStaffSessionResponse = z.void();
+
+/**
+ * La sesión vigente.
+ */
+export const zGetCurrentStaffSessionResponse = zCurrentStaffSession;
 
 /**
  * El local.

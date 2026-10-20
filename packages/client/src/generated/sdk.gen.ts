@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses } from './types.gen.ts';
+import type { CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -27,6 +27,46 @@ export const getLiveness = <ThrowOnError extends boolean = false>(options?: Opti
  * Puede atender tráfico (readiness). Consulta la base de datos.
  */
 export const getReadiness = <ThrowOnError extends boolean = false>(options?: Options<GetReadinessData, ThrowOnError>): RequestResult<GetReadinessResponses, GetReadinessErrors, ThrowOnError> => (options?.client ?? client).get<GetReadinessResponses, GetReadinessErrors, ThrowOnError>({ url: '/health', ...options });
+
+/**
+ * Inicia sesión del personal (12 horas).
+ *
+ * Un email inexistente y una contraseña incorrecta responden igual y tardan lo mismo, para no revelar qué emails pertenecen al personal. Límite propio de 10 intentos por minuto por IP.
+ */
+export const createStaffSession = <ThrowOnError extends boolean = false>(options: Options<CreateStaffSessionData, ThrowOnError>): RequestResult<CreateStaffSessionResponses, CreateStaffSessionErrors, ThrowOnError> => (options.client ?? client).post<CreateStaffSessionResponses, CreateStaffSessionErrors, ThrowOnError>({
+    url: '/v1/staff/sessions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Cierra la sesión (el token deja de servir de inmediato).
+ */
+export const deleteCurrentStaffSession = <ThrowOnError extends boolean = false>(options?: Options<DeleteCurrentStaffSessionData, ThrowOnError>): RequestResult<DeleteCurrentStaffSessionResponses, DeleteCurrentStaffSessionErrors, ThrowOnError> => (options?.client ?? client).delete<DeleteCurrentStaffSessionResponses, DeleteCurrentStaffSessionErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }],
+    url: '/v1/staff/sessions/current',
+    ...options
+});
+
+/**
+ * Sesión actual (para saber quién está en el dispositivo y hasta cuándo).
+ */
+export const getCurrentStaffSession = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentStaffSessionData, ThrowOnError>): RequestResult<GetCurrentStaffSessionResponses, GetCurrentStaffSessionErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentStaffSessionResponses, GetCurrentStaffSessionErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }],
+    url: '/v1/staff/sessions/current',
+    ...options
+});
 
 /**
  * Local del personal autenticado.

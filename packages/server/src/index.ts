@@ -7,3 +7,11 @@ export {
 } from "./commands.ts";
 export { hashPassword, hashToken, newSessionToken, verifyPassword } from "./credentials.ts";
 export { registerMethodNotAllowed, registerProblemHandlers, sendProblem } from "./problem.ts";
+export {
+  clearSessionCookie,
+  GUEST_COOKIE,
+  guestTokenOf,
+  STAFF_COOKIE,
+  setSessionCookie,
+  staffTokenOf,
+} from "./session-token.ts";

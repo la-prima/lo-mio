@@ -7,11 +7,14 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.3",
     "@fastify/cors": "^11.3.1",
     "@fastify/helmet": "^13.1.2",
     "@fastify/rate-limit": "^11.2.1",
     "@lo-mio/kernel": "workspace:*",
     "@lo-mio/postgres": "workspace:*",
+    "@lo-mio/server": "workspace:*",
+    "@lo-mio/staff": "workspace:*",
     "@lo-mio/venues": "workspace:*",
     "fastify": "^5.12.5",
     "fastify-openapi-glue": "^4.11.5",

@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     "apps/api": {
-      "entry": ["src/migrate.ts"]
+      "entry": ["src/migrate.ts", "src/seed.ts"]
     },
     ".": {
       "entry": ["allurerc.mjs", "tests/contract/labels.ts"]

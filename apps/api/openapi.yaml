@@ -9,6 +9,8 @@ servers:
 tags:
   - name: plataforma
     description: Salud del sistema.
+  - name: staff
+    description: Sesiones del personal.
   - name: venues
     description: Locales, mesas y catálogo.
 paths:
@@ -72,6 +74,105 @@ paths:
                     type: https://lo-mio.cl/problems/dependency-unavailable
                     title: Dependencia no disponible
                     status: 503
+  /v1/staff/sessions:
+    post:
+      operationId: createStaffSession
+      tags:
+        - staff
+      summary: Inicia sesión del personal (12 horas).
+      description: Un email inexistente y una contraseña incorrecta responden igual y
+        tardan lo mismo, para no revelar qué emails pertenecen al personal.
+        Límite propio de 10 intentos por minuto por IP.
+      security: []
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Credentials"
+            examples:
+              ok:
+                value:
+                  email: ana@laprima.cl
+                  password: una-clave-larga-1
+      responses:
+        "201":
+          description: Sesión iniciada. También se envía como cookie httpOnly `lomio_staff`.
+          headers:
+            Set-Cookie:
+              description: "`lomio_staff=<token>; HttpOnly; Secure; SameSite=Lax; Path=/;
+                Max-Age=43200`"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffSession"
+              examples:
+                ok:
+                  $ref: "#/components/examples/StaffSession"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/staff/sessions/current:
+    get:
+      operationId: getCurrentStaffSession
+      tags:
+        - staff
+      summary: Sesión actual (para saber quién está en el dispositivo y hasta cuándo).
+      security:
+        - staffSession:
+            - waiter
+            - manager
+            - admin
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: La sesión vigente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentStaffSession"
+              examples:
+                ok:
+                  value:
+                    expiresAt: 2026-10-21T08:00:00.000Z
+                    staff:
+                      id: 0199f0a0-0000-7000-8000-0000000000a1
+                      name: Ana
+                      role: waiter
+                      venueId: 0199f0a0-0000-7000-8000-000000000001
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+    delete:
+      operationId: deleteCurrentStaffSession
+      tags:
+        - staff
+      summary: Cierra la sesión (el token deja de servir de inmediato).
+      security:
+        - staffSession:
+            - waiter
+            - manager
+            - admin
+      responses:
+        "204":
+          description: Sesión cerrada.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
   /v1/venues/current:
     get:
       operationId: getCurrentVenue
@@ -341,6 +442,72 @@ components:
         instance:
           type: string
           description: Identificador de esta ocurrencia.
+    Credentials:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 200
+    StaffMember:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - role
+        - venueId
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - waiter
+            - manager
+            - admin
+        venueId:
+          type: string
+          format: uuid
+    StaffSession:
+      type: object
+      additionalProperties: false
+      required:
+        - token
+        - expiresAt
+        - staff
+      properties:
+        token:
+          type: string
+          description: "Para la app: enviar como `Authorization: Bearer <token>`."
+        expiresAt:
+          type: string
+          format: date-time
+        staff:
+          $ref: "#/components/schemas/StaffMember"
+    CurrentStaffSession:
+      type: object
+      additionalProperties: false
+      required:
+        - staff
+        - expiresAt
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+        staff:
+          $ref: "#/components/schemas/StaffMember"
     Venue:
       type: object
       additionalProperties: false
@@ -469,29 +636,17 @@ components:
                 type: https://lo-mio.cl/problems/rate-limited
                 title: Demasiadas solicitudes
                 status: 429
-    TableLabelTaken:
-      description: Ya existe una mesa con ese nombre en el local.
+    InvalidCredentials:
+      description: Email o contraseña incorrectos (no se distingue cuál).
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           examples:
-            table-label-taken:
+            invalid-credentials:
               value:
-                type: https://lo-mio.cl/problems/table-label-taken
-                title: Ya existe una mesa con ese nombre
-                status: 409
-    Unauthenticated:
-      description: Falta la sesión o no es válida.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          examples:
-            unauthenticated:
-              value:
-                type: https://lo-mio.cl/problems/unauthenticated
-                title: Sesión requerida
+                type: https://lo-mio.cl/problems/invalid-credentials
+                title: Email o contraseña incorrectos
                 status: 401
     InvalidRequest:
       description: La solicitud no cumple el contrato.
@@ -505,6 +660,30 @@ components:
                 type: https://lo-mio.cl/problems/invalid-request
                 title: Solicitud inválida
                 status: 400
+    Unauthenticated:
+      description: Falta la sesión o no es válida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            unauthenticated:
+              value:
+                type: https://lo-mio.cl/problems/unauthenticated
+                title: Sesión requerida
+                status: 401
+    TableLabelTaken:
+      description: Ya existe una mesa con ese nombre en el local.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            table-label-taken:
+              value:
+                type: https://lo-mio.cl/problems/table-label-taken
+                title: Ya existe una mesa con ese nombre
+                status: 409
     Forbidden:
       description: La sesión no tiene permiso para esta operación.
       content:
@@ -548,6 +727,15 @@ components:
       name: lomio_staff
       description: "Sesión del personal (también se acepta `Authorization: Bearer`)."
   examples:
+    StaffSession:
+      value:
+        token: 3q2-7wEXAMPLEtokenNOTreal0000000000000000000
+        expiresAt: 2026-10-21T08:00:00.000Z
+        staff:
+          id: 0199f0a0-0000-7000-8000-0000000000a1
+          name: Ana
+          role: waiter
+          venueId: 0199f0a0-0000-7000-8000-000000000001
     Venue:
       value:
         id: 0199f0a0-0000-7000-8000-000000000001

@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { getCurrentVenue, getLiveness, getReadiness, listProducts, listTables, type Options, registerProduct, registerTable, rotateTableQr } from '../sdk.gen.ts';
-import type { GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, ListProductsData, ListProductsError, ListProductsResponse, ListTablesData, ListTablesError, ListTablesResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse } from '../types.gen.ts';
+import { createStaffSession, deleteCurrentStaffSession, getCurrentStaffSession, getCurrentVenue, getLiveness, getReadiness, listProducts, listTables, type Options, registerProduct, registerTable, rotateTableQr } from '../sdk.gen.ts';
+import type { CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, ListProductsData, ListProductsError, ListProductsResponse, ListTablesData, ListTablesError, ListTablesResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse } from '../types.gen.ts';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -73,6 +73,60 @@ export const getReadinessOptions = (options?: Options<GetReadinessData>) => quer
         return data;
     },
     queryKey: getReadinessQueryKey(options)
+});
+
+/**
+ * Inicia sesión del personal (12 horas).
+ *
+ * Un email inexistente y una contraseña incorrecta responden igual y tardan lo mismo, para no revelar qué emails pertenecen al personal. Límite propio de 10 intentos por minuto por IP.
+ */
+export const createStaffSessionMutation = (options?: Partial<Options<CreateStaffSessionData>>): UseMutationOptions<CreateStaffSessionResponse, CreateStaffSessionError, Options<CreateStaffSessionData>> => {
+    const mutationOptions: UseMutationOptions<CreateStaffSessionResponse, CreateStaffSessionError, Options<CreateStaffSessionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createStaffSession({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Cierra la sesión (el token deja de servir de inmediato).
+ */
+export const deleteCurrentStaffSessionMutation = (options?: Partial<Options<DeleteCurrentStaffSessionData>>): UseMutationOptions<DeleteCurrentStaffSessionResponse, DeleteCurrentStaffSessionError, Options<DeleteCurrentStaffSessionData>> => {
+    const mutationOptions: UseMutationOptions<DeleteCurrentStaffSessionResponse, DeleteCurrentStaffSessionError, Options<DeleteCurrentStaffSessionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteCurrentStaffSession({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getCurrentStaffSessionQueryKey = (options?: Options<GetCurrentStaffSessionData>) => createQueryKey('getCurrentStaffSession', options);
+
+/**
+ * Sesión actual (para saber quién está en el dispositivo y hasta cuándo).
+ */
+export const getCurrentStaffSessionOptions = (options?: Options<GetCurrentStaffSessionData>) => queryOptions<GetCurrentStaffSessionResponse, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, ReturnType<typeof getCurrentStaffSessionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCurrentStaffSession({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCurrentStaffSessionQueryKey(options)
 });
 
 export const getCurrentVenueQueryKey = (options?: Options<GetCurrentVenueData>) => createQueryKey('getCurrentVenue', options);
