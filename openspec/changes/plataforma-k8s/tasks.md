@@ -16,8 +16,8 @@
 
 ## 4. CI
 
-- [ ] 4.1 Job `image`: build, Trivy de imagen y chart (falla con altas o críticas) y SBOM CycloneDX como artifact; verificar en el PR
-- [ ] 4.2 Job `k8s-smoke`: kind en CI + `tilt ci` + `/health` por el Gateway; agregar `image` y `k8s-smoke` a los checks requeridos del ruleset; verificar en el PR
+- [x] 4.1 Job `image`: build, Trivy de imagen y chart (falla con altas o críticas) y SBOM CycloneDX como artifact; verificar en el PR
+- [x] 4.2 Job `k8s-smoke`: kind en CI + `tilt ci` + `/health` por el Gateway; agregar `image` y `k8s-smoke` a los checks requeridos del ruleset; verificar en el PR
 
 ## 5. Documentación
 
