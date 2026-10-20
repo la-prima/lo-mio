@@ -1,5 +1,4 @@
-import { createDb, migrate, PgBossEventBus } from "@lo-mio/postgres";
-import { PgBoss } from "pg-boss";
+import { createBoss, createDb, migrate, PgBossEventBus } from "@lo-mio/postgres";
 import { buildApp } from "./app.ts";
 import { compose } from "./compose.ts";
 import { contextMigrations, contexts, eventCatalog } from "./contexts.ts";
@@ -10,7 +9,7 @@ const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
 if (env.MIGRATE_ON_START) await migrate(db, contextMigrations());
 
-const boss = new PgBoss(env.DATABASE_URL);
+const boss = createBoss(env.DATABASE_URL);
 await boss.start();
 const bus = new PgBossEventBus(boss, db, eventCatalog());
 

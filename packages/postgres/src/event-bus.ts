@@ -6,8 +6,16 @@ import {
   type EventHandler,
   topicOf,
 } from "@lo-mio/kernel";
-import { fromKysely, type PgBoss } from "pg-boss";
+import { fromKysely, PgBoss } from "pg-boss";
 import type { Db, Tx } from "./db.ts";
+
+/**
+ * pg-boss configurado para el bus. Sin `useListenNotify` (por defecto apagado en v12) la opción
+ * `notify` de las queues no hace nada y cada salto entre contextos espera el sondeo (hasta 2 s).
+ * Producción y tests lo crean aquí, para que nunca difieran.
+ */
+export const createBoss = (connectionString: string) =>
+  new PgBoss({ connectionString, useListenNotify: true });
 
 /**
  * EventBus sobre pg-boss. `publish` escribe en la transacción del caller (outbox): si hace

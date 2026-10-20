@@ -1,9 +1,8 @@
 /** API completa contra un Postgres real y descartable: misma composición que main.ts. */
 import { newId } from "@lo-mio/kernel";
-import { createDb, migrate, PgBossEventBus } from "@lo-mio/postgres";
+import { createBoss, createDb, migrate, PgBossEventBus } from "@lo-mio/postgres";
 import { startPostgres } from "@lo-mio/postgres/testing";
 import { staffService } from "@lo-mio/staff/server";
-import { PgBoss } from "pg-boss";
 import { buildApp } from "./app.ts";
 import { compose } from "./compose.ts";
 import { contextMigrations, contexts, eventCatalog } from "./contexts.ts";
@@ -16,7 +15,7 @@ export const PASSWORD = "una-clave-larga-de-prueba";
 /** Una instancia de la API (como un pod) sobre una base ya migrada. */
 async function instance(url: string) {
   const db = createDb(url);
-  const boss = new PgBoss({ connectionString: url, useListenNotify: true });
+  const boss = createBoss(url);
   await boss.start();
   const bus = new PgBossEventBus(boss, db, eventCatalog());
   const app = await buildApp(
