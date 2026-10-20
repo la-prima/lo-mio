@@ -6,9 +6,9 @@ Los objetivos de rendimiento y resiliencia (`docs/arquitectura.md`, sección 9) 
 
 ## What Changes
 
-- Entorno efímero para pruebas no funcionales (2 instancias de la API, Postgres y proxy).
+- Clúster kind efímero con el chart (2+ réplicas de la API, CloudNativePG con réplica) y datos semilla.
 - Escenarios k6 de carga HTTP, WebSocket y latencia de eventos.
-- Pruebas de caos: caída de una instancia de la API y reinicio de la DB a mitad del flujo.
+- Pruebas de caos: borrar pods de la API y forzar el failover de Postgres (promoción de la réplica) a mitad del flujo.
 - DAST con OWASP ZAP.
 - Workflow nightly que falla si no se cumplen los objetivos.
 
@@ -29,5 +29,5 @@ Ninguna.
 
 ## Impact
 
-- Nuevo: `load/`, `load/chaos/`, `compose.load.yaml`, workflow `nightly.yml`.
-- Depende de: `cobro-con-comprobante` (flujo completo que medir).
+- Nuevo: `load/`, `load/chaos/`, values de carga para el chart, workflow `nightly.yml`.
+- Depende de: `cobro-con-comprobante` (flujo completo que medir) y `plataforma-k8s`.

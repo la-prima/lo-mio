@@ -1,0 +1,33 @@
+# Design
+
+## Context
+
+La API corre hoy con `node src/main.ts` y migra al arrancar. Producción será Kubernetes administrado (proveedor a elegir en `despliegue-piloto`; candidato GKE Autopilot en Santiago). Ver `docs/arquitectura.md`, sección 11.
+
+## Goals / Non-Goals
+
+**Goals:**
+- Paridad local ↔ producción: mismo chart, misma entrada (Gateway API con TLS), mismo tipo de Postgres (primario + réplica).
+- Que `tilt up` levante todo con un solo comando y que `tilt ci` sirva de prueba de humo en CI.
+
+**Non-Goals:**
+- Simular el proveedor de nube (balanceadores administrados, IAM).
+
+## Decisions
+
+- **Imagen:** build multi-stage con `pnpm deploy --filter @lo-mio/api --prod` (solo las dependencias de producción del workspace) sobre `gcr.io/distroless/nodejs24-debian12:nonroot`. Sin shell ni gestor de paquetes, UID no root, `readOnlyRootFilesystem`. Alternativa descartada: `node:24-alpine`, que trae shell y un gestor de paquetes que no necesitamos (más superficie de ataque y más CVEs que gestionar).
+- **Migraciones como Job de Helm** (`pre-install`/`pre-upgrade`) con el mismo binario (`node src/migrate.ts`). Si una migración falla, el despliegue se detiene antes de reemplazar pods. La migración al arrancar se mantiene solo para desarrollo sin clúster.
+- **Probes:** liveness = el proceso responde (`/health/live`, sin tocar la base); readiness = la base responde (`/health`). Así, si la base cae, no se reinician los pods en cascada: solo salen del balanceo.
+- **Chart único `lo-mio`** con un bloque de values por componente (`api`; `guestWeb` cuando exista). Incluye `values-local.yaml`; staging y producción llegan en `despliegue-piloto`.
+- **Seguridad del chart:** `securityContext` restrictivo (sin privilegios, capabilities eliminadas, seccomp `RuntimeDefault`), `NetworkPolicy` (la API solo recibe tráfico del Gateway y solo sale a Postgres), `PodDisruptionBudget`, recursos con requests y limits, `ServiceAccount` sin token montado.
+- **kind:** 1 control plane + 2 workers (para ejercitar el scheduling y el PDB), con un registro local para que Tilt suba imágenes rápido. Se declara con **ctlptl** (herramienta del equipo de Tilt) para que crear el clúster sea idempotente.
+- **Entrada:** Gateway API con **Envoy Gateway** (implementación de referencia, sin la complejidad de un service mesh). El servicio de Envoy se expone por NodePort mapeado a los puertos 80/443 del host (`extraPortMappings`), sin depender de un LoadBalancer. Hostnames `*.lo-mio.localhost` (resuelven a 127.0.0.1 sin tocar `/etc/hosts`).
+- **TLS:** cert-manager con una CA local autofirmada. Los clientes de prueba confían en esa CA. Se prueba HTTPS de punta a punta, igual que en producción.
+- **Postgres:** **CloudNativePG** con 2 instancias. Es el mismo modelo primario/réplica de un Postgres administrado y permite las pruebas de failover de `carga-y-failover`. En producción se usará el Postgres administrado del proveedor; el chart solo recibe la URL por `Secret`.
+- **Tilt:** `docker_build` con live update (sincroniza `src/` y reinicia el proceso), el chart con `values-local.yaml` y los recursos agrupados en `infra` (Envoy Gateway, cert-manager, CloudNativePG) y `app`.
+
+## Risks / Trade-offs
+
+- **[Consumo de recursos en el notebook]** → kind con 3 nodos + CNPG con 2 instancias + Envoy necesita ~6 GB para Docker. Se documenta el mínimo; `values-local.yaml` usa requests bajos.
+- **[CI más lento]** → `k8s-smoke` tarda varios minutos. Corre en paralelo con el resto y cachea las imágenes de infraestructura.
+- **[Distroless sin shell dificulta depurar]** → Se usa `kubectl debug` con un contenedor efímero; documentado en el runbook.

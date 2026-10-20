@@ -33,13 +33,15 @@ Cada change es una rama y un PR. Se implementan en este orden:
 | # | Change | Entrega | Depende de |
 |---|---|---|---|
 | 1 | [base-tecnica](openspec/changes/base-tecnica/) | Kernel, bus de eventos (pg-boss), API Fastify, Testcontainers | — |
-| 2 | [reclamo-manual](openspec/changes/reclamo-manual/) | Primer flujo de punta a punta: carga manual → QR → reclamar/compartir → saldo | 1 |
-| 3 | [cobro-con-comprobante](openspec/changes/cobro-con-comprobante/) | Pagos con comprobante (timbre SII, voucher, efectivo) y cierre de mesa | 2 |
-| 4 | [tarjetas-y-reasignacion](openspec/changes/tarjetas-y-reasignacion/) | Tarjetas NFC, reasignaciones con confirmación, override | 3 |
-| 5 | [mesero-offline](openspec/changes/mesero-offline/) | Acciones del mesero sin conexión, distribución de la app al piloto | 3 |
-| 6 | [integracion-fudo](openspec/changes/integracion-fudo/) | Sincronización con Fudo y pedido desde lo-mio. **Bloqueado por el acceso a la API** | 2 |
-| 7 | [carga-y-failover](openspec/changes/carga-y-failover/) | k6, caos y DAST en nightly | 3 |
-| 8 | [despliegue-piloto](openspec/changes/despliegue-piloto/) | Hosting, runbook y despliegue gradual en el local | 3, 5, 7 |
+| 2 | [plataforma-k8s](openspec/changes/plataforma-k8s/) | Imágenes, Helm chart, kind con Gateway API, CloudNativePG y Tilt | 1 |
+| 3 | [contratos-y-evidencias](openspec/changes/contratos-y-evidencias/) | Contract-first (OpenAPI/AsyncAPI), mocks con Microcks, Schemathesis, flujos Playwright y reporte Allure | 2 |
+| 4 | [reclamo-manual](openspec/changes/reclamo-manual/) | Primer flujo de punta a punta: carga manual → QR → reclamar/compartir → saldo | 3 |
+| 5 | [cobro-con-comprobante](openspec/changes/cobro-con-comprobante/) | Pagos con comprobante (timbre SII, voucher, efectivo) y cierre de mesa | 4 |
+| 6 | [tarjetas-y-reasignacion](openspec/changes/tarjetas-y-reasignacion/) | Tarjetas NFC, reasignaciones con confirmación, override | 5 |
+| 7 | [mesero-offline](openspec/changes/mesero-offline/) | Acciones del mesero sin conexión, distribución de la app al piloto | 5 |
+| 8 | [integracion-fudo](openspec/changes/integracion-fudo/) | Sincronización con Fudo y pedido desde lo-mio. **Bloqueado por el acceso a la API** | 4 |
+| 9 | [carga-y-failover](openspec/changes/carga-y-failover/) | k6, caos (incluido failover de Postgres) y DAST en nightly | 5 |
+| 10 | [despliegue-piloto](openspec/changes/despliegue-piloto/) | Kubernetes administrado, runbook y despliegue gradual en el local | 5, 7, 9 |
 
 ## Cómo se trabaja
 
@@ -57,7 +59,9 @@ Monolito modular en TypeScript (pnpm workspaces, Node 24), organizado en **conte
 
 | Pieza | Tecnología |
 |---|---|
-| API | Fastify sobre Postgres |
+| API | Fastify sobre Postgres, rutas generadas desde su contrato OpenAPI |
+| Contratos | OpenAPI (HTTP) y AsyncAPI (eventos) como fuente de verdad; código, mocks (Microcks) y tests derivados |
+| Plataforma | Contenedores distroless, Helm, Kubernetes con Gateway API; local con kind + Tilt |
 | Eventos | pg-boss (outbox transaccional y pub/sub sobre Postgres), detrás de un puerto `EventBus` que permite migrar a NATS u otro broker |
 | App móvil (personal y comensal frecuente) | React Native con Expo (iOS y Android, NFC nativo) |
 | Web del comensal por QR | React + Vite, liviana, sin instalación |

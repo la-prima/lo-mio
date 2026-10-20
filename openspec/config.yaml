@@ -19,7 +19,9 @@ context: |
   Monolito modular DDD: contexts/<ctx> (venues, staff, tables, claims, pos, settlement),
   cada uno con domain/ (puro), contracts/ (API pública y eventos versionados) y server/.
   Entre contextos solo eventos asíncronos (pg-boss detrás del puerto EventBus) y contracts.
-  API Fastify + Postgres. Fronts: apps/mobile (Expo) y apps/guest-web (React + Vite).
+  Contract-first: OpenAPI/AsyncAPI en contracts/ son la fuente; código, mocks y tests se derivan.
+  API Fastify + Postgres en Kubernetes (Helm, Gateway API; local con kind + Tilt).
+  Fronts: apps/mobile (Expo) y apps/guest-web (React + Vite).
   Dinero siempre en enteros de unidad mínima.
   Decisiones de arquitectura: docs/arquitectura.md. Calidad y prácticas obligatorias: AGENTS.md.
 

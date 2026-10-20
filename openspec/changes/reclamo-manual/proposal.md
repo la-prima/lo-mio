@@ -40,4 +40,6 @@ Ninguna.
 
 - Nuevo: contextos `staff`, `tables`, `claims`, `pos`, `settlement`; completa `venues`; `packages/client`; `apps/guest-web`; `apps/mobile`.
 - Gateway WebSocket en `apps/api`.
-- CI: e2e web (Playwright) y e2e mobile (Maestro, Android).
+- Primeros contratos de negocio (OpenAPI y AsyncAPI) de cada contexto.
+- CI: e2e web (Playwright) y e2e mobile (Maestro, Android), con evidencias en Allure.
+- Depende de: `contratos-y-evidencias`.

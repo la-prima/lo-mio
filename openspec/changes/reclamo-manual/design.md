@@ -18,7 +18,7 @@ Primer change con reglas de negocio. Aplica `docs/arquitectura.md` completo; aqu
 - **Identificación del comensal:** cookie httpOnly `SameSite=Lax` ligada a la sesión de mesa. El QR de la mesa lleva un código aleatorio revocable, no el número de mesa.
 - **Auth del personal:** usuario y contraseña con `scrypt` (`node:crypto`). La sesión es una cookie httpOnly en la web y un token en `expo-secure-store` en la app. `@fastify/rate-limit` en el login.
 - **Carga manual como POS:** el adaptador manual publica el mismo `pos.item.received.v1` que publicará Fudo. `claims` no sabe de dónde viene el ítem.
-- **Eventos de este change:**
+- **Eventos de este change** (cada uno declarado en el `asyncapi.yaml` de su emisor):
 
 | Tópico | Emisor | Consumidores |
 |---|---|---|
