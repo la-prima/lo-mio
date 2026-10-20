@@ -78,14 +78,20 @@ El porqué de cada decisión (incluida la comparación de frameworks) está en [
 
 ## Empezar
 
-Requisitos: Node 24 (`.nvmrc`), corepack y [gitleaks](https://github.com/gitleaks/gitleaks).
+Requisitos: Node 24 (`.nvmrc`), corepack, Docker (≥ 6 GB de memoria asignada), [kind](https://kind.sigs.k8s.io), [ctlptl](https://github.com/tilt-dev/ctlptl), [Tilt](https://tilt.dev), Helm, kubectl y [gitleaks](https://github.com/gitleaks/gitleaks).
 
 ```bash
 corepack enable pnpm
-brew install gitleaks
-pnpm install        # instala dependencias y activa los git hooks
-pnpm verify         # lint, tipos, tests, código muerto y specs
+brew install gitleaks kind tilt-dev/tap/ctlptl tilt helm kubectl
+pnpm install                                  # dependencias y git hooks
+pnpm verify                                   # lint, tipos, tests, código muerto y specs
+pnpm test:int                                 # integración con Postgres real (Docker)
+
+ctlptl apply -f deploy/kind/cluster.yaml      # clúster local (3 nodos, Gateway API, TLS)
+tilt up                                       # infra + API con el mismo chart que producción
 ```
+
+La API queda en https://api.lo-mio.localhost (certificado de una CA local; ver [deploy/kind/](deploy/kind/)). Para borrar todo: `ctlptl delete -f deploy/kind/cluster.yaml`.
 
 ## Calidad y seguridad
 

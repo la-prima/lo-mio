@@ -1,4 +1,17 @@
 # Corre antes de cada install/upgrade. Si falla, Helm no reemplaza los pods.
+# Los hooks se crean antes que los recursos normales del chart, así que el Job trae su propia
+# ServiceAccount (también hook, con peso menor para que exista primero).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-api-migrations
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-1"
+    helm.sh/hook-delete-policy: before-hook-creation
+automountServiceAccountToken: false
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -18,7 +31,7 @@ spec:
         {{- include "lo-mio.api.selector" . | nindent 8 }}
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ .Release.Name }}-api
+      serviceAccountName: {{ .Release.Name }}-api-migrations
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true

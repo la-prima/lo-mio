@@ -1,0 +1,78 @@
+# Entrada del clúster (Gateway API con Envoy Gateway). En producción el Gateway es equivalente;
+# solo cambia cómo se expone (balanceador del proveedor en vez de NodePort).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gateway
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: kind-nodeport
+  namespace: gateway
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: NodePort
+        # Envoy Gateway usa `Local` (conserva la IP del cliente): un nodo sin pod de Envoy descarta
+        # el tráfico. En kind el host entra por el control plane, que no tiene Envoy; `Cluster`
+        # reenvía al nodo correcto a costa de perder la IP del cliente. En producción queda `Local`.
+        externalTrafficPolicy: Cluster
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+                - { name: http-80, port: 80, nodePort: 30080 }
+                - { name: https-443, port: 443, nodePort: 30443 }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: kind-nodeport
+    namespace: gateway
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: lo-mio
+  namespace: gateway
+spec:
+  gatewayClassName: envoy
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces: { from: Same }
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.lo-mio.localhost"
+      tls:
+        certificateRefs:
+          - name: lo-mio-localhost-tls
+      allowedRoutes:
+        namespaces: { from: All }
+---
+# HTTP → HTTPS, como en producción.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: https-redirect
+  namespace: gateway
+spec:
+  parentRefs:
+    - { name: lo-mio, sectionName: http }
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect: { scheme: https, statusCode: 301 }

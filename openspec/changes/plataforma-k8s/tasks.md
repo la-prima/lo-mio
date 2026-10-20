@@ -11,8 +11,8 @@
 
 ## 3. Clúster local
 
-- [ ] 3.1 `deploy/kind/cluster.yaml` (ctlptl: 3 nodos, registro local, puertos 80/443) con Envoy Gateway, cert-manager (CA local) y CloudNativePG (2 instancias); verificar que el clúster se crea desde cero y que el Gateway responde por HTTPS
-- [ ] 3.2 `Tiltfile` con build, live update y el chart; eliminar `compose.yaml` y actualizar "Empezar" en el README; verificar que `tilt ci` levanta todo y que `https://api.lo-mio.localhost/health` responde 200
+- [x] 3.1 `deploy/kind/cluster.yaml` (ctlptl: 3 nodos, registro local, puertos 80/443) con Envoy Gateway, cert-manager (CA local) y CloudNativePG (2 instancias); verificar que el clúster se crea desde cero y que el Gateway responde por HTTPS
+- [x] 3.2 `Tiltfile` con build, live update y el chart; eliminar `compose.yaml` y actualizar "Empezar" en el README; verificar que `tilt ci` levanta todo y que `https://api.lo-mio.localhost/health` responde 200
 
 ## 4. CI
 
