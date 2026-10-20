@@ -9,6 +9,8 @@ servers:
 tags:
   - name: plataforma
     description: Salud del sistema.
+  - name: claims
+    description: Reclamos y repartos de ítems.
   - name: pos
     description: Ítems que llegan del punto de venta.
   - name: staff
@@ -78,6 +80,267 @@ paths:
                     type: https://lo-mio.cl/problems/dependency-unavailable
                     title: Dependencia no disponible
                     status: 503
+  /v1/sessions/{sessionId}/items:
+    get:
+      operationId: listSessionItems
+      tags:
+        - claims
+      summary: Feed de la mesa, con dueños y partes de cada ítem.
+      description: Para los comensales de esa sesión o el personal del local.
+      security:
+        - guestSession: []
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
+            - waiter
+            - manager
+            - admin
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: Ítems de la sesión, del más antiguo al más nuevo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+              examples:
+                ok:
+                  value:
+                    - itemId: 0199f0a0-0000-7000-8000-0000000000d1
+                      sessionId: 0199f0a0-0000-7000-8000-0000000000e1
+                      name: Schop Kunstmann
+                      price:
+                        amount: 4500
+                        currency: CLP
+                      status: unowned
+                      version: 1
+                      shares: []
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/items/{itemId}/claim:
+    post:
+      operationId: claimItem
+      tags:
+        - claims
+      summary: El comensal reclama el ítem completo (lo mío).
+      description: Solo si no tiene dueño; si ya lo tiene, 409 (se puede proponer
+        compartirlo).
+      security:
+        - guestSession: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: El ítem con su reparto actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Item"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/ClaimConflict"
+        "422":
+          $ref: "#/components/responses/ClaimRejected"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/items/{itemId}/share:
+    post:
+      operationId: shareItem
+      tags:
+        - claims
+      summary: El comensal reparte el ítem entre varios (partes iguales o porciones).
+      description: Comparte un dueño del ítem, o cualquiera si no tiene dueño; siempre
+        incluyéndose.
+      security:
+        - guestSession: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Share"
+            examples:
+              ok:
+                $ref: "#/components/examples/Share"
+      responses:
+        "200":
+          description: El ítem con su reparto actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Item"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/ClaimConflict"
+        "422":
+          $ref: "#/components/responses/ClaimRejected"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/items/{itemId}/join:
+    post:
+      operationId: joinItem
+      tags:
+        - claims
+      summary: El comensal se suma a un ítem con dueño (yo también comí).
+      description: Lleva una porción, igual que los demás en partes iguales.
+      security:
+        - guestSession: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: El ítem con su reparto actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Item"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/ClaimConflict"
+        "422":
+          $ref: "#/components/responses/ClaimRejected"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/items/{itemId}/history:
+    get:
+      operationId: getItemHistory
+      tags:
+        - claims
+      summary: Historial completo de un ítem (auditoría), en orden.
+      security:
+        - staffCookie:
+            - manager
+            - admin
+        - staffBearer:
+            - manager
+            - admin
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: Cada cambio con su autor y momento.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryEntry"
+              examples:
+                ok:
+                  value:
+                    - version: 1
+                      type: added
+                      at: 2026-10-20T21:00:00.000Z
+                      actor:
+                        kind: system
+                      data:
+                        name: Tabla
+                        price:
+                          amount: 12000
+                          currency: CLP
+                    - version: 2
+                      type: claimed
+                      at: 2026-10-20T21:05:00.000Z
+                      actor:
+                        kind: guest
+                        id: 0199f0a0-0000-7000-8000-0000000000f1
+                      data:
+                        guestId: 0199f0a0-0000-7000-8000-0000000000f1
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
   /v1/pos/manual/items:
     post:
       operationId: loadManualItems
@@ -705,6 +968,191 @@ components:
         instance:
           type: string
           description: Identificador de esta ocurrencia.
+    Share:
+      type: object
+      additionalProperties: false
+      required:
+        - owners
+      properties:
+        owners:
+          type: array
+          minItems: 2
+          maxItems: 30
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - guestId
+              - portions
+            properties:
+              guestId:
+                type: string
+                format: uuid
+              portions:
+                type: integer
+                minimum: 1
+                maximum: 100
+                description: Partes iguales = 1 para todos.
+    Item:
+      type: object
+      additionalProperties: false
+      required:
+        - itemId
+        - sessionId
+        - name
+        - price
+        - status
+        - version
+        - shares
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          $ref: "#/components/schemas/Money"
+        status:
+          type: string
+          enum:
+            - unowned
+            - claimed
+            - shared
+        version:
+          type: integer
+          minimum: 1
+          description: "Aumenta con cada cambio: los consumidores descartan versiones
+            viejas."
+        shares:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - guestId
+              - alias
+              - portions
+              - amount
+            properties:
+              guestId:
+                type: string
+                format: uuid
+              alias:
+                type: string
+              portions:
+                type: integer
+                minimum: 1
+              amount:
+                $ref: "#/components/schemas/Money"
+    HistoryEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - type
+        - at
+        - actor
+        - data
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          enum:
+            - added
+            - claimed
+            - shared
+            - joined
+        at:
+          type: string
+          format: date-time
+        actor:
+          type: object
+          additionalProperties: false
+          required:
+            - kind
+          properties:
+            kind:
+              type: string
+              enum:
+                - guest
+                - staff
+                - system
+            id:
+              type: string
+              format: uuid
+        data:
+          type: object
+          additionalProperties: true
+          description: Detalle del evento (depende del tipo).
+    ItemChanged:
+      type: object
+      additionalProperties: false
+      required:
+        - itemId
+        - sessionId
+        - name
+        - price
+        - status
+        - version
+        - shares
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          $ref: "#/components/schemas/Money"
+        status:
+          type: string
+          enum:
+            - unowned
+            - claimed
+            - shared
+        version:
+          type: integer
+          minimum: 1
+        shares:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - guestId
+              - portions
+              - amount
+            properties:
+              guestId:
+                type: string
+                format: uuid
+              portions:
+                type: integer
+                minimum: 1
+              amount:
+                $ref: "#/components/schemas/Money"
+    Money:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+          maximum: 1000000000000
+          description: Tope de un billón de unidades mínimas.
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
     ManualItems:
       type: object
       additionalProperties: false
@@ -762,21 +1210,6 @@ components:
         quantity:
           type: integer
           minimum: 1
-    Money:
-      type: object
-      additionalProperties: false
-      required:
-        - amount
-        - currency
-      properties:
-        amount:
-          type: integer
-          minimum: 0
-          maximum: 1000000000000
-          description: Tope de un billón de unidades mínimas.
-        currency:
-          type: string
-          pattern: ^[A-Z]{3}$
     Credentials:
       type: object
       additionalProperties: false
@@ -1075,18 +1508,31 @@ components:
                 type: https://lo-mio.cl/problems/rate-limited
                 title: Demasiadas solicitudes
                 status: 429
-    ItemsRejected:
-      description: El precio no está en la moneda del local o la Idempotency-Key se
-        reutilizó.
+    ClaimConflict:
+      description: El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer
+        el feed).
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           examples:
-            currency-mismatch:
+            already-owned:
               value:
-                type: https://lo-mio.cl/problems/currency-mismatch
-                title: El precio no está en la moneda del local
+                type: https://lo-mio.cl/problems/already-owned
+                title: El ítem ya tiene dueño
+                status: 409
+    ClaimRejected:
+      description: El reparto o la acción no cumple las reglas (ej. compartir sin
+        incluirse), o Idempotency-Key reutilizada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            claim-rejected:
+              value:
+                type: https://lo-mio.cl/problems/not-in-share
+                title: Quien comparte debe estar en el reparto
                 status: 422
             idempotency-key-reused:
               value:
@@ -1117,18 +1563,6 @@ components:
                 type: https://lo-mio.cl/problems/unauthenticated
                 title: Sesión requerida
                 status: 401
-    Forbidden:
-      description: La sesión no tiene permiso para esta operación.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          examples:
-            forbidden:
-              value:
-                type: https://lo-mio.cl/problems/forbidden
-                title: Sin permiso
-                status: 403
     NotFound:
       description: El recurso no existe.
       content:
@@ -1141,6 +1575,36 @@ components:
                 type: https://lo-mio.cl/problems/not-found
                 title: Recurso no encontrado
                 status: 404
+    Forbidden:
+      description: La sesión no tiene permiso para esta operación.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            forbidden:
+              value:
+                type: https://lo-mio.cl/problems/forbidden
+                title: Sin permiso
+                status: 403
+    ItemsRejected:
+      description: El precio no está en la moneda del local o la Idempotency-Key se
+        reutilizó.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            currency-mismatch:
+              value:
+                type: https://lo-mio.cl/problems/currency-mismatch
+                title: El precio no está en la moneda del local
+                status: 422
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
     InvalidCredentials:
       description: Email o contraseña incorrectos (no se distingue cuál).
       content:
@@ -1257,17 +1721,37 @@ components:
       in: cookie
       name: lomio_guest
       description: Comensal unido a una sesión de mesa.
-  parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: true
-      description: Identificador único del comando (UUIDv7). Reintentar con la misma
-        clave no lo aplica dos veces.
-      schema:
-        type: string
-        format: uuid
   examples:
+    Share:
+      value:
+        owners:
+          - guestId: 0199f0a0-0000-7000-8000-0000000000f1
+            portions: 1
+          - guestId: 0199f0a0-0000-7000-8000-0000000000f2
+            portions: 1
+    Item:
+      value:
+        itemId: 0199f0a0-0000-7000-8000-0000000000d1
+        sessionId: 0199f0a0-0000-7000-8000-0000000000e1
+        name: Tabla de quesos
+        price:
+          amount: 12000
+          currency: CLP
+        status: shared
+        version: 2
+        shares:
+          - guestId: 0199f0a0-0000-7000-8000-0000000000f1
+            alias: Ana
+            portions: 1
+            amount:
+              amount: 6000
+              currency: CLP
+          - guestId: 0199f0a0-0000-7000-8000-0000000000f2
+            alias: Beto
+            portions: 1
+            amount:
+              amount: 6000
+              currency: CLP
     StaffSession:
       value:
         token: 3q2-7wEXAMPLEtokenNOTreal0000000000000000000
@@ -1306,3 +1790,13 @@ components:
         price:
           amount: 4500
           currency: CLP
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Identificador único del comando (UUIDv7). Reintentar con la misma
+        clave no lo aplica dos veces.
+      schema:
+        type: string
+        format: uuid

@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getLiveness, getReadiness, joinTable, listProducts, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr } from '../sdk.gen.ts';
-import type { CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinTableData, JoinTableError, JoinTableResponse, ListProductsData, ListProductsError, ListProductsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse } from '../types.gen.ts';
+import { claimItem, createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getItemHistory, getLiveness, getReadiness, joinItem, joinTable, listProducts, listSessionItems, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr, shareItem } from '../sdk.gen.ts';
+import type { ClaimItemData, ClaimItemError, ClaimItemResponse, CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetItemHistoryData, GetItemHistoryError, GetItemHistoryResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinItemData, JoinItemError, JoinItemResponse, JoinTableData, JoinTableError, JoinTableResponse, ListProductsData, ListProductsError, ListProductsResponse, ListSessionItemsData, ListSessionItemsError, ListSessionItemsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse, ShareItemData, ShareItemError, ShareItemResponse } from '../types.gen.ts';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -73,6 +73,101 @@ export const getReadinessOptions = (options?: Options<GetReadinessData>) => quer
         return data;
     },
     queryKey: getReadinessQueryKey(options)
+});
+
+export const listSessionItemsQueryKey = (options: Options<ListSessionItemsData>) => createQueryKey('listSessionItems', options);
+
+/**
+ * Feed de la mesa, con dueños y partes de cada ítem.
+ *
+ * Para los comensales de esa sesión o el personal del local.
+ */
+export const listSessionItemsOptions = (options: Options<ListSessionItemsData>) => queryOptions<ListSessionItemsResponse, ListSessionItemsError, ListSessionItemsResponse, ReturnType<typeof listSessionItemsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listSessionItems({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listSessionItemsQueryKey(options)
+});
+
+/**
+ * El comensal reclama el ítem completo (lo mío).
+ *
+ * Solo si no tiene dueño; si ya lo tiene, 409 (se puede proponer compartirlo).
+ */
+export const claimItemMutation = (options?: Partial<Options<ClaimItemData>>): UseMutationOptions<ClaimItemResponse, ClaimItemError, Options<ClaimItemData>> => {
+    const mutationOptions: UseMutationOptions<ClaimItemResponse, ClaimItemError, Options<ClaimItemData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await claimItem({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * El comensal reparte el ítem entre varios (partes iguales o porciones).
+ *
+ * Comparte un dueño del ítem, o cualquiera si no tiene dueño; siempre incluyéndose.
+ */
+export const shareItemMutation = (options?: Partial<Options<ShareItemData>>): UseMutationOptions<ShareItemResponse, ShareItemError, Options<ShareItemData>> => {
+    const mutationOptions: UseMutationOptions<ShareItemResponse, ShareItemError, Options<ShareItemData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await shareItem({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * El comensal se suma a un ítem con dueño (yo también comí).
+ *
+ * Lleva una porción, igual que los demás en partes iguales.
+ */
+export const joinItemMutation = (options?: Partial<Options<JoinItemData>>): UseMutationOptions<JoinItemResponse, JoinItemError, Options<JoinItemData>> => {
+    const mutationOptions: UseMutationOptions<JoinItemResponse, JoinItemError, Options<JoinItemData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await joinItem({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getItemHistoryQueryKey = (options: Options<GetItemHistoryData>) => createQueryKey('getItemHistory', options);
+
+/**
+ * Historial completo de un ítem (auditoría), en orden.
+ */
+export const getItemHistoryOptions = (options: Options<GetItemHistoryData>) => queryOptions<GetItemHistoryResponse, GetItemHistoryError, GetItemHistoryResponse, ReturnType<typeof getItemHistoryQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getItemHistory({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getItemHistoryQueryKey(options)
 });
 
 /**

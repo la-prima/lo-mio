@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses } from './types.gen.ts';
+import type { ClaimItemData, ClaimItemErrors, ClaimItemResponses, CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetItemHistoryData, GetItemHistoryErrors, GetItemHistoryResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinItemData, JoinItemErrors, JoinItemResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSessionItemsData, ListSessionItemsErrors, ListSessionItemsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses, ShareItemData, ShareItemErrors, ShareItemResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -27,6 +27,91 @@ export const getLiveness = <ThrowOnError extends boolean = false>(options?: Opti
  * Puede atender tráfico (readiness). Consulta la base de datos.
  */
 export const getReadiness = <ThrowOnError extends boolean = false>(options?: Options<GetReadinessData, ThrowOnError>): RequestResult<GetReadinessResponses, GetReadinessErrors, ThrowOnError> => (options?.client ?? client).get<GetReadinessResponses, GetReadinessErrors, ThrowOnError>({ url: '/health', ...options });
+
+/**
+ * Feed de la mesa, con dueños y partes de cada ítem.
+ *
+ * Para los comensales de esa sesión o el personal del local.
+ */
+export const listSessionItems = <ThrowOnError extends boolean = false>(options: Options<ListSessionItemsData, ThrowOnError>): RequestResult<ListSessionItemsResponses, ListSessionItemsErrors, ThrowOnError> => (options.client ?? client).get<ListSessionItemsResponses, ListSessionItemsErrors, ThrowOnError>({
+    security: [
+        {
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        },
+        {
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        },
+        { scheme: 'bearer', type: 'http' }
+    ],
+    url: '/v1/sessions/{sessionId}/items',
+    ...options
+});
+
+/**
+ * El comensal reclama el ítem completo (lo mío).
+ *
+ * Solo si no tiene dueño; si ya lo tiene, 409 (se puede proponer compartirlo).
+ */
+export const claimItem = <ThrowOnError extends boolean = false>(options: Options<ClaimItemData, ThrowOnError>): RequestResult<ClaimItemResponses, ClaimItemErrors, ThrowOnError> => (options.client ?? client).post<ClaimItemResponses, ClaimItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/items/{itemId}/claim',
+    ...options
+});
+
+/**
+ * El comensal reparte el ítem entre varios (partes iguales o porciones).
+ *
+ * Comparte un dueño del ítem, o cualquiera si no tiene dueño; siempre incluyéndose.
+ */
+export const shareItem = <ThrowOnError extends boolean = false>(options: Options<ShareItemData, ThrowOnError>): RequestResult<ShareItemResponses, ShareItemErrors, ThrowOnError> => (options.client ?? client).post<ShareItemResponses, ShareItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/items/{itemId}/share',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * El comensal se suma a un ítem con dueño (yo también comí).
+ *
+ * Lleva una porción, igual que los demás en partes iguales.
+ */
+export const joinItem = <ThrowOnError extends boolean = false>(options: Options<JoinItemData, ThrowOnError>): RequestResult<JoinItemResponses, JoinItemErrors, ThrowOnError> => (options.client ?? client).post<JoinItemResponses, JoinItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/items/{itemId}/join',
+    ...options
+});
+
+/**
+ * Historial completo de un ítem (auditoría), en orden.
+ */
+export const getItemHistory = <ThrowOnError extends boolean = false>(options: Options<GetItemHistoryData, ThrowOnError>): RequestResult<GetItemHistoryResponses, GetItemHistoryErrors, ThrowOnError> => (options.client ?? client).get<GetItemHistoryResponses, GetItemHistoryErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/items/{itemId}/history',
+    ...options
+});
 
 /**
  * El mesero carga ítems en una mesa (adaptador manual).

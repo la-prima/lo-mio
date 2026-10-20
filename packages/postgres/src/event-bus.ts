@@ -41,9 +41,12 @@ export class PgBossEventBus implements EventBus<Tx> {
     // LISTEN/NOTIFY despierta al worker al instante solo para jobs inmediatos; los reintentos
     // quedan programados a futuro y los recoge este sondeo (por defecto cada 30 s).
     // ponytail: ~1 consulta cada 5 s por queue; subirlo si las queues crecen a cientos.
-    const polling = { notifyPollingIntervalSeconds: 5 };
-    await this.#boss.work<EventEnvelope>(queue, polling, async ([job]) => {
-      if (job) await this.#handleOnce(subscriber, job.data, handler);
+    // En lotes: varios eventos publicados juntos (ej. las unidades de un ítem) generan un solo
+    // aviso; con un job por vez, el resto esperaba al sondeo (hasta 5 s). Cada evento se aplica
+    // en su propia transacción: si uno falla, el lote se reintenta y el inbox salta los ya aplicados.
+    const options = { notifyPollingIntervalSeconds: 5, batchSize: 20 };
+    await this.#boss.work<EventEnvelope>(queue, options, async (jobs) => {
+      for (const job of jobs) await this.#handleOnce(subscriber, job.data, handler);
     });
   }
 

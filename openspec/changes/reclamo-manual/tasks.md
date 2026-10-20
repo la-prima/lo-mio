@@ -18,9 +18,9 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 4. Contexto `claims`
 
-- [ ] 4.1 Dominio: eventos de asignación y su fold (reclamo, compartido igual/porciones, unirse); verificar con unit tests y una propiedad: la suma de las partes siempre es igual al precio
-- [ ] 4.2 Server: consumir `pos.item.received.v1`, comandos de reclamo con control optimista e idempotencia; verificar con un test de integración del reclamo simultáneo
-- [ ] 4.3 Historial de auditoría por ítem; verificar con un test que reconstruye el estado desde los eventos
+- [x] 4.1 Dominio: eventos de asignación y su fold (reclamo, compartido igual/porciones, unirse); verificar con unit tests y una propiedad: la suma de las partes siempre es igual al precio
+- [x] 4.2 Server: consumir `pos.item.received.v1`, comandos de reclamo con control optimista e idempotencia; verificar con un test de integración del reclamo simultáneo
+- [x] 4.3 Historial de auditoría por ítem; verificar con un test que reconstruye el estado desde los eventos
 
 ## 5. Contexto `settlement`
 

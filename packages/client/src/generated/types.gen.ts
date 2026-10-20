@@ -28,6 +28,72 @@ export type Problem = {
     instance?: string;
 };
 
+export type Share = {
+    owners: Array<{
+        guestId: string;
+        /**
+         * Partes iguales = 1 para todos.
+         */
+        portions: number;
+    }>;
+};
+
+export type Item = {
+    itemId: string;
+    sessionId: string;
+    name: string;
+    price: Money;
+    status: 'unowned' | 'claimed' | 'shared';
+    /**
+     * Aumenta con cada cambio: los consumidores descartan versiones viejas.
+     */
+    version: number;
+    shares: Array<{
+        guestId: string;
+        alias: string;
+        portions: number;
+        amount: Money;
+    }>;
+};
+
+export type HistoryEntry = {
+    version: number;
+    type: 'added' | 'claimed' | 'shared' | 'joined';
+    at: string;
+    actor: {
+        kind: 'guest' | 'staff' | 'system';
+        id?: string;
+    };
+    /**
+     * Detalle del evento (depende del tipo).
+     */
+    data: {
+        [key: string]: unknown;
+    };
+};
+
+export type ItemChanged = {
+    itemId: string;
+    sessionId: string;
+    name: string;
+    price: Money;
+    status: 'unowned' | 'claimed' | 'shared';
+    version: number;
+    shares: Array<{
+        guestId: string;
+        portions: number;
+        amount: Money;
+    }>;
+};
+
+export type Money = {
+    /**
+     * Tope de un billón de unidades mínimas.
+     */
+    amount: number;
+    currency: string;
+};
+
 export type ManualItems = {
     tableId: string;
     name: string;
@@ -45,14 +111,6 @@ export type ItemReceived = {
     name: string;
     unitPrice: Money;
     quantity: number;
-};
-
-export type Money = {
-    /**
-     * Tope de un billón de unidades mínimas.
-     */
-    amount: number;
-    currency: string;
 };
 
 export type Credentials = {
@@ -243,6 +301,247 @@ export type GetReadinessResponses = {
 };
 
 export type GetReadinessResponse = GetReadinessResponses[keyof GetReadinessResponses];
+
+export type ListSessionItemsData = {
+    body?: never;
+    path: {
+        sessionId: string;
+    };
+    query?: never;
+    url: '/v1/sessions/{sessionId}/items';
+};
+
+export type ListSessionItemsErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListSessionItemsError = ListSessionItemsErrors[keyof ListSessionItemsErrors];
+
+export type ListSessionItemsResponses = {
+    /**
+     * Ítems de la sesión, del más antiguo al más nuevo.
+     */
+    200: Array<Item>;
+};
+
+export type ListSessionItemsResponse = ListSessionItemsResponses[keyof ListSessionItemsResponses];
+
+export type ClaimItemData = {
+    body?: never;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/claim';
+};
+
+export type ClaimItemErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+     */
+    409: Problem;
+    /**
+     * El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ClaimItemError = ClaimItemErrors[keyof ClaimItemErrors];
+
+export type ClaimItemResponses = {
+    /**
+     * El ítem con su reparto actualizado.
+     */
+    200: Item;
+};
+
+export type ClaimItemResponse = ClaimItemResponses[keyof ClaimItemResponses];
+
+export type ShareItemData = {
+    body: Share;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/share';
+};
+
+export type ShareItemErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+     */
+    409: Problem;
+    /**
+     * El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ShareItemError = ShareItemErrors[keyof ShareItemErrors];
+
+export type ShareItemResponses = {
+    /**
+     * El ítem con su reparto actualizado.
+     */
+    200: Item;
+};
+
+export type ShareItemResponse = ShareItemResponses[keyof ShareItemResponses];
+
+export type JoinItemData = {
+    body?: never;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/join';
+};
+
+export type JoinItemErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+     */
+    409: Problem;
+    /**
+     * El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type JoinItemError = JoinItemErrors[keyof JoinItemErrors];
+
+export type JoinItemResponses = {
+    /**
+     * El ítem con su reparto actualizado.
+     */
+    200: Item;
+};
+
+export type JoinItemResponse = JoinItemResponses[keyof JoinItemResponses];
+
+export type GetItemHistoryData = {
+    body?: never;
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/history';
+};
+
+export type GetItemHistoryErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetItemHistoryError = GetItemHistoryErrors[keyof GetItemHistoryErrors];
+
+export type GetItemHistoryResponses = {
+    /**
+     * Cada cambio con su autor y momento.
+     */
+    200: Array<HistoryEntry>;
+};
+
+export type GetItemHistoryResponse = GetItemHistoryResponses[keyof GetItemHistoryResponses];
 
 export type LoadManualItemsData = {
     body: ManualItems;
