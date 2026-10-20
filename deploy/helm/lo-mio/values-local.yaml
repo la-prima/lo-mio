@@ -1,0 +1,14 @@
+# kind + Tilt. Ver deploy/kind/.
+api:
+  replicas: 2
+  hostname: api.lo-mio.localhost
+  env:
+    LOG_LEVEL: debug
+  resources:
+    requests: { cpu: 50m, memory: 96Mi }
+    limits: { memory: 256Mi }
+  networkPolicy:
+    databaseEgress:
+      - podSelector:
+          matchLabels:
+            cnpg.io/cluster: lo-mio-db

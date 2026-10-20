@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    {{- include "lo-mio.labels" . | nindent 4 }}
+    {{- include "lo-mio.api.selector" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels: {{- include "lo-mio.api.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "lo-mio.labels" . | nindent 8 }}
+        {{- include "lo-mio.api.selector" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-api
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      # Réplicas en nodos distintos cuando se puede.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: {{- include "lo-mio.api.selector" . | nindent 14 }}
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: api
+          image: {{ include "lo-mio.api.image" . }}
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          args: ["src/main.ts"]
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            {{- include "lo-mio.api.databaseEnv" . | nindent 12 }}
+            - name: MIGRATE_ON_START
+              value: "false"
+            {{- range $name, $value := .Values.api.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          lifecycle:
+            # Da tiempo a que Envoy deje de enviar tráfico antes de cerrar conexiones.
+            preStop:
+              sleep:
+                seconds: 5
+          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          securityContext: {{- include "lo-mio.containerSecurity" . | nindent 12 }}

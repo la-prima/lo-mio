@@ -1,0 +1,34 @@
+# Corre antes de cada install/upgrade. Si falla, Helm no reemplaza los pods.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-api-migrations
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        {{- include "lo-mio.labels" . | nindent 8 }}
+        {{- include "lo-mio.api.selector" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Release.Name }}-api
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: {{ include "lo-mio.api.image" . }}
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          args: ["src/migrate.ts"]
+          env: {{- include "lo-mio.api.databaseEnv" . | nindent 12 }}
+          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          securityContext: {{- include "lo-mio.containerSecurity" . | nindent 12 }}

@@ -7,7 +7,7 @@
 
 ## 2. Helm chart
 
-- [ ] 2.1 Chart `deploy/helm/lo-mio` con la API: Deployment, Service, HTTPRoute, Job de migraciones, NetworkPolicy, PDB, ServiceAccount, securityContext y `values-local.yaml`; verificar con `helm lint`, kubeconform y `trivy config` sin hallazgos altos
+- [x] 2.1 Chart `deploy/helm/lo-mio` con la API: Deployment, Service, HTTPRoute, Job de migraciones, NetworkPolicy, PDB, ServiceAccount, securityContext y `values-local.yaml`; verificar con `helm lint`, kubeconform y `trivy config` sin hallazgos altos
 
 ## 3. Clúster local
 
