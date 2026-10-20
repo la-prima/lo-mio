@@ -6,6 +6,18 @@ gateway:
   namespace: gateway
   sectionName: https
 
+# Web del comensal (apps/guest-web). Comparte origen con la API: el QR apunta aquí.
+guestWeb:
+  image:
+    repository: lo-mio-guest-web
+    tag: ""  # por defecto, appVersion del chart
+    pullPolicy: IfNotPresent
+  replicas: 2
+  hostname: mesa.lo-mio.cl
+  resources:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits: { memory: 64Mi }
+
 api:
   image:
     repository: lo-mio-api

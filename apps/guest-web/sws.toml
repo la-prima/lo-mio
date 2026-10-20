@@ -1,0 +1,30 @@
+# static-web-server: la SPA y sus headers. La API no pasa por aquí (el Gateway envía /v1 a la API).
+[general]
+host = "0.0.0.0"
+port = 8080
+root = "/public"
+# Toda ruta que no sea un archivo (ej. /m/<qr>) sirve la app.
+page-fallback = "/public/index.html"
+health = true
+compression = true
+security-headers = true
+log-level = "warn"
+
+[advanced]
+
+# Los assets llevan hash en el nombre: caché larga. index.html siempre se revalida.
+[[advanced.headers]]
+source = "/assets/**"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[advanced.headers]]
+source = "**/*.html"
+[advanced.headers.headers]
+Cache-Control = "no-cache"
+
+[[advanced.headers]]
+source = "**"
+[advanced.headers.headers]
+Content-Security-Policy = "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+Referrer-Policy = "no-referrer"

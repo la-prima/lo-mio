@@ -82,7 +82,8 @@ function appViolation(from: Zone, to: Zone | undefined, spec: string): string | 
   if (to?.kind === "app" && to.name !== from.name)
     return "una app no importa de otra: usar packages/";
   if (to?.layer === "server" && from.name !== "api") return "solo apps/api monta capas server";
-  if (FRONTS.has(from.name) && SERVER_ONLY_LIBS.test(spec))
+  // Solo src/ llega al dispositivo; scripts de build y e2e corren en Node.
+  if (FRONTS.has(from.name) && from.layer === "src" && SERVER_ONLY_LIBS.test(spec))
     return `librería de servidor en front: ${spec}`;
   return undefined;
 }
@@ -130,7 +131,7 @@ describe("Límites entre contextos y capas", () => {
   it("el código de runtime solo importa dependencias de producción (la imagen no trae las de desarrollo)", () => {
     const errors: string[] = [];
     const isTest =
-      /\.(test|int\.test|flow)\.ts$|\/(testing|fixtures|contract-suite)\.ts$|\.config\.ts$/;
+      /\.(test|int\.test|flow|e2e)\.ts$|\/(testing|fixtures|contract-suite)\.ts$|\.config\.ts$/;
     const runtimeDeps = (pkgDir: string) => {
       const manifest = JSON.parse(readFileSync(resolve(ROOT, pkgDir, "package.json"), "utf8")) as {
         dependencies?: Record<string, string>;

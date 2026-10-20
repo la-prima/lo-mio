@@ -1,0 +1,109 @@
+{{- /* Web del comensal: estáticos sobre static-web-server. Mismo origen que la API (ver HTTPRoute). */ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-guest-web
+  labels:
+    {{- include "lo-mio.labels" . | nindent 4 }}
+    {{- include "lo-mio.guestWeb.selector" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.guestWeb.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels: {{- include "lo-mio.guestWeb.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "lo-mio.labels" . | nindent 8 }}
+        {{- include "lo-mio.guestWeb.selector" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: {{- include "lo-mio.guestWeb.selector" . | nindent 14 }}
+      containers:
+        - name: guest-web
+          image: {{ .Values.guestWeb.image.repository }}:{{ .Values.guestWeb.image.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.guestWeb.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources: {{- toYaml .Values.guestWeb.resources | nindent 12 }}
+          securityContext: {{- include "lo-mio.containerSecurity" . | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-guest-web
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "lo-mio.guestWeb.selector" . | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-guest-web
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: {{- include "lo-mio.guestWeb.selector" . | nindent 6 }}
+---
+# Solo recibe tráfico de Envoy y no sale a ningún lado (sirve archivos).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-guest-web
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {{- include "lo-mio.guestWeb.selector" . | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.api.networkPolicy.gatewayNamespace }}
+      ports:
+        - port: http
+---
+# La web y la API en el mismo origen: la cookie del comensal es de primera parte y no hace falta
+# CORS con credenciales (ni su preflight en redes móviles lentas).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}-guest-web
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
+  hostnames:
+    - {{ .Values.guestWeb.hostname | quote }}
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: /v1 }
+      backendRefs:
+        - name: {{ .Release.Name }}-api
+          port: 80
+    - backendRefs:
+        - name: {{ .Release.Name }}-guest-web
+          port: 80

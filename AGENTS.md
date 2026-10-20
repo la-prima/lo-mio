@@ -61,8 +61,8 @@ Integraciones (POS, pagos, OCR) **siempre detrás de un contrato** definido en e
 | **pre-commit** | gitleaks (secretos), Biome (formato + lint), test de arquitectura, typecheck, tests relacionados con lo modificado, validar specs | < 10 s |
 | **commit-msg** | Conventional Commits: `tipo(scope): descripción` | — |
 | **pre-push** | `pnpm verify` completo | < 1 min |
-| **CI en cada PR** | verify · integración (Testcontainers) · imagen (Trivy + SBOM) · chart (lint, kubeconform, Trivy) · humo en kind · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · *e2e cuando existan los fronts* | minutos |
-| **Nightly / pre-release** | *carga (k6), failover, DAST (ZAP), e2e en matriz completa de navegadores* | — |
+| **CI en cada PR** | verify · integración (Testcontainers) · imagen (Trivy + SBOM) · chart (lint, kubeconform, Trivy) · humo en kind · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · e2e web (Chromium y Pixel) · *e2e mobile cuando exista la app* | minutos |
+| **Nightly / pre-release** | e2e web en matriz completa de navegadores · *carga (k6), failover, DAST (ZAP)* | — |
 
 En cursiva: se activa con el change que crea la app correspondiente (ver el roadmap en el README).
 
@@ -124,6 +124,7 @@ pnpm test:int       # integración (requiere Docker)
 pnpm contracts      # lint + bundle + generación desde los contratos
 pnpm test:contract  # Schemathesis contra la API en kind
 pnpm test:flows     # flujos de la API (Playwright) contra kind
+pnpm test:e2e       # e2e de la web del comensal (Playwright) contra kind
 pnpm report         # reporte Allure único con todo lo anterior
 pnpm spec           # valida OpenSpec
 

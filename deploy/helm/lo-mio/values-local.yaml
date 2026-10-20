@@ -20,3 +20,6 @@ api:
       - podSelector:
           matchLabels:
             cnpg.io/cluster: lo-mio-db
+guestWeb:
+  replicas: 1
+  hostname: mesa.lo-mio.localhost

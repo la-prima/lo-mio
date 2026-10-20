@@ -73,10 +73,14 @@ jobs:
       # Vulnerabilidades de la imagen (SO + dependencias de Node).
       - run: $TRIVY image --quiet --scanners vuln --severity HIGH,CRITICAL --exit-code 1 lo-mio-api:${{ github.sha }}
       - run: $TRIVY image --quiet --format cyclonedx --output sbom-api.cdx.json lo-mio-api:${{ github.sha }}
+      # Sin SO ni paquetes (binario estático sobre scratch): Trivy solo ve el binario.
+      - run: docker build -t lo-mio-guest-web:${{ github.sha }} -f apps/guest-web/Dockerfile .
+      - run: $TRIVY image --quiet --scanners vuln --severity HIGH,CRITICAL --exit-code 1 lo-mio-guest-web:${{ github.sha }}
+      - run: $TRIVY image --quiet --format cyclonedx --output sbom-guest-web.cdx.json lo-mio-guest-web:${{ github.sha }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom
-          path: sbom-api.cdx.json
+          path: sbom-*.cdx.json
       # Chart: lint, esquemas de Kubernetes y malas configuraciones de seguridad.
       - run: helm lint deploy/helm/lo-mio -f deploy/helm/lo-mio/values-local.yaml
       - run: >
@@ -115,10 +119,38 @@ jobs:
           kubectl get pods -A -o wide
           kubectl get events -A --sort-by=.lastTimestamp | tail -50
 
+  guest-web-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: deploy/ci/install-k8s-tools.sh
+      # Chromium cubre los proyectos del PR (escritorio y Pixel emulado).
+      - run: pnpm --filter @lo-mio/guest-web exec playwright install --with-deps chromium
+      - run: ctlptl apply -f deploy/kind/cluster.yaml
+      - run: tilt ci --timeout 25m
+      - run: pnpm test:e2e
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: allure-guest-web-e2e
+          path: reports/allure-results
+          if-no-files-found: ignore
+      - if: failure()
+        run: |
+          kubectl get pods -A -o wide
+          kubectl get events -A --sort-by=.lastTimestamp | tail -50
+
   # Un solo reporte HTML con las evidencias de todos los jobs (ver AGENTS.md, "Evidencias").
   report:
     if: ${{ !cancelled() }}
-    needs: [verify, integration, api-flows]
+    needs: [verify, integration, api-flows, guest-web-e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: read
