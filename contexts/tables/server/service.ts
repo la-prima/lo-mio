@@ -144,11 +144,9 @@ export async function joinTable(
     const session = await ensureOpenSession(deps, tx, table.venue_id, table.table_id);
     const current = await guestOfToken(tx, token);
     if (current?.sessionId === session.id && token) return { token, guest: guestView(current) };
-    // ponytail: dos uniones simultáneas pueden recibir el mismo "Comensal N"; es solo el alias
-    // por defecto (los ids son únicos). Usar una secuencia por sesión si molesta.
     const name = alias?.ok
       ? alias.value
-      : defaultAlias((await repo.countGuests(tx, session.id)) + 1);
+      : defaultAlias(await repo.nextGuestPosition(tx, session.id));
     const guestId = newId();
     const newToken = newSessionToken();
     await repo.insertGuest(tx, {

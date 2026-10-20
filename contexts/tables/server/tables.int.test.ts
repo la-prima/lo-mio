@@ -70,6 +70,16 @@ describe("Sesiones de mesa y comensales", () => {
     ).toHaveLength(1);
   });
 
+  it("cinco comensales escanean el QR al mismo tiempo y cada uno recibe un alias distinto", async () => {
+    const { qrCode } = await newTable("12");
+    await service.joinTable(deps(), qrCode, {}, undefined); // la sesión ya abierta
+    const joined = await Promise.all(
+      Array.from({ length: 5 }, () => service.joinTable(deps(), qrCode, {}, undefined)),
+    );
+    const aliases = joined.map((j) => (j && "guest" in j ? j.guest.alias : "")).sort();
+    expect(aliases).toEqual(["Comensal 2", "Comensal 3", "Comensal 4", "Comensal 5", "Comensal 6"]);
+  });
+
   it("el primer ítem del POS abre la mesa y cada unidad queda en la sesión", async () => {
     const { tableId } = await newTable("4");
     await emit("pos.item.received", {

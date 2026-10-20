@@ -94,13 +94,23 @@ export const guestByTokenHash = (tx: Db, tokenHash: string) =>
     .where("guests.token_hash", "=", tokenHash)
     .executeTakeFirst();
 
-export async function countGuests(tx: Db, sessionId: string) {
+/**
+ * Posición del próximo comensal. Bloquea la sesión hasta el fin de la transacción: dos uniones
+ * simultáneas se numeran una después de la otra (nunca dos "Comensal 2").
+ */
+export async function nextGuestPosition(tx: Db, sessionId: string) {
+  await db(tx)
+    .selectFrom("table_sessions")
+    .select("id")
+    .where("id", "=", sessionId)
+    .forUpdate()
+    .execute();
   const row = await db(tx)
     .selectFrom("guests")
     .select((eb) => eb.fn.countAll<string>().as("n"))
     .where("session_id", "=", sessionId)
     .executeTakeFirstOrThrow();
-  return Number(row.n);
+  return Number(row.n) + 1;
 }
 
 export async function insertGuest(
