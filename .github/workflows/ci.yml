@@ -24,6 +24,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: allure-unit
+          path: reports/allure-results
+          if-no-files-found: ignore
 
   contracts:
     runs-on: ubuntu-latest
@@ -50,6 +56,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Testcontainers usa el Docker que ya trae el runner.
       - run: pnpm test:int
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: allure-integration
+          path: reports/allure-results
+          if-no-files-found: ignore
 
   image:
     runs-on: ubuntu-latest
@@ -74,20 +86,68 @@ jobs:
           -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
       - run: $TRIVY config --quiet --severity HIGH,CRITICAL --exit-code 1 --helm-values deploy/helm/lo-mio/values-local.yaml deploy/helm/lo-mio
 
-  k8s-smoke:
+  api-flows:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: deploy/ci/install-k8s-tools.sh
-      # Mismo clúster y mismo Tiltfile que en local; `tilt ci` termina cuando todo está listo
-      # (incluida la prueba de humo por el Gateway) o falla.
+      # Mismo clúster y mismo Tiltfile que en local; `tilt ci` incluye la prueba de humo.
       - run: ctlptl apply -f deploy/kind/cluster.yaml
       - run: tilt ci --timeout 25m
+      # Conformidad con el contrato y flujos funcionales, contra la API desplegada.
+      - run: pnpm test:contract
+      - run: pnpm test:flows
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: allure-api-flows
+          path: reports/allure-results
+          if-no-files-found: ignore
       - if: failure()
         run: |
           kubectl get pods -A -o wide
           kubectl get events -A --sort-by=.lastTimestamp | tail -50
+
+  # Un solo reporte HTML con las evidencias de todos los jobs (ver AGENTS.md, "Evidencias").
+  report:
+    if: ${{ !cancelled() }}
+    needs: [verify, integration, api-flows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: allure-*
+          path: reports/allure-results
+          merge-multiple: true
+      - run: pnpm report
+      - id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reporte-de-pruebas
+          path: reports/allure-report/index.html
+      - run: node deploy/ci/report-summary.ts reports/allure-report/summary.json "${{ steps.upload.outputs.artifact-url }}" > summary.md
+      - run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
+      - if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file summary.md --edit-last --create-if-none
 
   secrets:
     runs-on: ubuntu-latest

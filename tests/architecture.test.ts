@@ -99,7 +99,7 @@ function* imports() {
   }
 }
 
-describe("arquitectura", () => {
+describe("Límites entre contextos y capas", () => {
   it("todos los imports respetan los límites", () => {
     const errors: string[] = [];
     for (const { file, abs, spec } of imports()) {

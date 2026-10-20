@@ -5,13 +5,28 @@
  */
 import { createClient, createConfig } from "@lo-mio/client";
 import { test as base, expect } from "@playwright/test";
+import * as allure from "allure-js-commons";
+import { flowLabels } from "../allure/labels.ts";
 
 type Api = ReturnType<typeof createClient>;
 
 const describeHeaders = (headers: Headers, prefix: string) =>
   [...headers.entries()].map(([k, v]) => `${prefix} ${k}: ${v}`);
 
-export const test = base.extend<{ api: Api }>({
+export const test = base.extend<{ api: Api; allureLabels: void }>({
+  // Contexto → flujo → escenario en el reporte, desde los describe (ver tests/allure/labels.ts).
+  allureLabels: [
+    // biome-ignore lint/correctness/noEmptyPattern: Playwright lee las dependencias del fixture desde este patrón.
+    async ({}, provide, testInfo) => {
+      const labels = flowLabels(testInfo.titlePath.slice(1, -1), testInfo.title);
+      await allure.epic(labels.epic);
+      await allure.feature(labels.feature);
+      await allure.story(labels.story);
+      await allure.tag("flujo");
+      await provide();
+    },
+    { auto: true },
+  ],
   api: async ({ baseURL }, provide, testInfo) => {
     const api = createClient(createConfig({ baseUrl: baseURL ?? "" }));
     api.interceptors.response.use(async (response, request) => {

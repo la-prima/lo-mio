@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadEnv } from "./env.ts";
 
-describe("loadEnv", () => {
+describe("Configuración del entorno", () => {
   it("aplica valores por defecto y separa los orígenes de CORS", () => {
     const env = loadEnv({
       DATABASE_URL: "postgres://u:p@localhost:5432/db",

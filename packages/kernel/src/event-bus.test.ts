@@ -10,7 +10,7 @@ const catalog = {
 const claimed = (data: unknown = { amount: 4500 }, type = "claims.item.claimed") =>
   createEvent({ type, version: 1, venueId: newId(), aggregateId: "item-1", data });
 
-describe("InMemoryEventBus", () => {
+describe("Bus de eventos en memoria (tests)", () => {
   it("entrega cada evento a todos los suscriptores de su tópico, con la transacción", async () => {
     const bus = new InMemoryEventBus<string>(catalog);
     const received: [string, EventEnvelope, string][] = [];

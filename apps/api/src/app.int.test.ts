@@ -10,7 +10,7 @@ import { platformHandlers } from "./platform.ts";
 
 const env = (url: string) => loadEnv({ DATABASE_URL: url, LOG_LEVEL: "fatal" });
 
-describe("api", () => {
+describe("API HTTP desde el contrato", () => {
   let pg: Awaited<ReturnType<typeof startPostgres>>;
   let db: Db;
   let app: FastifyInstance;

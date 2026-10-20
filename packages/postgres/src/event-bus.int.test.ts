@@ -13,7 +13,7 @@ const catalog = Object.fromEntries(
 const event = (type: string, data: unknown = { n: 1 }) =>
   createEvent({ type, version: 1, venueId: newId(), aggregateId: newId(), data });
 
-describe("PgBossEventBus", () => {
+describe("Bus de eventos sobre Postgres", () => {
   let pg: Awaited<ReturnType<typeof startPostgres>>;
   let db: Db;
   let boss: PgBoss;

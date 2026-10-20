@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 url="${1:-https://api.lo-mio.localhost}"
 host="$(echo "$url" | sed -E 's#^https?://([^/:]+).*#\1#')"
 out="${REPORT_DIR:-$PWD/reports/contract}"
-mkdir -p "$out"
+rm -rf "$out" && mkdir -p "$out"
 ca="$out/ca.crt"
 kubectl get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$ca"
 
@@ -16,3 +16,6 @@ docker run --rm --add-host "$host:host-gateway" \
   -v "$PWD/tests/contract/schemathesis.toml:/spec/schemathesis.toml:ro" \
   -v "$out:/out" \
   schemathesis/schemathesis:v4.30.1 --config-file /spec/schemathesis.toml run /spec/openapi.yaml
+
+# Al reporte unificado, con la jerarquía común.
+node tests/contract/labels.ts "$out/allure-results" "$PWD/reports/allure-results"
