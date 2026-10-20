@@ -23,10 +23,23 @@ La explicación completa está en [docs/vision.md](docs/vision.md).
 | [docs/vision.md](docs/vision.md) | Problema, idea, medios de identificación, ideas futuras y métricas del piloto |
 | [docs/glosario.md](docs/glosario.md) | Términos del dominio y su nombre en el código |
 | [AGENTS.md](AGENTS.md) | Cómo se trabaja: flujo, arquitectura, reglas de código, pruebas y seguridad. **Lectura obligatoria antes de contribuir.** |
-| [Propuesta del MVP](openspec/changes/mvp-cuenta-individual/proposal.md) | Qué incluye el MVP, por qué y qué queda fuera |
-| [Specs del MVP](openspec/changes/mvp-cuenta-individual/specs/) | Comportamiento esperado, con escenarios |
-| [Diseño del MVP](openspec/changes/mvp-cuenta-individual/design.md) | Decisiones técnicas con su justificación, riesgos y objetivos de carga |
-| [Tareas del MVP](openspec/changes/mvp-cuenta-individual/tasks.md) | Plan de implementación |
+| [docs/arquitectura.md](docs/arquitectura.md) | Decisiones técnicas transversales con su justificación, riesgos y objetivos de carga |
+| [openspec/changes/](openspec/changes/) | Changes del MVP: propuesta, specs, diseño y tareas de cada uno (ver roadmap abajo) |
+
+### Roadmap del MVP
+
+Cada change es una rama y un PR. Se implementan en este orden:
+
+| # | Change | Entrega | Depende de |
+|---|---|---|---|
+| 1 | [base-tecnica](openspec/changes/base-tecnica/) | Kernel, bus de eventos (pg-boss), API Fastify, Testcontainers | — |
+| 2 | [reclamo-manual](openspec/changes/reclamo-manual/) | Primer flujo de punta a punta: carga manual → QR → reclamar/compartir → saldo | 1 |
+| 3 | [cobro-con-comprobante](openspec/changes/cobro-con-comprobante/) | Pagos con comprobante (timbre SII, voucher, efectivo) y cierre de mesa | 2 |
+| 4 | [tarjetas-y-reasignacion](openspec/changes/tarjetas-y-reasignacion/) | Tarjetas NFC, reasignaciones con confirmación, override | 3 |
+| 5 | [mesero-offline](openspec/changes/mesero-offline/) | Acciones del mesero sin conexión, distribución de la app al piloto | 3 |
+| 6 | [integracion-fudo](openspec/changes/integracion-fudo/) | Sincronización con Fudo y pedido desde lo-mio. **Bloqueado por el acceso a la API** | 2 |
+| 7 | [carga-y-failover](openspec/changes/carga-y-failover/) | k6, caos y DAST en nightly | 3 |
+| 8 | [despliegue-piloto](openspec/changes/despliegue-piloto/) | Hosting, runbook y despliegue gradual en el local | 3, 5, 7 |
 
 ## Cómo se trabaja
 
@@ -57,7 +70,7 @@ contexts/<ctx>/     venues · staff · tables · claims · pos · settlement
 apps/               api · mobile · guest-web
 ```
 
-El porqué de cada decisión (incluida la comparación de frameworks) está en el [diseño del MVP](openspec/changes/mvp-cuenta-individual/design.md). Los límites entre contextos se verifican en cada commit ([AGENTS.md → Arquitectura](AGENTS.md#arquitectura)).
+El porqué de cada decisión (incluida la comparación de frameworks) está en [docs/arquitectura.md](docs/arquitectura.md). Los límites entre contextos se verifican en cada commit ([AGENTS.md → Arquitectura](AGENTS.md#arquitectura)).
 
 ## Empezar
 
