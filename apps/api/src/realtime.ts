@@ -50,7 +50,7 @@ async function actorFor(
 }
 
 export async function registerRealtime(app: FastifyInstance, { db, bus, connectionString }: Deps) {
-  const sockets = new Map<string, Set<Socket>>();
+  const sockets = new Map<string, Set<(message: string) => void>>();
 
   // Relay durable: cada evento se notifica una vez, al confirmarse su transacción.
   for (const topic of REALTIME_TOPICS) {
@@ -74,7 +74,7 @@ export async function registerRealtime(app: FastifyInstance, { db, bus, connecti
   await listener.query(`listen ${CHANNEL}`);
   listener.on("notification", ({ payload }) => {
     const { sessionId, ...message } = JSON.parse(String(payload)) as { sessionId: string };
-    for (const socket of sockets.get(sessionId) ?? []) socket.send(JSON.stringify(message));
+    for (const deliver of sockets.get(sessionId) ?? []) deliver(JSON.stringify(message));
   });
   app.addHook("onClose", async () => listener.end());
 
@@ -86,13 +86,20 @@ export async function registerRealtime(app: FastifyInstance, { db, bus, connecti
       const { sessionId } = req.params;
       const actor = await actorFor(db, req, sessionId);
       if (!actor) return socket.close(4401, "sesión de la mesa requerida");
-      const subscribers = sockets.get(sessionId) ?? new Set<Socket>();
-      subscribers.add(socket);
+      // Se suscribe antes de leer el snapshot (no se pierde lo que pase mientras tanto), pero lo
+      // que llegue se retiene hasta enviarlo: el snapshot va primero; el cliente descarta por versión.
+      const pending: string[] = [];
+      let send = (message: string): unknown => pending.push(message);
+      const deliver = (message: string) => send(message);
+      const subscribers = sockets.get(sessionId) ?? new Set();
+      subscribers.add(deliver);
       sockets.set(sessionId, subscribers);
-      socket.on("close", () => subscribers.delete(socket));
+      socket.on("close", () => subscribers.delete(deliver));
       const items = await claimsService.sessionFeed(db, actor, sessionId);
       const balances = await settlementService.sessionBalances(db, actor, sessionId);
       socket.send(JSON.stringify({ type: "snapshot", items, balances }));
+      send = (message) => socket.send(message);
+      for (const message of pending) socket.send(message);
     },
   );
 }
