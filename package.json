@@ -14,12 +14,15 @@
     "test": "vitest run --project unit",
     "deadcode": "knip",
     "spec": "openspec validate --all --strict --no-interactive",
-    "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec",
-    "test:int": "vitest run --project integration"
+    "verify": "pnpm contracts:check && pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec",
+    "test:int": "vitest run --project integration",
+    "contracts": "node scripts/contracts.ts",
+    "contracts:check": "node scripts/contracts.ts --check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@fission-ai/openspec": "^1.14.1",
+    "@redocly/cli": "^2.63.0",
     "@types/node": "^26.6.5",
     "knip": "^6.41.0",
     "lefthook": "^2.2.1",

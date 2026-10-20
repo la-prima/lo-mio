@@ -172,6 +172,9 @@ importers:
       '@fission-ai/openspec':
         specifier: ^1.14.1
         version: 1.14.1(@types/node@26.6.5)
+      '@redocly/cli':
+        specifier: ^2.63.0
+        version: 2.63.0
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -820,6 +823,11 @@ packages:
 
   '@protobufjs/utf8@1.1.2':
     resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
+
+  '@redocly/cli@2.63.0':
+    resolution: {integrity: sha512-ErLDLdXNX20EbjpOi/BnZS5cTf0B2aarg8vtlGB7sQn6fe+cP6WvZCwKQVEbx6HkkE+XfIzAQ3iemJAWOgyT0w==}
+    engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
+    hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.13':
     resolution: {integrity: sha512-Vu/NICrgdRvUOeaJZIyB2FP63s6fO/4ud5l8dXmxDx9yDyn+mN0y+gsvsVviSli+T361Aqo0h46EuMoobrwawA==}
@@ -2769,6 +2777,8 @@ snapshots:
   '@protobufjs/pool@1.1.0': {}
 
   '@protobufjs/utf8@1.1.2': {}
+
+  '@redocly/cli@2.63.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.13':
     optional: true

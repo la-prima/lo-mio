@@ -2,8 +2,8 @@
 
 ## 1. Contratos
 
-- [ ] 1.1 `apps/api/openapi/platform.yaml` (`/health`, `/health/live`, errores problem+json) y bundling + lint con Redocly; verificar que `pnpm contracts` falla con un contrato sin `operationId` o sin ejemplos
-- [ ] 1.2 Estructura `contexts/<ctx>/contracts/{openapi,asyncapi}.yaml` en la plantilla `venues` y `contracts/external/`; verificar que el bundle incluye el contrato del contexto
+- [x] 1.1 `apps/api/openapi/platform.yaml` (`/health`, `/health/live`, errores problem+json) y bundling + lint con Redocly; verificar que `pnpm contracts` falla con un contrato sin `operationId` o sin ejemplos
+- [x] 1.2 Estructura `contexts/<ctx>/contracts/{openapi,asyncapi}.yaml` en la plantilla `venues` y `contracts/external/`; verificar que el bundle incluye el contrato del contexto
 
 ## 2. Generación
 

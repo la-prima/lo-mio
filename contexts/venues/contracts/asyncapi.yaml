@@ -1,0 +1,7 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · venues (eventos)
+  version: 1.0.0
+  description: Eventos que publica el contexto venues. Tópico = <ctx>.<agregado>.<hecho>.v<n>.
+channels: {}
+operations: {}

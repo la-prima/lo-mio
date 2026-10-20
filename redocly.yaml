@@ -1,0 +1,35 @@
+# Reglas de los contratos OpenAPI (ver docs/arquitectura.md, sección 12).
+extends:
+  - recommended
+rules:
+  operation-operationId: error
+  operation-summary: error
+  info-license: off
+  # Microcks mockea con los ejemplos: toda respuesta con cuerpo debe traer uno.
+  rule/response-has-example:
+    subject:
+      type: MediaType
+    where:
+      - subject:
+          type: Response
+        assertions:
+          defined: true
+    assertions:
+      requireAny: [example, examples]
+    message: Cada respuesta debe tener `example` o `examples` (Microcks los usa para mockear).
+    severity: error
+  # Errores en formato RFC 9457.
+  rule/errors-are-problem-json:
+    subject:
+      type: MediaTypesMap
+    where:
+      - subject:
+          type: Response
+          matchParentKeys: /^[45]\d\d$/
+        assertions:
+          defined: true
+    assertions:
+      required: [application/problem+json]
+      disallowed: [application/json]
+    message: Las respuestas 4xx/5xx usan `application/problem+json` (RFC 9457).
+    severity: error

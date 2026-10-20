@@ -1,0 +1,8 @@
+openapi: 3.1.0
+info:
+  title: lo-mio · venues
+  version: 1.0.0
+  description: Locales, mesas y configuración. Rutas bajo /v1/venues. Las operaciones llegan con reclamo-manual.
+servers:
+  - url: /
+paths: {}

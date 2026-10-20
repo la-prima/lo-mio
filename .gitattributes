@@ -1,0 +1,3 @@
+apps/api/openapi.yaml linguist-generated=true
+**/contracts/generated/** linguist-generated=true
+packages/client/src/generated/** linguist-generated=true
