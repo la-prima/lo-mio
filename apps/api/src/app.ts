@@ -5,7 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyInstance, type RouteHandlerMethod } from "fastify";
 import openapiGlue from "fastify-openapi-glue";
 import type { Env } from "./env.ts";
-import { registerProblemHandlers } from "./problem.ts";
+import { registerMethodNotAllowed, registerProblemHandlers } from "./problem.ts";
 
 /** Contrato unificado (plataforma + contextos) que genera `pnpm contracts`. */
 const SPECIFICATION = join(import.meta.dirname, "../openapi.yaml");
@@ -29,6 +29,16 @@ export async function buildApp(
     },
   });
   registerProblemHandlers(app);
+  // Fastify no registra TRACE por defecto: sin esto responde 400 en vez de 405.
+  app.addHttpMethod("TRACE");
+  const routes = new Map<string, Set<string>>();
+  app.addHook("onRoute", (route) => {
+    // Las rutas comodín (ej. OPTIONS * de CORS) no son paths del contrato.
+    if (route.url.includes("*")) return;
+    const methods = routes.get(route.url) ?? new Set<string>();
+    for (const m of [route.method].flat()) methods.add(m);
+    routes.set(route.url, methods);
+  });
   await app.register(helmet);
   await app.register(cors, { origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false });
   // ponytail: límite global por IP; los endpoints sensibles (login, PIN) suman el suyo.
@@ -44,6 +54,7 @@ export async function buildApp(
       return handler;
     },
   });
+  registerMethodNotAllowed(app, new Map(routes));
   const orphans = Object.keys(handlers).filter((id) => !mounted.has(id));
   if (orphans.length > 0)
     throw new Error(`handlers sin operación en el contrato: ${orphans.join(", ")}`);

@@ -49,6 +49,8 @@ Hoy `apps/api` define rutas a mano y `contracts/` está vacío. Los tests son Vi
 ### Conformidad: Schemathesis
 
 - Corre contra la API desplegada en kind (CI: job `api-flows`). Genera casos desde el OpenAPI (incluidos bordes y datos inválidos) y verifica respuestas, códigos y headers contra el contrato. Exporta JUnit para Allure.
+- **Primer hallazgo real:** un método no declarado en una ruta existente respondía 404, y RFC 9110 exige 405 con `Allow`. Ahora la API registra un 405 para cada método que falte en cada path del contrato, en `onRequest`, antes de que Fastify valide el body.
+- **`QUERY` excluido** de los métodos que prueba (`tests/contract/schemathesis.toml`): Envoy lo rechaza con 400 en HTTP/1.1 antes de llegar a la API, que sí responde 405 (lo cubre el test de integración). Envoy Gateway no tiene opción para aceptar métodos no estándar.
 
 ### Flujos funcionales: Playwright
 

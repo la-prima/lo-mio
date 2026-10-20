@@ -40,6 +40,15 @@ describe("api", () => {
     expect(res.json()).toMatchObject({ status: 404, type: "https://lo-mio.cl/problems/not-found" });
   });
 
+  it("un método no declarado en una ruta existente responde 405 con Allow (RFC 9110)", async () => {
+    for (const method of ["POST", "DELETE", "TRACE", "QUERY"] as const) {
+      const res = await app.inject({ method, url: "/health/live" });
+      expect(res.statusCode).toBe(405);
+      expect(res.headers.allow).toBe("GET, HEAD");
+      expect(res.headers["content-type"]).toContain("application/problem+json");
+    }
+  });
+
   it("un campo que el contrato no declara no sale en la respuesta", async () => {
     const leaky = await buildApp(env(pg.url), {
       ...platformHandlers(db),

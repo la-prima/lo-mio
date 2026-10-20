@@ -1,4 +1,4 @@
-import type { FastifyError, FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyError, FastifyInstance, FastifyReply, HTTPMethods } from "fastify";
 
 const BASE = "https://lo-mio.cl/problems";
 
@@ -37,4 +37,37 @@ export function registerProblemHandlers(app: FastifyInstance): void {
     req.log.error({ err: error }, "error no controlado");
     return sendProblem(reply, 500, "internal-error", "Error interno");
   });
+}
+
+const METHODS: HTTPMethods[] = ["GET", "POST", "PUT", "PATCH", "DELETE", "TRACE", "QUERY"];
+
+/**
+ * RFC 9110: un método no soportado en una ruta que existe responde 405 con `Allow`, no 404.
+ * Llamar con las rutas ya registradas (las del contrato): cubre cualquier path y método.
+ */
+export function registerMethodNotAllowed(
+  app: FastifyInstance,
+  routes: Map<string, Set<string>>,
+): void {
+  for (const [url, methods] of routes) {
+    const allow = [...methods].sort().join(", ");
+    const missing = METHODS.filter((m) => !methods.has(m));
+    if (missing.length === 0) continue;
+    app.route({
+      method: missing,
+      url,
+      // En onRequest: antes de que Fastify valide el body (QUERY sin Content-Type daría 400).
+      onRequest: async (req, reply) => {
+        const detail = `${req.method} no está en el contrato para ${url}; usar ${allow}`;
+        return sendProblem(
+          reply.header("allow", allow),
+          405,
+          "method-not-allowed",
+          "Método no permitido",
+          detail,
+        );
+      },
+      handler: async () => undefined,
+    });
+  }
 }
