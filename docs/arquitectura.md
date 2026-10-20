@@ -151,7 +151,7 @@ Los escenarios k6 y de caos viven en `load/` y corren cada noche contra un clús
 - **Ambiente local:** kind (3 nodos, declarado con ctlptl) + Tilt. Postgres con **CloudNativePG** (primario + réplica), que reproduce el modelo de un Postgres administrado y permite probar failover. En producción se usa el Postgres administrado del proveedor.
 - Migraciones como **Job de Helm** previo a cada despliegue.
 - Los tests de integración siguen con Testcontainers (rápidos y aislados). kind es para probar el sistema desplegado.
-- Detalle: change `plataforma-k8s`.
+- Detalle: change archivado [`plataforma-k8s`](../openspec/changes/archive/2026-10-20-plataforma-k8s/).
 
 ### 12. Contract-first
 
