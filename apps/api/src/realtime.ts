@@ -16,7 +16,7 @@ import { sql } from "kysely";
 import pg from "pg";
 
 const CHANNEL = "lomio_realtime";
-export const REALTIME_TOPICS = [
+const REALTIME_TOPICS = [
   "claims.item.changed.v1",
   "settlement.balance.changed.v1",
   "tables.guest.joined.v1",
