@@ -66,8 +66,33 @@ export type Bar = {
   ) => Promise<{ api: Api; guestId: string; sessionId: string; alias: string }>;
 };
 
-// biome-ignore lint/suspicious/noConfusingVoidType: así tipa Playwright un fixture automático sin valor.
-export const test = base.extend<{ api: Api; bar: Bar; allureLabels: void }>({
+/** Sesión del administrador, una por worker: el login tiene su propio límite (10/min por IP). */
+async function adminToken(baseUrl: string): Promise<string> {
+  const api = createClient(createConfig({ baseUrl }));
+  let token = "";
+  const login = async () => {
+    const { data, response } = await createStaffSession({ client: api, body: ADMIN });
+    token = data?.token ?? "";
+    return response?.status;
+  };
+  // Si otra suite (ej. Schemathesis) agotó el límite, se espera a que se libere.
+  await expect
+    .poll(login, { message: "el administrador inicia sesión", timeout: 70_000, intervals: [5_000] })
+    .toBe(201);
+  return token;
+}
+
+export const test = base.extend<
+  // biome-ignore lint/suspicious/noConfusingVoidType: así tipa Playwright un fixture automático sin valor.
+  { api: Api; bar: Bar; allureLabels: void },
+  { staffToken: string }
+>({
+  staffToken: [
+    // biome-ignore lint/correctness/noEmptyPattern: Playwright lee las dependencias del fixture desde este patrón.
+    async ({}, provide, workerInfo) =>
+      provide(await adminToken(workerInfo.project.use.baseURL ?? "")),
+    { scope: "worker", timeout: 90_000 },
+  ],
   // Contexto → flujo → escenario en el reporte, desde los describe (ver tests/allure/labels.ts).
   allureLabels: [
     // biome-ignore lint/correctness/noEmptyPattern: Playwright lee las dependencias del fixture desde este patrón.
@@ -82,23 +107,10 @@ export const test = base.extend<{ api: Api; bar: Bar; allureLabels: void }>({
     { auto: true },
   ],
   api: async ({ baseURL }, provide, testInfo) => provide(client(baseURL ?? "", testInfo)),
-  bar: async ({ baseURL, api }, provide, testInfo) => {
-    // El login tiene su propio límite (10/min): si Schemathesis lo agotó, se espera a que se libere.
-    let token = "";
-    const login = async () => {
-      const { data, response } = await createStaffSession({ client: api, body: ADMIN });
-      token = data?.token ?? "";
-      return response?.status;
-    };
-    await expect
-      .poll(login, {
-        message: "el administrador inicia sesión",
-        timeout: 70_000,
-        intervals: [5_000],
-      })
-      .toBe(201);
+  bar: async ({ baseURL, api, staffToken: token }, provide, testInfo) => {
     const staff = client(baseURL ?? "", testInfo, { Authorization: `Bearer ${token}` });
-    const label = `F${Date.now().toString(36).slice(-5)}`;
+    // Aleatoria: con workers en paralelo, la hora choca (la etiqueta es única por local).
+    const label = `F${crypto.randomUUID().slice(0, 8)}`;
     const table = (
       await registerTable({ client: staff, body: { label }, ...idempotency(), throwOnError: true })
     ).data;

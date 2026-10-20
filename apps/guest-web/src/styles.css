@@ -1,13 +1,98 @@
 :root {
   color-scheme: light dark;
+  --fg: #111827;
+  --bg: #ffffff;
+  --muted: #4b5563;
+  --line: #d1d5db;
+  --accent: #1d4ed8;
+  --on-accent: #ffffff;
   font-family: system-ui, sans-serif;
   line-height: 1.4;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #f3f4f6;
+    --bg: #111827;
+    --muted: #d1d5db;
+    --line: #374151;
+    --accent: #93c5fd;
+    --on-accent: #111827;
+  }
+}
 body {
   margin: 0;
+  color: var(--fg);
+  background: var(--bg);
 }
 main {
   max-width: 32rem;
   margin: 0 auto;
   padding: 1rem;
+}
+h1,
+h2,
+h3 {
+  margin: 0.5rem 0;
+}
+h3 {
+  font-size: 1rem;
+}
+.muted {
+  color: var(--muted);
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+.item {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.item-head,
+.balances li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.balances li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+}
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+button:disabled {
+  opacity: 0.6;
+}
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}
+.my-balance {
+  font-size: 1.25rem;
 }

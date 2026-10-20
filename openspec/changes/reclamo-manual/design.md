@@ -39,6 +39,8 @@ Primer change con reglas de negocio. Aplica `docs/arquitectura.md` completo; aqu
 - **Tiempo real entre réplicas (cambio respecto al plan):** un suscriptor durable del bus (`realtime`) toma cada evento relevante una vez y hace `pg_notify` en su transacción; cada instancia de la API escucha el canal y reenvía a sus sockets. Un suscriptor del bus por sí solo no alcanza: es consumidor competitivo y cada evento llegaría a una sola réplica.
 - **Reanudación por snapshot (cambio respecto al plan):** en vez de guardar un log por sesión y reanudar desde el último `event.id`, al conectarse el servidor envía el feed y los saldos completos; cada ítem trae su `version` y el cliente descarta lo que ya tiene. Cumple "resincronizar sin acciones duplicadas" sin almacenamiento extra.
 - **WebSocket fuera de fastify-openapi-glue** (glue solo monta HTTP): la ruta `/v1/sessions/{sessionId}/events` se declara en el `asyncapi.yaml` de la API y la registra `apps/api`, con la misma autenticación.
+- **Web del comensal en el mismo origen que la API:** el HTTPRoute de `guestWeb` envía `/v1` a la API y el resto a los estáticos. La cookie `lomio_guest` es de primera parte, no hace falta CORS con credenciales (ni su preflight en redes móviles) y el WebSocket va al mismo host.
+- **Alias por defecto sin duplicados:** la unión bloquea la fila de la sesión (`FOR UPDATE`) al numerar "Comensal N"; dos uniones simultáneas se numeran en orden (con alias repetidos, "compartir con" no distingue a quién).
 
 - **Gateway WebSocket** en `apps/api` (`docs/arquitectura.md`, sección 6): reenvía los eventos de la sesión a sus clientes y reanuda desde el último `event.id`.
 

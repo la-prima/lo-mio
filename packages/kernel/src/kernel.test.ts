@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { addMoney, createEvent, eventEnvelopeSchema, money, newId, topicOf } from "./index.ts";
+import {
+  addMoney,
+  createEvent,
+  eventEnvelopeSchema,
+  formatMoney,
+  money,
+  newId,
+  topicOf,
+} from "./index.ts";
 
 describe("Dinero", () => {
   it("suma montos de la misma moneda", () => {
@@ -11,6 +19,13 @@ describe("Dinero", () => {
     expect(() => money(10.5, "CLP")).toThrow(RangeError);
     expect(() => money(10, "clp")).toThrow(RangeError);
     expect(() => addMoney(money(1, "CLP"), money(1, "USD"))).toThrow(RangeError);
+  });
+
+  it("se muestra con los decimales de su moneda", () => {
+    // Intl separa el símbolo con un espacio duro según el locale; se normaliza para comparar.
+    const shown = (m: ReturnType<typeof money>) => formatMoney(m).replace(/\s/g, " ");
+    expect(shown(money(3334, "CLP"))).toBe("$3.334");
+    expect(shown(money(1050, "USD"))).toBe("US$10,50");
   });
 });
 

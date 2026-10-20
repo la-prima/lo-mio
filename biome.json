@@ -60,7 +60,7 @@
       }
     },
     {
-      "includes": ["**/*.test.ts", "**/*.flow.ts"],
+      "includes": ["**/*.test.ts", "**/*.flow.ts", "**/*.e2e.ts"],
       "linter": {
         "rules": {
           "complexity": {
