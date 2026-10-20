@@ -2,8 +2,8 @@
 
 ## 1. Imagen
 
-- [ ] 1.1 `apps/api/Dockerfile` multi-stage (`pnpm deploy --prod`, distroless nonroot) y entrypoint `src/migrate.ts`; verificar que la imagen arranca contra Postgres, responde `/health` y que Trivy no reporta vulnerabilidades altas ni críticas
-- [ ] 1.2 Separar `/health/live` (proceso) de `/health` (readiness con base); verificar con tests de integración
+- [x] 1.1 `apps/api/Dockerfile` multi-stage (`pnpm deploy --prod`, distroless nonroot) y entrypoint `src/migrate.ts`; verificar que la imagen arranca contra Postgres, responde `/health` y que Trivy no reporta vulnerabilidades altas ni críticas
+- [x] 1.2 Separar `/health/live` (proceso) de `/health` (readiness con base); verificar con tests de integración
 
 ## 2. Helm chart
 
