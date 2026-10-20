@@ -36,6 +36,30 @@ describe("Locales por HTTP", () => {
     expect(venue.json()).toMatchObject({ name: "Bar A", country: "CL", currency: "CLP" });
   });
 
+  it("un body que no cumple el contrato se rechaza, no se corrige en silencio", async () => {
+    const asNumber = await api.app.inject({
+      method: "POST",
+      url: "/v1/venues/current/tables",
+      headers: command(admin),
+      payload: { label: 60216331315366580 },
+    });
+    expect(asNumber.statusCode).toBe(400);
+    const extra = await api.app.inject({
+      method: "POST",
+      url: "/v1/venues/current/products",
+      headers: command(admin),
+      payload: { name: "Vino", price: { amount: 1, currency: "CLP", descuento: 50 } },
+    });
+    expect(extra.statusCode).toBe(400);
+    const control = await api.app.inject({
+      method: "POST",
+      url: "/v1/venues/current/tables",
+      headers: command(admin),
+      payload: { label: "\u0003" },
+    });
+    expect(control.statusCode).toBe(400);
+  });
+
   it("un comando sin Idempotency-Key se rechaza por contrato", async () => {
     const res = await api.app.inject({
       method: "POST",

@@ -5,9 +5,14 @@ export type Venue = { id: string; name: string; country: string; currency: strin
 export type Table = { id: string; venueId: string; label: string; qrCode: string };
 export type Product = { id: string; venueId: string; name: string; price: Money };
 
+// Sin caracteres de control (C0/C1). No se usa \p{C}: incluye los no asignados, que cambian con
+// cada versión de Unicode (el contrato y sus clientes podrían discrepar).
+// biome-ignore lint/suspicious/noControlCharactersInRegex: justamente se buscan caracteres de control.
+const PRINTABLE = /^[^\u0000-\u001F\u007F-\u009F]+$/;
+
 const trimmed = (value: string, max: number) => {
   const text = value.trim();
-  return text.length > 0 && text.length <= max ? text : undefined;
+  return text.length > 0 && text.length <= max && PRINTABLE.test(text) ? text : undefined;
 };
 
 export function registerVenue(input: {

@@ -76,8 +76,8 @@ export async function addTable(
   const venue = await currentVenue(deps, actor);
   return run(deps, actor, key, ["registerTable", input], async (tx) => {
     const table = registerTable(venue, { id: newId(), label: input.label, qrCode: newQrCode() });
-    if (!table.ok)
-      return problem(400, "invalid-request", "Solicitud inválida", "Nombre de mesa inválido");
+    // 422: el request cumple el contrato, pero no la regla (ej. un nombre que es solo espacios).
+    if (!table.ok) return problem(422, "invalid-table-label", "Nombre de mesa inválido");
     if (!(await repo.insertTable(tx, table.value))) {
       return problem(409, "table-label-taken", "Ya existe una mesa con ese nombre");
     }
@@ -124,11 +124,11 @@ export async function addProduct(
   return run(deps, actor, key, ["registerProduct", input], async (tx) => {
     const product = registerProduct(venue, { id: newId(), ...input });
     if (!product.ok) {
-      const detail =
-        product.error === "currency-mismatch"
-          ? `El precio debe estar en ${venue.currency}`
-          : "Producto inválido";
-      return problem(400, "invalid-request", "Solicitud inválida", detail);
+      if (product.error !== "currency-mismatch") {
+        return problem(422, "invalid-product-name", "Nombre de producto inválido");
+      }
+      const detail = `El precio debe estar en ${venue.currency}`;
+      return problem(422, "currency-mismatch", "El precio no está en la moneda del local", detail);
     }
     await repo.insertProduct(tx, product.value);
     const { id, name, price } = product.value;

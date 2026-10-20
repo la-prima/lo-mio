@@ -50,7 +50,7 @@ export const deleteCurrentStaffSession = <ThrowOnError extends boolean = false>(
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/staff/sessions/current',
     ...options
 });
@@ -63,7 +63,7 @@ export const getCurrentStaffSession = <ThrowOnError extends boolean = false>(opt
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/staff/sessions/current',
     ...options
 });
@@ -76,7 +76,7 @@ export const getCurrentVenue = <ThrowOnError extends boolean = false>(options?: 
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/venues/current',
     ...options
 });
@@ -89,7 +89,7 @@ export const listTables = <ThrowOnError extends boolean = false>(options?: Optio
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/venues/current/tables',
     ...options
 });
@@ -102,7 +102,7 @@ export const registerTable = <ThrowOnError extends boolean = false>(options: Opt
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/venues/current/tables',
     ...options,
     headers: {
@@ -119,7 +119,7 @@ export const rotateTableQr = <ThrowOnError extends boolean = false>(options: Opt
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/venues/current/tables/{tableId}/qr-rotation',
     ...options
 });
@@ -132,7 +132,7 @@ export const listProducts = <ThrowOnError extends boolean = false>(options?: Opt
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/venues/current/products',
     ...options
 });
@@ -145,7 +145,7 @@ export const registerProduct = <ThrowOnError extends boolean = false>(options: O
             in: 'cookie',
             name: 'lomio_staff',
             type: 'apiKey'
-        }],
+        }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/venues/current/products',
     ...options,
     headers: {

@@ -2,8 +2,25 @@
 base-url = "${API_URL}"
 tls-verify = "${CA_BUNDLE}"
 
+# Sesión del administrador local (tests/contract/run.sh), por esquema del contrato: así
+# Schemathesis sabe qué credencial invalida al probar autenticación incorrecta.
+[auth.openapi.staffCookie]
+api_key = "${API_TOKEN}"
+
+[auth.openapi.staffBearer]
+bearer = "${API_TOKEN}"
+
+# Cerraría la sesión que usa el resto de la corrida; la cubre staff-access.int.test.ts.
+[[operations]]
+include-operation-id = "deleteCurrentStaffSession"
+enabled = false
+
 [checks]
 enabled = true
+
+# Reusar una Idempotency-Key con otra solicitud responde 422 por contrato: es aceptación válida.
+[checks.positive_data_acceptance]
+expected-statuses = ["2XX", "3XX", 401, 403, 404, 409, 422, 429]
 
 [phases.coverage]
 # Todos los métodos por defecto salvo QUERY (borrador IETF): Envoy lo rechaza con 400 en HTTP/1.1

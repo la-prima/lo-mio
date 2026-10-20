@@ -56,6 +56,9 @@ export type TableQrRotated = {
 };
 
 export type Money = {
+    /**
+     * Tope de un billón de unidades mínimas.
+     */
     amount: number;
     currency: string;
 };
@@ -81,9 +84,14 @@ export type Problem = {
 };
 
 /**
- * Sesión del personal (también se acepta `Authorization: Bearer`).
+ * Sesión del personal en la app (`Authorization: Bearer <token>`).
  */
-export type StaffSession = unknown;
+export type StaffBearer = unknown;
+
+/**
+ * Sesión del personal en la web (cookie httpOnly).
+ */
+export type StaffCookie = unknown;
 
 /**
  * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
@@ -179,7 +187,7 @@ export type RegisterTableErrors = {
      */
     409: Problem;
     /**
-     * La misma Idempotency-Key se usó con otra solicitud.
+     * Nombre de mesa inválido (ej. solo espacios) o Idempotency-Key reutilizada.
      */
     422: Problem;
     /**
@@ -215,6 +223,10 @@ export type RotateTableQrData = {
 };
 
 export type RotateTableQrErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
     /**
      * Falta la sesión o no es válida.
      */
@@ -304,7 +316,7 @@ export type RegisterProductErrors = {
      */
     403: Problem;
     /**
-     * La misma Idempotency-Key se usó con otra solicitud.
+     * Precio en otra moneda que la del local, nombre inválido o Idempotency-Key reutilizada.
      */
     422: Problem;
     /**

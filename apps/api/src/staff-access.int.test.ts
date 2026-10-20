@@ -96,6 +96,12 @@ describe("Acceso del personal", () => {
     expect(res.json()).toMatchObject({ type: "https://lo-mio.cl/problems/forbidden" });
   });
 
+  it("un login sin cuerpo responde 400 (no 500): el contrato exige el body", async () => {
+    const res = await api.app.inject({ method: "POST", url: "/v1/staff/sessions" });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ type: "https://lo-mio.cl/problems/invalid-request" });
+  });
+
   it("el login tiene su propio límite de intentos", async () => {
     let last = 0;
     for (let i = 0; i < 11; i++) {

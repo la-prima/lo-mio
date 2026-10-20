@@ -128,7 +128,11 @@ paths:
         - staff
       summary: Sesión actual (para saber quién está en el dispositivo y hasta cuándo).
       security:
-        - staffSession:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
             - waiter
             - manager
             - admin
@@ -162,7 +166,11 @@ paths:
         - staff
       summary: Cierra la sesión (el token deja de servir de inmediato).
       security:
-        - staffSession:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
             - waiter
             - manager
             - admin
@@ -180,7 +188,11 @@ paths:
         - venues
       summary: Local del personal autenticado.
       security:
-        - staffSession:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
             - waiter
             - manager
             - admin
@@ -209,7 +221,11 @@ paths:
         - venues
       summary: Mesas del local, con el código de su QR.
       security:
-        - staffSession:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
             - waiter
             - manager
             - admin
@@ -242,7 +258,9 @@ paths:
         - venues
       summary: Registra una mesa y genera su QR.
       security:
-        - staffSession:
+        - staffCookie:
+            - admin
+        - staffBearer:
             - admin
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -279,7 +297,7 @@ paths:
         "409":
           $ref: "#/components/responses/TableLabelTaken"
         "422":
-          $ref: "#/components/responses/IdempotencyKeyReused"
+          $ref: "#/components/responses/TableRejected"
         "429":
           $ref: "#/components/responses/RateLimited"
   /v1/venues/current/tables/{tableId}/qr-rotation:
@@ -289,7 +307,9 @@ paths:
         - venues
       summary: Revoca el QR de la mesa y genera uno nuevo (ej. al reimprimirlo).
       security:
-        - staffSession:
+        - staffCookie:
+            - admin
+        - staffBearer:
             - admin
       parameters:
         - name: tableId
@@ -313,6 +333,8 @@ paths:
               examples:
                 ok:
                   $ref: "#/components/examples/Table"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
@@ -330,7 +352,11 @@ paths:
         - venues
       summary: Catálogo del local (lo usa la carga manual de ítems).
       security:
-        - staffSession:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
             - waiter
             - manager
             - admin
@@ -365,7 +391,9 @@ paths:
         - venues
       summary: Agrega un producto al catálogo.
       security:
-        - staffSession:
+        - staffCookie:
+            - admin
+        - staffBearer:
             - admin
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -403,7 +431,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
         "422":
-          $ref: "#/components/responses/IdempotencyKeyReused"
+          $ref: "#/components/responses/ProductRejected"
         "429":
           $ref: "#/components/responses/RateLimited"
 components:
@@ -538,6 +566,7 @@ components:
           type: string
           minLength: 1
           maxLength: 20
+          pattern: ^[^\u0000-\u001F\u007F-\u009F]+$
           description: Nombre visible (ej. "5", "Terraza 2").
     Table:
       type: object
@@ -566,6 +595,7 @@ components:
           type: string
           minLength: 1
           maxLength: 80
+          pattern: ^[^\u0000-\u001F\u007F-\u009F]+$
         price:
           $ref: "#/components/schemas/Money"
     Product:
@@ -620,6 +650,8 @@ components:
         amount:
           type: integer
           minimum: 0
+          maximum: 1000000000000
+          description: Tope de un billón de unidades mínimas.
         currency:
           type: string
           pattern: ^[A-Z]{3}$
@@ -672,6 +704,47 @@ components:
                 type: https://lo-mio.cl/problems/unauthenticated
                 title: Sesión requerida
                 status: 401
+    TableRejected:
+      description: Nombre de mesa inválido (ej. solo espacios) o Idempotency-Key
+        reutilizada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalid-table-label:
+              value:
+                type: https://lo-mio.cl/problems/invalid-table-label
+                title: Nombre de mesa inválido
+                status: 422
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
+    ProductRejected:
+      description: Precio en otra moneda que la del local, nombre inválido o
+        Idempotency-Key reutilizada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            currency-mismatch:
+              value:
+                type: https://lo-mio.cl/problems/currency-mismatch
+                title: El precio no está en la moneda del local
+                status: 422
+            invalid-product-name:
+              value:
+                type: https://lo-mio.cl/problems/invalid-product-name
+                title: Nombre de producto inválido
+                status: 422
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
     TableLabelTaken:
       description: Ya existe una mesa con ese nombre en el local.
       content:
@@ -696,18 +769,6 @@ components:
                 type: https://lo-mio.cl/problems/forbidden
                 title: Sin permiso
                 status: 403
-    IdempotencyKeyReused:
-      description: La misma Idempotency-Key se usó con otra solicitud.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          examples:
-            idempotency-key-reused:
-              value:
-                type: https://lo-mio.cl/problems/idempotency-key-reused
-                title: Idempotency-Key reutilizada
-                status: 422
     NotFound:
       description: El recurso no existe.
       content:
@@ -720,12 +781,28 @@ components:
                 type: https://lo-mio.cl/problems/not-found
                 title: Recurso no encontrado
                 status: 404
+    IdempotencyKeyReused:
+      description: La misma Idempotency-Key se usó con otra solicitud.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
   securitySchemes:
-    staffSession:
+    staffCookie:
       type: apiKey
       in: cookie
       name: lomio_staff
-      description: "Sesión del personal (también se acepta `Authorization: Bearer`)."
+      description: Sesión del personal en la web (cookie httpOnly).
+    staffBearer:
+      type: http
+      scheme: bearer
+      description: "Sesión del personal en la app (`Authorization: Bearer <token>`)."
   examples:
     StaffSession:
       value:

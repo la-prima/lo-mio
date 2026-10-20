@@ -1,0 +1,41 @@
+{{- if .Values.api.seed.enabled }}
+# Solo local y CI: crea un local y su administrador para poder iniciar sesión. Idempotente.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-api-seed
+  labels: {{- include "lo-mio.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        {{- include "lo-mio.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Release.Name }}-api-migrations
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: seed
+          image: {{ include "lo-mio.api.image" . }}
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          args: ["src/seed.ts"]
+          env:
+            {{- include "lo-mio.api.databaseEnv" . | nindent 12 }}
+            - { name: SEED_VENUE_NAME, value: {{ .Values.api.seed.venueName | quote }} }
+            - { name: SEED_VENUE_COUNTRY, value: "CL" }
+            - { name: SEED_ADMIN_NAME, value: "Administración local" }
+            - { name: SEED_ADMIN_EMAIL, value: {{ .Values.api.seed.adminEmail | quote }} }
+            - { name: SEED_ADMIN_PASSWORD, value: {{ .Values.api.seed.adminPassword | quote }} }
+          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          securityContext: {{- include "lo-mio.containerSecurity" . | nindent 12 }}
+{{- end }}

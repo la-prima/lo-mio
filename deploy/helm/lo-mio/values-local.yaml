@@ -1,5 +1,11 @@
 # kind + Tilt. Ver deploy/kind/.
 api:
+  # Credenciales solo de desarrollo (kind y CI). tests/contract y tests/flows las usan.
+  seed:
+    enabled: true
+    venueName: Bar La Prima (local)
+    adminEmail: admin@lo-mio.localhost
+    adminPassword: admin-local-123
   replicas: 2
   hostname: api.lo-mio.localhost
   env:

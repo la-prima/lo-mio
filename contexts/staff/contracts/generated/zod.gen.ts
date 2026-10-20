@@ -38,9 +38,14 @@ export const zProblem = z.strictObject({
 });
 
 /**
- * Sesión del personal (también se acepta `Authorization: Bearer`).
+ * Sesión del personal en la app (`Authorization: Bearer <token>`).
  */
-export const zStaffSession2 = z.unknown();
+export const zStaffBearer = z.unknown();
+
+/**
+ * Sesión del personal en la web (cookie httpOnly).
+ */
+export const zStaffCookie = z.unknown();
 
 export const zCreateStaffSessionBody = zCredentials;
 

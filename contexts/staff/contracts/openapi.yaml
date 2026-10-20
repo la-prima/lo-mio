@@ -51,7 +51,7 @@ paths:
       operationId: getCurrentStaffSession
       tags: [staff]
       summary: Sesión actual (para saber quién está en el dispositivo y hasta cuándo).
-      security: [{ staffSession: [waiter, manager, admin] }]
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
       x-microcks-operation: *defaultExample
       responses:
         "200":
@@ -70,14 +70,15 @@ paths:
       operationId: deleteCurrentStaffSession
       tags: [staff]
       summary: Cierra la sesión (el token deja de servir de inmediato).
-      security: [{ staffSession: [waiter, manager, admin] }]
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
       responses:
         "204": { description: Sesión cerrada. }
         "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
         "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
 components:
   securitySchemes:
-    staffSession: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffSession" }
+    staffCookie: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffCookie" }
+    staffBearer: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffBearer" }
   schemas:
     Credentials:
       type: object

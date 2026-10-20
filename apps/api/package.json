@@ -16,12 +16,12 @@
     "@lo-mio/server": "workspace:*",
     "@lo-mio/staff": "workspace:*",
     "@lo-mio/venues": "workspace:*",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "fastify": "^5.12.5",
     "fastify-openapi-glue": "^4.11.5",
     "pg-boss": "^12.37.1",
+    "yaml": "^2.9.1",
     "zod": "^4.6.7"
-  },
-  "devDependencies": {
-    "yaml": "^2.9.1"
   }
 }

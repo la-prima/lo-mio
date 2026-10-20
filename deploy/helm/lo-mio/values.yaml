@@ -25,6 +25,9 @@ api:
   resources:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { memory: 256Mi }
+  # Local de demostración con su administrador. Nunca en producción.
+  seed:
+    enabled: false
   networkPolicy:
     enabled: true
     # Namespace de los pods de Envoy que reenvían el tráfico a la API.

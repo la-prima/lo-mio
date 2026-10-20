@@ -103,7 +103,13 @@ describe("Locales, mesas y catálogo", () => {
       { name: "Vino", price: { amount: 10, currency: "USD" } },
       cmd(),
     );
-    expect(usd).toMatchObject({ status: 400, body: { detail: "El precio debe estar en CLP" } });
+    expect(usd).toMatchObject({
+      status: 422,
+      body: {
+        type: "https://lo-mio.cl/problems/currency-mismatch",
+        detail: "El precio debe estar en CLP",
+      },
+    });
     expect(await service.listProducts(deps(), staff(venueA, "waiter"))).toEqual([
       expect.objectContaining(schop),
     ]);

@@ -36,6 +36,10 @@ describe("Mesas y su QR", () => {
   it("un nombre vacío o demasiado largo se rechaza", () => {
     expect(registerTable(venue(), { id: "t1", label: "  ", qrCode: "a" }).ok).toBe(false);
     expect(registerTable(venue(), { id: "t1", label: "x".repeat(21), qrCode: "a" }).ok).toBe(false);
+    expect(registerTable(venue(), { id: "t1", label: "\u0003", qrCode: "a" }).ok).toBe(false);
+    expect(registerTable(venue(), { id: "t1", label: "Terraza ñandú 🍺", qrCode: "a" }).ok).toBe(
+      true,
+    );
   });
 
   it("rotar el QR reemplaza el código anterior", () => {

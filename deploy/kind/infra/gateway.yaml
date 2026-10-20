@@ -76,3 +76,19 @@ spec:
     - filters:
         - type: RequestRedirect
           requestRedirect: { scheme: https, statusCode: 301 }
+---
+# Headers con guion bajo: Envoy por defecto rechaza la request (400 en texto plano, fuera del
+# contrato de errores). Se descartan: la API nunca los recibe (misma protección contra
+# ambigüedades de headers) y la request sigue su curso. Producción usa la misma política.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: lo-mio
+  namespace: gateway
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: lo-mio
+  headers:
+    withUnderscoresAction: DropHeader

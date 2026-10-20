@@ -51,9 +51,14 @@ export type Problem = {
 };
 
 /**
- * Sesión del personal (también se acepta `Authorization: Bearer`).
+ * Sesión del personal en la app (`Authorization: Bearer <token>`).
  */
-export type StaffSession2 = unknown;
+export type StaffBearer = unknown;
+
+/**
+ * Sesión del personal en la web (cookie httpOnly).
+ */
+export type StaffCookie = unknown;
 
 export type CreateStaffSessionData = {
     body: Credentials;

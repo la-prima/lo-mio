@@ -238,6 +238,12 @@ importers:
       '@lo-mio/venues':
         specifier: workspace:*
         version: link:../../contexts/venues
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
+      ajv-formats:
+        specifier: ^3.0.1
+        version: 3.0.1
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
@@ -247,13 +253,12 @@ importers:
       pg-boss:
         specifier: ^12.37.1
         version: 12.37.1(@opentelemetry/api@1.9.1)
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
-    devDependencies:
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   contexts/staff:
     dependencies:

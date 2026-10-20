@@ -21,7 +21,7 @@ paths:
       operationId: getCurrentVenue
       tags: [venues]
       summary: Local del personal autenticado.
-      security: [{ staffSession: [waiter, manager, admin] }]
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
       x-microcks-operation: *defaultExample
       responses:
         "200":
@@ -37,7 +37,7 @@ paths:
       operationId: listTables
       tags: [venues]
       summary: Mesas del local, con el código de su QR.
-      security: [{ staffSession: [waiter, manager, admin] }]
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
       x-microcks-operation: *defaultExample
       responses:
         "200":
@@ -54,7 +54,7 @@ paths:
       operationId: registerTable
       tags: [venues]
       summary: Registra una mesa y genera su QR.
-      security: [{ staffSession: [admin] }]
+      security: [{ staffCookie: [admin] }, { staffBearer: [admin] }]
       parameters: [{ $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }]
       x-microcks-operation: *defaultExample
       requestBody:
@@ -74,14 +74,14 @@ paths:
         "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
         "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/TableLabelTaken" }
-        "422": { $ref: "../../../contracts/common.yaml#/components/responses/IdempotencyKeyReused" }
+        "422": { $ref: "#/components/responses/TableRejected" }
         "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
   /v1/venues/current/tables/{tableId}/qr-rotation:
     post:
       operationId: rotateTableQr
       tags: [venues]
       summary: Revoca el QR de la mesa y genera uno nuevo (ej. al reimprimirlo).
-      security: [{ staffSession: [admin] }]
+      security: [{ staffCookie: [admin] }, { staffBearer: [admin] }]
       parameters:
         - { name: tableId, in: path, required: true, schema: { type: string, format: uuid } }
         - { $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }
@@ -93,6 +93,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Table" }
               examples: { ok: { $ref: "#/components/examples/Table" } }
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
         "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
         "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
         "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
@@ -103,7 +104,7 @@ paths:
       operationId: listProducts
       tags: [venues]
       summary: Catálogo del local (lo usa la carga manual de ítems).
-      security: [{ staffSession: [waiter, manager, admin] }]
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
       x-microcks-operation: *defaultExample
       responses:
         "200":
@@ -123,7 +124,7 @@ paths:
       operationId: registerProduct
       tags: [venues]
       summary: Agrega un producto al catálogo.
-      security: [{ staffSession: [admin] }]
+      security: [{ staffCookie: [admin] }, { staffBearer: [admin] }]
       parameters: [{ $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }]
       x-microcks-operation: *defaultExample
       requestBody:
@@ -142,11 +143,12 @@ paths:
         "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
         "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
         "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
-        "422": { $ref: "../../../contracts/common.yaml#/components/responses/IdempotencyKeyReused" }
+        "422": { $ref: "#/components/responses/ProductRejected" }
         "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
 components:
   securitySchemes:
-    staffSession: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffSession" }
+    staffCookie: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffCookie" }
+    staffBearer: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffBearer" }
   schemas:
     Venue:
       type: object
@@ -166,6 +168,8 @@ components:
           type: string
           minLength: 1
           maxLength: 20
+          # Sin caracteres de control (C0/C1, rango estable entre versiones de Unicode).
+          pattern: "^[^\\u0000-\\u001F\\u007F-\\u009F]+$"
           description: 'Nombre visible (ej. "5", "Terraza 2").'
     Table:
       type: object
@@ -180,7 +184,7 @@ components:
       additionalProperties: false
       required: [name, price]
       properties:
-        name: { type: string, minLength: 1, maxLength: 80 }
+        name: { type: string, minLength: 1, maxLength: 80, pattern: "^[^\\u0000-\\u001F\\u007F-\\u009F]+$" }
         price: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
     Product:
       type: object
@@ -207,6 +211,44 @@ components:
         tableId: { type: string, format: uuid }
         qrCode: { type: string }
   responses:
+    # 422 = el request cumple el contrato pero no una regla de negocio (400 = no cumple el contrato).
+    TableRejected:
+      description: Nombre de mesa inválido (ej. solo espacios) o Idempotency-Key reutilizada.
+      content:
+        application/problem+json:
+          schema: { $ref: "../../../contracts/common.yaml#/components/schemas/Problem" }
+          examples:
+                invalid-table-label:
+                  value:
+                    type: https://lo-mio.cl/problems/invalid-table-label
+                    title: Nombre de mesa inválido
+                    status: 422
+                idempotency-key-reused:
+                  value:
+                    type: https://lo-mio.cl/problems/idempotency-key-reused
+                    title: Idempotency-Key reutilizada
+                    status: 422
+    ProductRejected:
+      description: Precio en otra moneda que la del local, nombre inválido o Idempotency-Key reutilizada.
+      content:
+        application/problem+json:
+          schema: { $ref: "../../../contracts/common.yaml#/components/schemas/Problem" }
+          examples:
+                currency-mismatch:
+                  value:
+                    type: https://lo-mio.cl/problems/currency-mismatch
+                    title: El precio no está en la moneda del local
+                    status: 422
+                invalid-product-name:
+                  value:
+                    type: https://lo-mio.cl/problems/invalid-product-name
+                    title: Nombre de producto inválido
+                    status: 422
+                idempotency-key-reused:
+                  value:
+                    type: https://lo-mio.cl/problems/idempotency-key-reused
+                    title: Idempotency-Key reutilizada
+                    status: 422
     TableLabelTaken:
       description: Ya existe una mesa con ese nombre en el local.
       content:

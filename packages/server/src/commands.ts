@@ -21,6 +21,8 @@ export function replyCommand(reply: FastifyReply, result: Idempotent) {
       "La misma clave se usó con otra solicitud",
     );
   }
+  // Los errores de los servicios son Problems (RFC 9457): su content-type lo exige el contrato.
+  if (result.status >= 400) reply.type("application/problem+json");
   return reply.code(result.status).send(result.body);
 }
 

@@ -10,13 +10,17 @@ servers:
 paths: {}
 components:
   securitySchemes:
-    # Personal del local. Web: cookie httpOnly; app: Authorization: Bearer <token>.
-    # Los roles requeridos se declaran en cada operación: [waiter], [manager], [admin].
-    staffSession:
+    # Personal del local, dos formas equivalentes (cada operación declara ambas como alternativas):
+    # la web usa la cookie httpOnly y la app el token Bearer. Roles en cada operación.
+    staffCookie:
       type: apiKey
       in: cookie
       name: lomio_staff
-      description: "Sesión del personal (también se acepta `Authorization: Bearer`)."
+      description: Sesión del personal en la web (cookie httpOnly).
+    staffBearer:
+      type: http
+      scheme: bearer
+      description: "Sesión del personal en la app (`Authorization: Bearer <token>`)."
     # Comensal anónimo de una sesión de mesa (cookie httpOnly emitida al unirse por QR).
     guestSession:
       type: apiKey
@@ -48,7 +52,7 @@ components:
       additionalProperties: false
       required: [amount, currency]
       properties:
-        amount: { type: integer, minimum: 0 }
+        amount: { type: integer, minimum: 0, maximum: 1000000000000, description: Tope de un billón de unidades mínimas. }
         currency: { type: string, pattern: "^[A-Z]{3}$" }
   responses:
     InvalidRequest:
