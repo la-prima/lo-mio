@@ -4,3 +4,23 @@
 id = "GHSA-vfj7-8cjw-p6xm"
 ignoreUntil = 2027-01-15
 reason = "braces (DoS por patrón anidado) solo llega vía @fission-ai/openspec (devDependency, CLI local); procesa patrones nuestros, no input de usuarios. Sin versión corregida al 2026-10-19."
+
+# Licencias que osv-scanner no detecta porque el paquete usa el formato antiguo
+# `licenses: [{ type }]` de npm. Verificadas a mano en package.json y LICENSE.
+[[PackageOverrides]]
+name = "ssh2"
+ecosystem = "npm"
+license.override = ["MIT"]
+reason = "MIT (formato antiguo de npm); vía testcontainers, solo en tests."
+
+[[PackageOverrides]]
+name = "cpu-features"
+ecosystem = "npm"
+license.override = ["MIT"]
+reason = "MIT (formato antiguo de npm); vía testcontainers, solo en tests."
+
+[[PackageOverrides]]
+name = "buildcheck"
+ecosystem = "npm"
+license.override = ["MIT"]
+reason = "MIT (formato antiguo de npm); vía testcontainers, solo en tests."

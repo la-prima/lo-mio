@@ -1,0 +1,14 @@
+# Postgres local para desarrollo: `docker compose up -d`. Credenciales solo de desarrollo.
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: lomio
+      POSTGRES_PASSWORD: lomio
+      POSTGRES_DB: lomio
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+volumes:
+  pgdata:

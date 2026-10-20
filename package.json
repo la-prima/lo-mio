@@ -11,10 +11,11 @@
     "check": "biome check .",
     "fix": "biome check --write .",
     "typecheck": "pnpm -r --parallel typecheck",
-    "test": "vitest run",
+    "test": "vitest run --project unit",
     "deadcode": "knip",
     "spec": "openspec validate --all --strict --no-interactive",
-    "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec"
+    "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec",
+    "test:int": "vitest run --project integration"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
