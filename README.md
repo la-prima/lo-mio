@@ -28,11 +28,11 @@ La explicación completa está en [docs/vision.md](docs/vision.md).
 
 ### Roadmap del MVP
 
-Cada change es una rama y un PR. Se implementan en este orden:
+Cada change es una rama y un PR. Se implementan en este orden (✅ = archivado):
 
 | # | Change | Entrega | Depende de |
 |---|---|---|---|
-| 1 | [base-tecnica](openspec/changes/base-tecnica/) | Kernel, bus de eventos (pg-boss), API Fastify, Testcontainers | — |
+| 1 | [base-tecnica](openspec/changes/archive/2026-10-20-base-tecnica/) ✅ | Kernel, bus de eventos (pg-boss), API Fastify, Testcontainers | — |
 | 2 | [plataforma-k8s](openspec/changes/plataforma-k8s/) | Imágenes, Helm chart, kind con Gateway API, CloudNativePG y Tilt | 1 |
 | 3 | [contratos-y-evidencias](openspec/changes/contratos-y-evidencias/) | Contract-first (OpenAPI/AsyncAPI), mocks con Microcks, Schemathesis, flujos Playwright y reporte Allure | 2 |
 | 4 | [reclamo-manual](openspec/changes/reclamo-manual/) | Primer flujo de punta a punta: carga manual → QR → reclamar/compartir → saldo | 3 |
