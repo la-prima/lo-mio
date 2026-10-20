@@ -17,7 +17,9 @@
     "verify": "pnpm contracts:check && pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec",
     "test:int": "vitest run --project integration",
     "contracts": "node scripts/contracts.ts",
-    "contracts:check": "node scripts/contracts.ts --check"
+    "contracts:check": "node scripts/contracts.ts --check",
+    "test:contract": "tests/contract/run.sh",
+    "test:flows": "tests/flows/run.sh"
   },
   "devDependencies": {
     "@asyncapi/parser": "^3.6.4",

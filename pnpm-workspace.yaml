@@ -3,6 +3,7 @@ packages:
   - contexts/*
   - packages/*
   - tools/*
+  - tests/flows
 
 # Supply chain: no instalar versiones publicadas hace menos de 7 días
 # (ventana típica en que se detectan paquetes comprometidos).

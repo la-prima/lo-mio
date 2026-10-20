@@ -1,0 +1,16 @@
+{
+  "name": "@lo-mio/flows",
+  "private": true,
+  "type": "module",
+  "description": "Flujos funcionales de la API (Playwright) contra el ambiente desplegado, agrupados por contexto y flujo de usuario.",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@lo-mio/client": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.5"
+  }
+}
