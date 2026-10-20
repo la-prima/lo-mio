@@ -34,7 +34,7 @@ Cada change es una rama y un PR. Se implementan en este orden (✅ = archivado):
 |---|---|---|---|
 | 1 | [base-tecnica](openspec/changes/archive/2026-10-20-base-tecnica/) ✅ | Kernel, bus de eventos (pg-boss), API Fastify, Testcontainers | — |
 | 2 | [plataforma-k8s](openspec/changes/archive/2026-10-20-plataforma-k8s/) ✅ | Imágenes, Helm chart, kind con Gateway API, CloudNativePG y Tilt | 1 |
-| 3 | [contratos-y-evidencias](openspec/changes/contratos-y-evidencias/) | Contract-first (OpenAPI/AsyncAPI), mocks con Microcks, Schemathesis, flujos Playwright y reporte Allure | 2 |
+| 3 | [contratos-y-evidencias](openspec/changes/archive/2026-10-20-contratos-y-evidencias/) ✅ | Contract-first (OpenAPI/AsyncAPI), mocks con Microcks, Schemathesis, flujos Playwright y reporte Allure | 2 |
 | 4 | [reclamo-manual](openspec/changes/reclamo-manual/) | Primer flujo de punta a punta: carga manual → QR → reclamar/compartir → saldo | 3 |
 | 5 | [cobro-con-comprobante](openspec/changes/cobro-con-comprobante/) | Pagos con comprobante (timbre SII, voucher, efectivo) y cierre de mesa | 4 |
 | 6 | [tarjetas-y-reasignacion](openspec/changes/tarjetas-y-reasignacion/) | Tarjetas NFC, reasignaciones con confirmación, override | 5 |

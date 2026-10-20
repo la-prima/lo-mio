@@ -165,7 +165,7 @@ Los escenarios k6 y de caos viven en `load/` y corren cada noche contra un clús
   - Schemathesis verifica la conformidad de la API contra su OpenAPI.
   - Playwright prueba los flujos funcionales usando el cliente generado.
 - **Evidencias:** un reporte Allure por run, con jerarquía contexto → flujo de usuario → escenario → paso, y traces, videos y request/response adjuntos.
-- Detalle: change `contratos-y-evidencias`.
+- Detalle: change archivado [`contratos-y-evidencias`](../openspec/changes/archive/2026-10-20-contratos-y-evidencias/).
 
 ## Reutilización (antes de escribir código)
 
