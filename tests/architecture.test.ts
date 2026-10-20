@@ -38,8 +38,8 @@ function zoneOfSpecifier(spec: string, fromFile: string): Zone | undefined {
 /** Devuelve el motivo si el import está prohibido. */
 function violation(from: Zone, to: Zone | undefined, spec: string): string | undefined {
   if (from.kind === "kernel") {
-    if (to?.kind !== "kernel" && spec !== "vitest")
-      return "kernel es puro: solo se importa a sí mismo";
+    if (to?.kind !== "kernel" && spec !== "vitest" && spec !== "zod")
+      return "kernel es puro: solo se importa a sí mismo (y zod)";
     return undefined;
   }
   if (from.kind === "context") return contextViolation(from, to, spec);
@@ -50,14 +50,19 @@ function violation(from: Zone, to: Zone | undefined, spec: string): string | und
   return undefined;
 }
 
+/** domain/ y contracts/ solo usan kernel y unas pocas librerías puras; nunca otros paquetes. */
+function purityViolation(from: Zone, to: Zone | undefined, spec: string): string | undefined {
+  const allowedLibs: Record<string, RegExp> = { domain: /^vitest$/, contracts: /^(vitest|zod)$/ };
+  const allowed = allowedLibs[from.layer];
+  if (!allowed) return undefined;
+  if (!to && !allowed.test(spec)) return `${from.layer}/ no usa la librería ${spec}`;
+  if (to?.kind === "package") return `${from.layer}/ no usa el paquete ${spec}`;
+  return undefined;
+}
+
 function contextViolation(from: Zone, to: Zone | undefined, spec: string): string | undefined {
-  const pureLayers: Record<string, RegExp> = {
-    domain: /^vitest$/,
-    contracts: /^(vitest|zod)$/,
-  };
-  const allowedLibs = pureLayers[from.layer];
-  if (allowedLibs && !to && !allowedLibs.test(spec))
-    return `${from.layer}/ no usa la librería ${spec}`;
+  const impure = purityViolation(from, to, spec);
+  if (impure) return impure;
   if (!to || to.kind === "kernel") return undefined;
   if (to.kind === "app") return "un contexto nunca importa de apps/";
   if (to.kind === "context" && to.name !== from.name && to.layer !== "contracts") {

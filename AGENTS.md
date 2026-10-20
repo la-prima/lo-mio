@@ -15,7 +15,7 @@ Monolito modular organizado en **contextos de negocio (DDD)** que se comunican p
 
 ```
 packages/
-  kernel/        Shared kernel: Money, splitAmount, Id, Result, EventEnvelope, puerto EventBus. Puro.
+  kernel/        Shared kernel: Money, splitAmount, Id, Result, EventEnvelope, puerto EventBus. Puro (solo zod).
   client/        Cliente de API tipado + hooks; lo usan todos los fronts.
 contexts/<ctx>/  Un paquete por contexto (venues, staff, tables, claims, pos, settlement):
   domain/        Agregados, eventos de dominio, reglas. Puro: sin IO ni librerías.
@@ -28,7 +28,7 @@ apps/
 ```
 
 Límites (los verifica `tests/architecture.test.ts` en cada commit):
-- `kernel` y los `domain/` son puros: solo importan su propio código (y `kernel`).
+- `kernel` y los `domain/` son puros: solo importan su propio código (y `kernel`). `kernel` además puede usar zod.
 - **Entre contextos solo se importa `@lo-mio/<ctx>/contracts`.** Nunca el domain ni el server de otro.
 - Solo `apps/api` importa capas `server/`. Los fronts usan `domain/` y `contracts/`, nunca librerías de servidor.
 - Las apps no se importan entre sí: lo compartido va a `packages/`.
@@ -51,7 +51,7 @@ Integraciones (POS, pagos, OCR) **siempre detrás de un contrato** definido en e
 5. **Errores**: nunca tragarse una excepción. Las fallas esperadas se modelan como resultado y las inesperadas se propagan y se loguean.
 6. **Toda mutación de asignaciones o pagos es un evento auditable** (quién, cuándo, desde qué dispositivo, por qué).
 7. Sin `any`, sin `!` (non-null assertion), sin `console` (se usa el logger), sin export default (salvo donde el framework lo exige: rutas de Expo Router y archivos `*.config.ts`).
-8. Funciones ≤ 60 líneas y complejidad cognitiva ≤ 12 (lo verifica Biome). Si no cabe, el diseño está mal.
+8. Funciones ≤ 60 líneas y complejidad cognitiva ≤ 12 (lo verifica Biome; en `*.test.ts` el límite de líneas no aplica, porque un `describe` agrupa casos). Si no cabe, el diseño está mal.
 9. Nombres en inglés en el código, según el glosario. Textos de UI, specs y docs en español.
 
 ## Calidad: qué corre y cuándo
@@ -61,7 +61,7 @@ Integraciones (POS, pagos, OCR) **siempre detrás de un contrato** definido en e
 | **pre-commit** | gitleaks (secretos), Biome (formato + lint), test de arquitectura, typecheck, tests relacionados con lo modificado, validar specs | < 10 s |
 | **commit-msg** | Conventional Commits: `tipo(scope): descripción` | — |
 | **pre-push** | `pnpm verify` completo | < 1 min |
-| **CI en cada PR** | verify · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · *integración y e2e cuando existan las apps* | minutos |
+| **CI en cada PR** | verify · integración (Testcontainers) · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · *e2e cuando existan los fronts* | minutos |
 | **Nightly / pre-release** | *carga (k6), failover, DAST (ZAP), e2e en matriz completa de navegadores* | — |
 
 En cursiva: se activa con el change que crea la app correspondiente (ver el roadmap en el README).
@@ -73,7 +73,7 @@ En cursiva: se activa con el change que crea la app correspondiente (ver el road
 | Tipo | Dónde | Herramienta | Qué cubre |
 |---|---|---|---|
 | Unit | junto al código: `*.test.ts` | Vitest | Toda regla de `kernel` y de cada `domain/`. Obligatorio para lógica de dinero. |
-| Integración | `contexts/<ctx>/server/**/*.test.ts` | Vitest + Testcontainers (Postgres real + pg-boss) | Por contexto: comandos, persistencia y eventos (se publican los de entrada y se verifican los de salida). Nada de mocks de la base de datos. |
+| Integración | `**/*.int.test.ts` (`pnpm test:int`, requiere Docker) | Vitest + Testcontainers (Postgres real + pg-boss) | Por contexto: comandos, persistencia y eventos (se publican los de entrada y se verifican los de salida). Nada de mocks de la base de datos. |
 | Contrato | `contexts/pos/server/adapters/` | Vitest | Cada adaptador POS pasa la **misma** suite del contrato `PosAdapter`. |
 | E2E web | `apps/guest-web/e2e/` | Playwright: Chromium, Firefox, WebKit, Pixel y iPhone emulados | Flujos del comensal: unirse, reclamar, compartir, confirmar y ver saldo. |
 | E2E mobile | `apps/mobile/e2e/` | Maestro en emuladores Android e iOS | Flujos del personal: cobro completo con rotación, offline, override. |
@@ -98,6 +98,7 @@ pnpm install        # instala y activa los hooks
 pnpm verify         # todo lo de pre-push
 pnpm fix            # formato + autofix de lint
 pnpm test           # unit tests
+pnpm test:int       # integración (requiere Docker)
 pnpm spec           # valida OpenSpec
 ```
 

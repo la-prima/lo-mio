@@ -83,11 +83,12 @@ Fastify además valida y serializa con JSON Schema compilado (rendimiento y prot
 - **Adaptador MVP:** [pg-boss](https://github.com/timgit/pg-boss) sobre el mismo Postgres.
   - `publish` dentro de la transacción del cambio de negocio: outbox nativo, sin eventos perdidos ni fantasmas.
   - Pub/sub con un queue por suscriptor: fan-out por tópico.
-  - Workers transaccionales: el efecto del handler y el *ack* se confirman juntos, sin doble procesamiento.
+  - Idempotencia con tabla `inbox`: el handler corre en una transacción de Kysely junto con el registro (suscriptor, `event.id`); un evento repetido se descarta. Se eligió en vez de los workers transaccionales de pg-boss porque esos abren su propia transacción (no de Kysely) y porque el inbox sigue valiendo con cualquier broker.
+  - LISTEN/NOTIFY para entrega inmediata; los reintentos (programados a futuro) los recoge un sondeo cada 5 s.
   - Reintentos con backoff y dead-letter.
 - **Sobre de evento** (`EventEnvelope`, inspirado en CloudEvents): `id` (UUIDv7), `type`, `version`, `venueId`, `aggregateId`, `occurredAt`, `correlationId`, `causationId`, `data`.
 - **Tópicos:** `<contexto>.<agregado>.<hecho-en-pasado>.v<n>`, ej. `claims.item.claimed.v1`. El schema de cada evento vive en el `contracts/` del contexto que lo emite. Un cambio incompatible es una versión nueva, y se publican ambas mientras haya consumidores de la anterior.
-- **Consumidores idempotentes** por `event.id`, aunque el worker transaccional ya lo garantiza, para que la regla siga valiendo con NATS.
+- **Consumidores idempotentes** por `event.id`, garantizado por el inbox del adaptador.
 - **Migración futura:** un adaptador `EventBus` para NATS JetStream (u otro) con los mismos tópicos. pg-boss queda solo como outbox relay.
 
 **Alternativas descartadas:**

@@ -13,7 +13,7 @@ pre-commit:
       run: pnpm typecheck
     - name: tests
       glob: "*.{ts,tsx}"
-      run: pnpm vitest related --run --passWithNoTests {staged_files}
+      run: pnpm vitest related --run --project unit --passWithNoTests {staged_files}
     - name: architecture
       glob: "*.{ts,tsx}"
       run: pnpm vitest run tests/architecture.test.ts

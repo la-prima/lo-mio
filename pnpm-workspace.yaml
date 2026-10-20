@@ -17,3 +17,7 @@ trustPolicy: no-downgrade
 # Scripts de instalación bloqueados salvo lista explícita.
 allowBuilds:
   lefthook: true
+  # Vía testcontainers; opcionales, no se necesitan compilar.
+  cpu-features: false
+  protobufjs: false
+  ssh2: false

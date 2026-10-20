@@ -1,0 +1,22 @@
+{
+  "name": "@lo-mio/postgres",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.2.0",
+    "@types/pg": "^8.23.1"
+  },
+  "dependencies": {
+    "@lo-mio/kernel": "workspace:*",
+    "kysely": "^0.29.6",
+    "pg": "^8.23.1",
+    "pg-boss": "^12.37.1"
+  }
+}
