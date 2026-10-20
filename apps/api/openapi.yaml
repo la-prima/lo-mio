@@ -80,6 +80,7 @@ components:
           const: ok
     Problem:
       type: object
+      additionalProperties: false
       required:
         - type
         - title

@@ -2,11 +2,11 @@
 
 import * as z from 'zod';
 
-export const zHealthStatus = z.object({
+export const zHealthStatus = z.strictObject({
     status: z.literal('ok')
 });
 
-export const zProblem = z.object({
+export const zProblem = z.strictObject({
     type: z.url(),
     title: z.string(),
     status: z.int().gte(400).lte(599),

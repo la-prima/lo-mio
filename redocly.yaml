@@ -5,6 +5,8 @@ rules:
   operation-operationId: error
   operation-summary: error
   info-license: off
+  # Los payloads de eventos viven en components y solo los referencia el asyncapi.yaml.
+  no-unused-components: off
   # Microcks mockea con los ejemplos: toda respuesta con cuerpo debe traer uno.
   rule/response-has-example:
     subject:
@@ -32,4 +34,18 @@ rules:
       required: [application/problem+json]
       disallowed: [application/json]
     message: Las respuestas 4xx/5xx usan `application/problem+json` (RFC 9457).
+    severity: error
+  # Contratos cerrados: un campo no declarado es un error (el zod generado usa strictObject).
+  rule/objects-are-closed:
+    subject:
+      type: Schema
+    where:
+      - subject:
+          type: Schema
+          property: type
+        assertions:
+          const: object
+    assertions:
+      required: [additionalProperties]
+    message: Todo objeto declara `additionalProperties` (false salvo que sea un mapa a propósito).
     severity: error

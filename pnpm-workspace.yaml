@@ -22,4 +22,6 @@ allowBuilds:
   cpu-features: false
   protobufjs: false
   ssh2: false
+  # Telemetría de instalación (vía @asyncapi/parser).
+  "@scarf/scarf": false
 

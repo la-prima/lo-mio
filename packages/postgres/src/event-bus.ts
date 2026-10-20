@@ -1,4 +1,11 @@
-import { type EventBus, type EventEnvelope, type EventHandler, topicOf } from "@lo-mio/kernel";
+import {
+  assertDeclared,
+  type EventBus,
+  type EventCatalog,
+  type EventEnvelope,
+  type EventHandler,
+  topicOf,
+} from "@lo-mio/kernel";
 import { fromKysely, type PgBoss } from "pg-boss";
 import type { Db, Tx } from "./db.ts";
 
@@ -6,18 +13,22 @@ import type { Db, Tx } from "./db.ts";
  * EventBus sobre pg-boss. `publish` escribe en la transacción del caller (outbox): si hace
  * rollback, el evento no existe. Cada suscriptor tiene su queue con reintentos y dead-letter, y
  * el handler corre en una transacción junto con su registro en `inbox`: un evento repetido
- * (reintento tras un corte, o entrega doble) se descarta sin repetir efectos.
+ * (reintento tras un corte, o entrega doble) se descarta sin repetir efectos. Solo se publican
+ * eventos declarados en el catálogo (contratos AsyncAPI), validados antes de tocar la transacción.
  */
 export class PgBossEventBus implements EventBus<Tx> {
   readonly #boss: PgBoss;
   readonly #db: Db;
+  readonly #catalog: EventCatalog;
 
-  constructor(boss: PgBoss, db: Db) {
+  constructor(boss: PgBoss, db: Db, catalog: EventCatalog) {
     this.#boss = boss;
     this.#db = db;
+    this.#catalog = catalog;
   }
 
   async publish(event: EventEnvelope, { tx }: { tx: Tx }): Promise<void> {
+    assertDeclared(this.#catalog, event);
     await this.#boss.publish(topicOf(event), event, { db: fromKysely(tx) });
   }
 

@@ -1,7 +1,7 @@
 import { createDb, migrate, PgBossEventBus } from "@lo-mio/postgres";
 import { PgBoss } from "pg-boss";
 import { buildApp } from "./app.ts";
-import { contextMigrations, contexts } from "./contexts.ts";
+import { contextMigrations, contexts, eventCatalog } from "./contexts.ts";
 import { loadEnv } from "./env.ts";
 
 const env = loadEnv();
@@ -10,7 +10,7 @@ if (env.MIGRATE_ON_START) await migrate(db, contextMigrations());
 
 const boss = new PgBoss(env.DATABASE_URL);
 await boss.start();
-const bus = new PgBossEventBus(boss, db);
+const bus = new PgBossEventBus(boss, db, eventCatalog());
 
 const app = await buildApp(env, db);
 for (const context of contexts) await app.register(context.module, { db, bus });

@@ -69,6 +69,8 @@ components:
     # RFC 9457. Todas las respuestas de error de todos los contextos usan este schema.
     Problem:
       type: object
+      # Sin miembros de extensión por ahora; si se agregan, se declaran aquí.
+      additionalProperties: false
       required: [type, title, status]
       properties:
         type: { type: string, format: uri, description: Identificador del tipo de problema. }
