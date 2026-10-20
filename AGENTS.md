@@ -61,7 +61,7 @@ Integraciones (POS, pagos, OCR) **siempre detrás de un contrato** definido en e
 | **pre-commit** | gitleaks (secretos), Biome (formato + lint), test de arquitectura, typecheck, tests relacionados con lo modificado, validar specs | < 10 s |
 | **commit-msg** | Conventional Commits: `tipo(scope): descripción` | — |
 | **pre-push** | `pnpm verify` completo | < 1 min |
-| **CI en cada PR** | verify · integración (Testcontainers) · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · *e2e cuando existan los fronts* | minutos |
+| **CI en cada PR** | verify · integración (Testcontainers) · imagen (Trivy + SBOM) · chart (lint, kubeconform, Trivy) · humo en kind · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · *e2e cuando existan los fronts* | minutos |
 | **Nightly / pre-release** | *carga (k6), failover, DAST (ZAP), e2e en matriz completa de navegadores* | — |
 
 En cursiva: se activa con el change que crea la app correspondiente (ver el roadmap en el README).
@@ -100,7 +100,21 @@ pnpm fix            # formato + autofix de lint
 pnpm test           # unit tests
 pnpm test:int       # integración (requiere Docker)
 pnpm spec           # valida OpenSpec
+
+# Ambiente local (Docker con ≥ 6 GB de memoria asignada)
+ctlptl apply -f deploy/kind/cluster.yaml   # clúster kind (idempotente)
+tilt up                                    # infra + app con el chart de producción; UI en http://localhost:10350
+tilt ci                                    # lo mismo, sin UI: termina en verde o en rojo (lo usa CI)
+ctlptl delete -f deploy/kind/cluster.yaml  # borrar todo
 ```
+
+### Plataforma
+
+- Todo lo desplegable corre como en producción: imagen distroless sin root, sistema de archivos de solo lectura, mismo Helm chart (`deploy/helm/lo-mio`) y entrada por Gateway API con HTTPS (`https://api.lo-mio.localhost`). Ver `docs/arquitectura.md`, sección 11.
+- **No hay live update:** cada cambio reconstruye la imagen (~2 s con caché). No relajar `readOnlyRootFilesystem` para acelerar el ciclo.
+- **Un cambio en el chart** se valida con `helm lint`, kubeconform y `trivy config` (los corre el job `image` de CI) y con `tilt ci` desde cero.
+- **Depurar un pod distroless** (no tiene shell): `kubectl debug -n lo-mio -it <pod> --image=busybox:1.37 --target=api`.
+- **Postgres local** (CloudNativePG): `kubectl cnpg psql lo-mio-db -n lo-mio` con el plugin, o `kubectl port-forward -n lo-mio svc/lo-mio-db-rw 5432`.
 
 ## Definición de terminado
 

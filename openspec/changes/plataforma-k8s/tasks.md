@@ -21,4 +21,4 @@
 
 ## 5. Documentación
 
-- [ ] 5.1 Comandos y requisitos en `AGENTS.md` (`tilt up`, requisitos de recursos, `kubectl debug`); verificar que un clon limpio levanta el ambiente siguiendo solo el README
+- [x] 5.1 Comandos y requisitos en `AGENTS.md` (`tilt up`, requisitos de recursos, `kubectl debug`); verificar que un clon limpio levanta el ambiente siguiendo solo el README
