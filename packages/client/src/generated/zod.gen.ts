@@ -14,6 +14,55 @@ export const zProblem = z.strictObject({
     instance: z.string().optional()
 });
 
+export const zVenue = z.strictObject({
+    id: z.uuid(),
+    name: z.string(),
+    country: z.string(),
+    currency: z.string()
+});
+
+export const zNewTable = z.strictObject({
+    label: z.string().min(1).max(20)
+});
+
+export const zTable = z.strictObject({
+    id: z.uuid(),
+    label: z.string(),
+    qrCode: z.string()
+});
+
+export const zTableRegistered = z.strictObject({
+    tableId: z.uuid(),
+    label: z.string(),
+    qrCode: z.string()
+});
+
+export const zTableQrRotated = z.strictObject({
+    tableId: z.uuid(),
+    qrCode: z.string()
+});
+
+export const zMoney = z.strictObject({
+    amount: z.int().gte(0),
+    currency: z.string().regex(/^[A-Z]{3}$/)
+});
+
+export const zNewProduct = z.strictObject({
+    name: z.string().min(1).max(80),
+    price: zMoney
+});
+
+export const zProduct = z.strictObject({
+    id: z.uuid(),
+    name: z.string(),
+    price: zMoney
+});
+
+/**
+ * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+ */
+export const zIdempotencyKey = z.uuid();
+
 /**
  * El proceso está vivo.
  */
@@ -23,3 +72,53 @@ export const zGetLivenessResponse = zHealthStatus;
  * Listo para atender tráfico.
  */
 export const zGetReadinessResponse = zHealthStatus;
+
+/**
+ * El local.
+ */
+export const zGetCurrentVenueResponse = zVenue;
+
+/**
+ * Mesas ordenadas por nombre.
+ */
+export const zListTablesResponse = z.array(zTable);
+
+export const zRegisterTableBody = zNewTable;
+
+export const zRegisterTableHeaders = z.strictObject({
+    'Idempotency-Key': z.uuid()
+});
+
+/**
+ * Mesa registrada.
+ */
+export const zRegisterTableResponse = zTable;
+
+export const zRotateTableQrHeaders = z.strictObject({
+    'Idempotency-Key': z.uuid()
+});
+
+export const zRotateTableQrPath = z.strictObject({
+    tableId: z.uuid()
+});
+
+/**
+ * Mesa con su QR nuevo. El anterior deja de servir.
+ */
+export const zRotateTableQrResponse = zTable;
+
+/**
+ * Productos ordenados por nombre.
+ */
+export const zListProductsResponse = z.array(zProduct);
+
+export const zRegisterProductBody = zNewProduct;
+
+export const zRegisterProductHeaders = z.strictObject({
+    'Idempotency-Key': z.uuid()
+});
+
+/**
+ * Producto registrado.
+ */
+export const zRegisterProductResponse = zProduct;

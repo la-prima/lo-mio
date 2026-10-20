@@ -3,3 +3,323 @@
 export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
+
+export type Venue = {
+    id: string;
+    name: string;
+    /**
+     * ISO 3166-1 alfa-2. Solo CL por ahora.
+     */
+    country: string;
+    /**
+     * ISO 4217. Define la unidad mínima de los montos.
+     */
+    currency: string;
+};
+
+export type NewTable = {
+    /**
+     * Nombre visible (ej. "5", "Terraza 2").
+     */
+    label: string;
+};
+
+export type Table = {
+    id: string;
+    label: string;
+    /**
+     * Código aleatorio del QR impreso. Revocable.
+     */
+    qrCode: string;
+};
+
+export type NewProduct = {
+    name: string;
+    price: Money;
+};
+
+export type Product = {
+    id: string;
+    name: string;
+    price: Money;
+};
+
+export type TableRegistered = {
+    tableId: string;
+    label: string;
+    qrCode: string;
+};
+
+export type TableQrRotated = {
+    tableId: string;
+    qrCode: string;
+};
+
+export type Money = {
+    amount: number;
+    currency: string;
+};
+
+export type Problem = {
+    /**
+     * Identificador del tipo de problema.
+     */
+    type: string;
+    /**
+     * Resumen legible, igual para todas las ocurrencias del tipo.
+     */
+    title: string;
+    status: number;
+    /**
+     * Explicación de esta ocurrencia.
+     */
+    detail?: string;
+    /**
+     * Identificador de esta ocurrencia.
+     */
+    instance?: string;
+};
+
+/**
+ * Sesión del personal (también se acepta `Authorization: Bearer`).
+ */
+export type StaffSession = unknown;
+
+/**
+ * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+ */
+export type IdempotencyKey = string;
+
+export type GetCurrentVenueData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current';
+};
+
+export type GetCurrentVenueErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetCurrentVenueError = GetCurrentVenueErrors[keyof GetCurrentVenueErrors];
+
+export type GetCurrentVenueResponses = {
+    /**
+     * El local.
+     */
+    200: Venue;
+};
+
+export type GetCurrentVenueResponse = GetCurrentVenueResponses[keyof GetCurrentVenueResponses];
+
+export type ListTablesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/tables';
+};
+
+export type ListTablesErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListTablesError = ListTablesErrors[keyof ListTablesErrors];
+
+export type ListTablesResponses = {
+    /**
+     * Mesas ordenadas por nombre.
+     */
+    200: Array<Table>;
+};
+
+export type ListTablesResponse = ListTablesResponses[keyof ListTablesResponses];
+
+export type RegisterTableData = {
+    body: NewTable;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/tables';
+};
+
+export type RegisterTableErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * Ya existe una mesa con ese nombre en el local.
+     */
+    409: Problem;
+    /**
+     * La misma Idempotency-Key se usó con otra solicitud.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RegisterTableError = RegisterTableErrors[keyof RegisterTableErrors];
+
+export type RegisterTableResponses = {
+    /**
+     * Mesa registrada.
+     */
+    201: Table;
+};
+
+export type RegisterTableResponse = RegisterTableResponses[keyof RegisterTableResponses];
+
+export type RotateTableQrData = {
+    body?: never;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        tableId: string;
+    };
+    query?: never;
+    url: '/v1/venues/current/tables/{tableId}/qr-rotation';
+};
+
+export type RotateTableQrErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * La misma Idempotency-Key se usó con otra solicitud.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RotateTableQrError = RotateTableQrErrors[keyof RotateTableQrErrors];
+
+export type RotateTableQrResponses = {
+    /**
+     * Mesa con su QR nuevo. El anterior deja de servir.
+     */
+    200: Table;
+};
+
+export type RotateTableQrResponse = RotateTableQrResponses[keyof RotateTableQrResponses];
+
+export type ListProductsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/products';
+};
+
+export type ListProductsErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListProductsError = ListProductsErrors[keyof ListProductsErrors];
+
+export type ListProductsResponses = {
+    /**
+     * Productos ordenados por nombre.
+     */
+    200: Array<Product>;
+};
+
+export type ListProductsResponse = ListProductsResponses[keyof ListProductsResponses];
+
+export type RegisterProductData = {
+    body: NewProduct;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/products';
+};
+
+export type RegisterProductErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * La misma Idempotency-Key se usó con otra solicitud.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RegisterProductError = RegisterProductErrors[keyof RegisterProductErrors];
+
+export type RegisterProductResponses = {
+    /**
+     * Producto registrado.
+     */
+    201: Product;
+};
+
+export type RegisterProductResponse = RegisterProductResponses[keyof RegisterProductResponses];

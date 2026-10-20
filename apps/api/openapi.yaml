@@ -9,6 +9,8 @@ servers:
 tags:
   - name: plataforma
     description: Salud del sistema.
+  - name: venues
+    description: Locales, mesas y catálogo.
 paths:
   /health/live:
     get:
@@ -70,6 +72,239 @@ paths:
                     type: https://lo-mio.cl/problems/dependency-unavailable
                     title: Dependencia no disponible
                     status: 503
+  /v1/venues/current:
+    get:
+      operationId: getCurrentVenue
+      tags:
+        - venues
+      summary: Local del personal autenticado.
+      security:
+        - staffSession:
+            - waiter
+            - manager
+            - admin
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: El local.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Venue"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Venue"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/venues/current/tables:
+    get:
+      operationId: listTables
+      tags:
+        - venues
+      summary: Mesas del local, con el código de su QR.
+      security:
+        - staffSession:
+            - waiter
+            - manager
+            - admin
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: Mesas ordenadas por nombre.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Table"
+              examples:
+                ok:
+                  value:
+                    - id: 0199f0a0-0000-7000-8000-000000000005
+                      label: "5"
+                      qrCode: q7Kd2mN9xVb4LpW1sT8cRa
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+    post:
+      operationId: registerTable
+      tags:
+        - venues
+      summary: Registra una mesa y genera su QR.
+      security:
+        - staffSession:
+            - admin
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewTable"
+            examples:
+              ok:
+                value:
+                  label: "5"
+      responses:
+        "201":
+          description: Mesa registrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Table"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Table"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/TableLabelTaken"
+        "422":
+          $ref: "#/components/responses/IdempotencyKeyReused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/venues/current/tables/{tableId}/qr-rotation:
+    post:
+      operationId: rotateTableQr
+      tags:
+        - venues
+      summary: Revoca el QR de la mesa y genera uno nuevo (ej. al reimprimirlo).
+      security:
+        - staffSession:
+            - admin
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: Mesa con su QR nuevo. El anterior deja de servir.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Table"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Table"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/IdempotencyKeyReused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/venues/current/products:
+    get:
+      operationId: listProducts
+      tags:
+        - venues
+      summary: Catálogo del local (lo usa la carga manual de ítems).
+      security:
+        - staffSession:
+            - waiter
+            - manager
+            - admin
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: Productos ordenados por nombre.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+              examples:
+                ok:
+                  value:
+                    - id: 0199f0a0-0000-7000-8000-000000000101
+                      name: Schop Kunstmann
+                      price:
+                        amount: 4500
+                        currency: CLP
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+    post:
+      operationId: registerProduct
+      tags:
+        - venues
+      summary: Agrega un producto al catálogo.
+      security:
+        - staffSession:
+            - admin
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProduct"
+            examples:
+              ok:
+                value:
+                  name: Schop Kunstmann
+                  price:
+                    amount: 4500
+                    currency: CLP
+      responses:
+        "201":
+          description: Producto registrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Product"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/IdempotencyKeyReused"
+        "429":
+          $ref: "#/components/responses/RateLimited"
 components:
   schemas:
     HealthStatus:
@@ -106,6 +341,121 @@ components:
         instance:
           type: string
           description: Identificador de esta ocurrencia.
+    Venue:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - country
+        - currency
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        country:
+          type: string
+          description: ISO 3166-1 alfa-2. Solo CL por ahora.
+        currency:
+          type: string
+          description: ISO 4217. Define la unidad mínima de los montos.
+    NewTable:
+      type: object
+      additionalProperties: false
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: Nombre visible (ej. "5", "Terraza 2").
+    Table:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - qrCode
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        qrCode:
+          type: string
+          description: Código aleatorio del QR impreso. Revocable.
+    NewProduct:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        price:
+          $ref: "#/components/schemas/Money"
+    Product:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          $ref: "#/components/schemas/Money"
+    TableRegistered:
+      type: object
+      additionalProperties: false
+      required:
+        - tableId
+        - label
+        - qrCode
+      properties:
+        tableId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        qrCode:
+          type: string
+    TableQrRotated:
+      type: object
+      additionalProperties: false
+      required:
+        - tableId
+        - qrCode
+      properties:
+        tableId:
+          type: string
+          format: uuid
+        qrCode:
+          type: string
+    Money:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
   responses:
     RateLimited:
       description: Se superó el límite de solicitudes.
@@ -119,3 +469,110 @@ components:
                 type: https://lo-mio.cl/problems/rate-limited
                 title: Demasiadas solicitudes
                 status: 429
+    TableLabelTaken:
+      description: Ya existe una mesa con ese nombre en el local.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            table-label-taken:
+              value:
+                type: https://lo-mio.cl/problems/table-label-taken
+                title: Ya existe una mesa con ese nombre
+                status: 409
+    Unauthenticated:
+      description: Falta la sesión o no es válida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            unauthenticated:
+              value:
+                type: https://lo-mio.cl/problems/unauthenticated
+                title: Sesión requerida
+                status: 401
+    InvalidRequest:
+      description: La solicitud no cumple el contrato.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalid-request:
+              value:
+                type: https://lo-mio.cl/problems/invalid-request
+                title: Solicitud inválida
+                status: 400
+    Forbidden:
+      description: La sesión no tiene permiso para esta operación.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            forbidden:
+              value:
+                type: https://lo-mio.cl/problems/forbidden
+                title: Sin permiso
+                status: 403
+    IdempotencyKeyReused:
+      description: La misma Idempotency-Key se usó con otra solicitud.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
+    NotFound:
+      description: El recurso no existe.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            not-found:
+              value:
+                type: https://lo-mio.cl/problems/not-found
+                title: Recurso no encontrado
+                status: 404
+  securitySchemes:
+    staffSession:
+      type: apiKey
+      in: cookie
+      name: lomio_staff
+      description: "Sesión del personal (también se acepta `Authorization: Bearer`)."
+  examples:
+    Venue:
+      value:
+        id: 0199f0a0-0000-7000-8000-000000000001
+        name: Bar La Prima
+        country: CL
+        currency: CLP
+    Table:
+      value:
+        id: 0199f0a0-0000-7000-8000-000000000005
+        label: "5"
+        qrCode: q7Kd2mN9xVb4LpW1sT8cRa
+    Product:
+      value:
+        id: 0199f0a0-0000-7000-8000-000000000101
+        name: Schop Kunstmann
+        price:
+          amount: 4500
+          currency: CLP
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Identificador único del comando (UUIDv7). Reintentar con la misma
+        clave no lo aplica dos veces.
+      schema:
+        type: string
+        format: uuid

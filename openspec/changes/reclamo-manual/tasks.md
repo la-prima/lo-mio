@@ -4,7 +4,7 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 1. Contexto `venues` y `staff`
 
-- [ ] 1.1 Dominio de país (CL: CLP, 0 decimales, boleta SII) y alta de local, mesas con QR revocable y catálogo; verificar con unit tests y tests de integración, incluido el país no soportado
+- [x] 1.1 Dominio de país (CL: CLP, 0 decimales, boleta SII) y alta de local, mesas con QR revocable y catálogo; verificar con unit tests y tests de integración, incluido el país no soportado
 - [ ] 1.2 Personal, roles y sesión (cookie web y token app, 12 h) con aislamiento por `venueId`; verificar con tests de integración, incluido el acceso cruzado entre locales y la sesión expirada
 
 ## 2. Contexto `pos`

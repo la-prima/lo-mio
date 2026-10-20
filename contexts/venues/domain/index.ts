@@ -1,2 +1,10 @@
-// Dominio de venues: agregados Venue y Table, reglas puras. Llega con el change reclamo-manual.
-export {};
+export { type Country, type CountryCode, countryOf } from "./country.ts";
+export {
+  type Product,
+  registerProduct,
+  registerTable,
+  registerVenue,
+  rotateQr,
+  type Table,
+  type Venue,
+} from "./venue.ts";
