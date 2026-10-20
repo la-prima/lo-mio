@@ -1,0 +1,18 @@
+{
+  "name": "@lo-mio/venues",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./domain": "./domain/index.ts",
+    "./contracts": "./contracts/index.ts",
+    "./server": "./server/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@lo-mio/kernel": "workspace:*",
+    "@lo-mio/postgres": "workspace:*",
+    "fastify": "^5.12.5"
+  }
+}
