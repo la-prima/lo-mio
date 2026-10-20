@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # La API responde por el Gateway con TLS válido (CA local) y HTTP redirige a HTTPS.
 set -euo pipefail
+# Siempre el clúster local, nunca el contexto activo de kubectl (podría ser uno real).
+kube() { kubectl --context "${KUBE_CONTEXT:-kind-lo-mio}" "$@"; }
 ca="$(mktemp)"
 trap 'rm -f "$ca"' EXIT
-kubectl get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$ca"
+kube get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$ca"
 
 for _ in $(seq 1 30); do
   if curl -fsS --cacert "$ca" https://api.lo-mio.localhost/health; then

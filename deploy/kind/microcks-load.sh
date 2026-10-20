@@ -2,12 +2,14 @@
 # Carga en Microcks (kind) los contratos propios y externos. Cada OpenAPI se empaqueta antes
 # (resuelve $ref entre archivos, que Microcks no sigue). Idempotente: re-subir reemplaza.
 set -euo pipefail
+# Siempre el clúster local, nunca el contexto activo de kubectl (podría ser uno real).
+kube() { kubectl --context "${KUBE_CONTEXT:-kind-lo-mio}" "$@"; }
 cd "$(dirname "$0")/../.."
 export REDOCLY_SUPPRESS_UPDATE_NOTICE=true REDOCLY_TELEMETRY=off
 url="https://microcks.lo-mio.localhost"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-kubectl get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$tmp/ca.crt"
+kube get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$tmp/ca.crt"
 
 until curl -fsS --cacert "$tmp/ca.crt" "$url/api/health" >/dev/null 2>&1; do sleep 2; done
 
