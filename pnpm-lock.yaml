@@ -220,6 +220,9 @@ importers:
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
+      fastify-openapi-glue:
+        specifier: ^4.11.5
+        version: 4.11.5
       pg-boss:
         specifier: ^12.37.1
         version: 12.37.1(@opentelemetry/api@1.9.1)
@@ -227,17 +230,7 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
-  contexts/venues:
-    dependencies:
-      '@lo-mio/kernel':
-        specifier: workspace:*
-        version: link:../../packages/kernel
-      '@lo-mio/postgres':
-        specifier: workspace:*
-        version: link:../../packages/postgres
-      fastify:
-        specifier: ^5.12.5
-        version: 5.12.5
+  contexts/venues: {}
 
   packages/client:
     dependencies:
@@ -1020,6 +1013,10 @@ packages:
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
 
+  '@seriousme/openapi-schema-validator@2.11.0':
+    resolution: {integrity: sha512-DL8TjmjkUS76OaK/TinoRtf6PrirsWfMZiv62ifP9eq3UOpoLqSGZKpCErxMzz0i1pjECSPYY+qZ1SRYEgiEvg==}
+    hasBin: true
+
   '@stoplight/better-ajv-errors@1.0.3':
     resolution: {integrity: sha512-0p9uXkuB22qGdNfy3VeEhxkU5uwvp/KrBTAbrLBURv6ilxIVwanKwjMc41lQfIVgPGcOkmLbTolfFrSsueu7zA==}
     engines: {node: ^12.20 || >= 14.13}
@@ -1783,6 +1780,11 @@ packages:
 
   fast-wrap-ansi@0.2.2:
     resolution: {integrity: sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q==}
+
+  fastify-openapi-glue@4.11.5:
+    resolution: {integrity: sha512-T8+JRBrWSc1OWruD4dSvjow6OzLraL1Oi9PpgKF6mQ6MbDflQ9AX15cfJnmIhzRqWVWsUp1/bw0OXTOs4CwKpw==}
+    engines: {node: '>=20.0.0'}
+    hasBin: true
 
   fastify-plugin@6.0.1:
     resolution: {integrity: sha512-4wW4RxSmvPXLrh5mgQEiu43qU3bw44N2ss4FTkTkQIbprUhE+/s43QX0j/ttcztdWK7PEkHqVthdc5GdEGDvjA==}
@@ -3730,6 +3732,13 @@ snapshots:
 
   '@scarf/scarf@1.4.0': {}
 
+  '@seriousme/openapi-schema-validator@2.11.0':
+    dependencies:
+      ajv: 8.20.0
+      ajv-draft-04: 1.0.0(ajv@8.20.0)
+      ajv-formats: 3.0.1
+      yaml: 2.9.1
+
   '@stoplight/better-ajv-errors@1.0.3(ajv@8.20.0)':
     dependencies:
       ajv: 8.20.0
@@ -4587,6 +4596,12 @@ snapshots:
   fast-wrap-ansi@0.2.2:
     dependencies:
       fast-string-width: 3.0.2
+
+  fastify-openapi-glue@4.11.5:
+    dependencies:
+      '@seriousme/openapi-schema-validator': 2.11.0
+      fastify-plugin: 6.0.1
+      yaml: 2.9.1
 
   fastify-plugin@6.0.1: {}
 

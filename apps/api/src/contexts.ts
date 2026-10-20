@@ -1,7 +1,9 @@
 import type { EventBus, EventCatalog } from "@lo-mio/kernel";
 import type { Db, Tx } from "@lo-mio/postgres";
 import { venues } from "@lo-mio/venues/server";
-import type { FastifyInstance } from "fastify";
+import type { Handlers } from "./app.ts";
+
+type ContextDeps = { db: Db; bus: EventBus<Tx> };
 
 /** Lo que cada contexto expone a la composition root. */
 type ServerContext = {
@@ -10,7 +12,10 @@ type ServerContext = {
   events: EventCatalog;
   /** Carpeta de migraciones SQL propias del contexto, si tiene tablas. */
   migrations?: string;
-  module: (app: FastifyInstance, deps: { db: Db; bus: EventBus<Tx> }) => Promise<void>;
+  /** Handlers de las operaciones de su openapi.yaml, por operationId. */
+  handlers: (deps: ContextDeps) => Handlers;
+  /** Suscripciones a eventos de otros contextos. */
+  subscribe?: (deps: ContextDeps) => Promise<void>;
 };
 
 export const contexts: ServerContext[] = [venues];

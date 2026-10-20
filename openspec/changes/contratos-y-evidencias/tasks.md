@@ -13,7 +13,7 @@
 
 ## 3. La API implementa solo su contrato
 
-- [ ] 3.1 Rutas con fastify-openapi-glue y handlers por `operationId` desde cada contexto; verificar con tests de integración: ruta no declarada → 404, operación sin handler → no arranca, campo extra en la respuesta → no sale
+- [x] 3.1 Rutas con fastify-openapi-glue y handlers por `operationId` desde cada contexto; verificar con tests de integración: ruta no declarada → 404, operación sin handler → no arranca, campo extra en la respuesta → no sale
 
 ## 4. Mocks
 

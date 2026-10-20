@@ -1,37 +1,51 @@
+import { join } from "node:path";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import { type Db, ping } from "@lo-mio/postgres";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type RouteHandlerMethod } from "fastify";
+import openapiGlue from "fastify-openapi-glue";
 import type { Env } from "./env.ts";
+import { registerProblemHandlers } from "./problem.ts";
 
-/** Arma la API sin escuchar en un puerto: así los tests la ejercitan con `inject`. */
-export async function buildApp(env: Env, db: Db): Promise<FastifyInstance> {
+/** Contrato unificado (plataforma + contextos) que genera `pnpm contracts`. */
+const SPECIFICATION = join(import.meta.dirname, "../openapi.yaml");
+
+export type Handlers = Record<string, RouteHandlerMethod>;
+
+/**
+ * Arma la API sin escuchar en un puerto (los tests usan `inject`). Las rutas salen del contrato:
+ * no existe ninguna que no esté declarada, y las respuestas se serializan con su schema.
+ * No arranca si el contrato tiene una operación sin handler o si sobra un handler.
+ */
+export async function buildApp(
+  env: Env,
+  handlers: Handlers,
+  specification: string = SPECIFICATION,
+): Promise<FastifyInstance> {
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
       redact: ["req.headers.authorization", "req.headers.cookie", 'res.headers["set-cookie"]'],
     },
   });
+  registerProblemHandlers(app);
   await app.register(helmet);
   await app.register(cors, { origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false });
   // ponytail: límite global por IP; los endpoints sensibles (login, PIN) suman el suyo.
   await app.register(rateLimit, { max: 300, timeWindow: "1 minute" });
 
-  // liveness: el proceso responde. No toca la base, para que una caída de Postgres no
-  // reinicie todos los pods en cascada.
-  app.get("/health/live", async () => ({ status: "ok" }));
-
-  // readiness: puede atender tráfico (la base responde).
-  app.get("/health", async (_req, reply) => {
-    try {
-      await ping(db);
-      return { status: "ok" };
-    } catch (error) {
-      app.log.error({ err: error }, "health: base de datos no disponible");
-      return reply.code(503).send({ status: "unavailable" });
-    }
+  const mounted = new Set<string>();
+  await app.register(openapiGlue, {
+    specification,
+    operationResolver: (operationId: string) => {
+      const handler = handlers[operationId];
+      if (!handler) throw new Error(`la operación ${operationId} del contrato no tiene handler`);
+      mounted.add(operationId);
+      return handler;
+    },
   });
-
+  const orphans = Object.keys(handlers).filter((id) => !mounted.has(id));
+  if (orphans.length > 0)
+    throw new Error(`handlers sin operación en el contrato: ${orphans.join(", ")}`);
   return app;
 }

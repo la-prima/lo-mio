@@ -3,6 +3,7 @@ import { PgBoss } from "pg-boss";
 import { buildApp } from "./app.ts";
 import { contextMigrations, contexts, eventCatalog } from "./contexts.ts";
 import { loadEnv } from "./env.ts";
+import { platformHandlers } from "./platform.ts";
 
 const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
@@ -12,8 +13,10 @@ const boss = new PgBoss(env.DATABASE_URL);
 await boss.start();
 const bus = new PgBossEventBus(boss, db, eventCatalog());
 
-const app = await buildApp(env, db);
-for (const context of contexts) await app.register(context.module, { db, bus });
+const deps = { db, bus };
+const handlers = Object.assign(platformHandlers(db), ...contexts.map((c) => c.handlers(deps)));
+const app = await buildApp(env, handlers);
+for (const context of contexts) await context.subscribe?.(deps);
 await app.listen({ host: env.HOST, port: env.PORT });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
