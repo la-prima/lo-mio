@@ -16,6 +16,7 @@
     "@lo-mio/pos": "workspace:*",
     "@lo-mio/postgres": "workspace:*",
     "@lo-mio/server": "workspace:*",
+    "@lo-mio/settlement": "workspace:*",
     "@lo-mio/staff": "workspace:*",
     "@lo-mio/tables": "workspace:*",
     "@lo-mio/venues": "workspace:*",

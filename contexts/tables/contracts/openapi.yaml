@@ -171,6 +171,15 @@ components:
     GuestJoined:
       type: object
       additionalProperties: false
+      required: [sessionId, guestId, alias, currency]
+      properties:
+        sessionId: { type: string, format: uuid }
+        guestId: { type: string, format: uuid }
+        alias: { type: string }
+        currency: { type: string, description: Moneda de la sesión (la del local). }
+    GuestRenamed:
+      type: object
+      additionalProperties: false
       required: [sessionId, guestId, alias]
       properties:
         sessionId: { type: string, format: uuid }

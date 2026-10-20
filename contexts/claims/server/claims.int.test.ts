@@ -31,7 +31,7 @@ describe("Reclamos y repartos", () => {
     );
   const guest = async (alias: string, sessionId = session) => {
     const guestId = newId();
-    await emit("tables.guest.joined", { sessionId, guestId, alias });
+    await emit("tables.guest.joined", { sessionId, guestId, alias, currency: "CLP" });
     return { kind: "guest", guestId, sessionId, venueId: venue } as const;
   };
   /** Ítem nuevo en la mesa; devuelve su id en claims. */

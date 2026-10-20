@@ -27,7 +27,7 @@ channels:
     description: El comensal cambió su alias.
     messages:
       guestRenamed:
-        payload: { $ref: "./openapi.yaml#/components/schemas/GuestJoined" }
+        payload: { $ref: "./openapi.yaml#/components/schemas/GuestRenamed" }
 operations:
   publishSessionOpened: { action: send, channel: { $ref: "#/channels/sessionOpened" } }
   publishItemSeated: { action: send, channel: { $ref: "#/channels/itemSeated" } }

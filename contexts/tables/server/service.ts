@@ -43,16 +43,18 @@ const sessionView = (s: { id: string; table_id: string; opened_at: Date }) => ({
 // ---------- eventos de otros contextos ----------
 
 export async function onTableRegistered(event: EventEnvelope, tx: Tx) {
-  const { tableId, label, qrCode } = event.data as {
+  const { tableId, label, qrCode, currency } = event.data as {
     tableId: string;
     label: string;
     qrCode: string;
+    currency: string;
   };
   await repo.upsertTable(tx, {
     table_id: tableId,
     venue_id: event.venueId,
     label,
     qr_code: qrCode,
+    currency,
   });
 }
 
@@ -159,6 +161,8 @@ export async function joinTable(
       sessionId: session.id,
       guestId,
       alias: name,
+      // La moneda de la sesión: settlement la necesita para el saldo (también en cero).
+      currency: table.currency,
     });
     return {
       token: newToken,

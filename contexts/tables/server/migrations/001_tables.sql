@@ -3,7 +3,8 @@ create table tables_registry (
   table_id uuid primary key,
   venue_id uuid not null,
   label text not null,
-  qr_code text not null unique
+  qr_code text not null unique,
+  currency text not null              -- moneda del local: la de los saldos de la sesión
 );
 
 create table table_sessions (

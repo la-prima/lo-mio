@@ -13,6 +13,8 @@ tags:
     description: Reclamos y repartos de ítems.
   - name: pos
     description: Ítems que llegan del punto de venta.
+  - name: settlement
+    description: Saldos y pagos.
   - name: staff
     description: Sesiones del personal.
   - name: tables
@@ -403,6 +405,64 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/ItemsRejected"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/sessions/{sessionId}/balances:
+    get:
+      operationId: listSessionBalances
+      tags:
+        - settlement
+      summary: Saldo de cada comensal de la sesión.
+      description: Para los comensales de esa sesión o el personal del local.
+      security:
+        - guestSession: []
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
+            - waiter
+            - manager
+            - admin
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: Un saldo por comensal (incluidos los que todavía no reclamaron nada).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Balance"
+              examples:
+                ok:
+                  value:
+                    - guestId: 0199f0a0-0000-7000-8000-0000000000f1
+                      alias: Ana
+                      balance:
+                        amount: 8500
+                        currency: CLP
+                    - guestId: 0199f0a0-0000-7000-8000-0000000000f2
+                      alias: Beto
+                      balance:
+                        amount: 0
+                        currency: CLP
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "429":
           $ref: "#/components/responses/RateLimited"
   /v1/staff/sessions:
@@ -1210,6 +1270,37 @@ components:
         quantity:
           type: integer
           minimum: 1
+    Balance:
+      type: object
+      additionalProperties: false
+      required:
+        - guestId
+        - alias
+        - balance
+      properties:
+        guestId:
+          type: string
+          format: uuid
+        alias:
+          type: string
+        balance:
+          $ref: "#/components/schemas/Money"
+    BalanceChanged:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - guestId
+        - balance
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        guestId:
+          type: string
+          format: uuid
+        balance:
+          $ref: "#/components/schemas/Money"
     Credentials:
       type: object
       additionalProperties: false
@@ -1372,6 +1463,26 @@ components:
         unitPrice:
           $ref: "#/components/schemas/Money"
     GuestJoined:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - guestId
+        - alias
+        - currency
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        guestId:
+          type: string
+          format: uuid
+        alias:
+          type: string
+        currency:
+          type: string
+          description: Moneda de la sesión (la del local).
+    GuestRenamed:
       type: object
       additionalProperties: false
       required:

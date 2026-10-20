@@ -113,6 +113,18 @@ export type ItemReceived = {
     quantity: number;
 };
 
+export type Balance = {
+    guestId: string;
+    alias: string;
+    balance: Money;
+};
+
+export type BalanceChanged = {
+    sessionId: string;
+    guestId: string;
+    balance: Money;
+};
+
 export type Credentials = {
     email: string;
     password: string;
@@ -183,6 +195,16 @@ export type ItemSeated = {
 };
 
 export type GuestJoined = {
+    sessionId: string;
+    guestId: string;
+    alias: string;
+    /**
+     * Moneda de la sesión (la del local).
+     */
+    currency: string;
+};
+
+export type GuestRenamed = {
     sessionId: string;
     guestId: string;
     alias: string;
@@ -593,6 +615,45 @@ export type LoadManualItemsResponses = {
 };
 
 export type LoadManualItemsResponse = LoadManualItemsResponses[keyof LoadManualItemsResponses];
+
+export type ListSessionBalancesData = {
+    body?: never;
+    path: {
+        sessionId: string;
+    };
+    query?: never;
+    url: '/v1/sessions/{sessionId}/balances';
+};
+
+export type ListSessionBalancesErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListSessionBalancesError = ListSessionBalancesErrors[keyof ListSessionBalancesErrors];
+
+export type ListSessionBalancesResponses = {
+    /**
+     * Un saldo por comensal (incluidos los que todavía no reclamaron nada).
+     */
+    200: Array<Balance>;
+};
+
+export type ListSessionBalancesResponse = ListSessionBalancesResponses[keyof ListSessionBalancesResponses];
 
 export type CreateStaffSessionData = {
     body: Credentials;

@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { ClaimItemData, ClaimItemErrors, ClaimItemResponses, CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetItemHistoryData, GetItemHistoryErrors, GetItemHistoryResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinItemData, JoinItemErrors, JoinItemResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSessionItemsData, ListSessionItemsErrors, ListSessionItemsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses, ShareItemData, ShareItemErrors, ShareItemResponses } from './types.gen.ts';
+import type { ClaimItemData, ClaimItemErrors, ClaimItemResponses, CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetItemHistoryData, GetItemHistoryErrors, GetItemHistoryResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinItemData, JoinItemErrors, JoinItemResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSessionBalancesData, ListSessionBalancesErrors, ListSessionBalancesResponses, ListSessionItemsData, ListSessionItemsErrors, ListSessionItemsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses, ShareItemData, ShareItemErrors, ShareItemResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -130,6 +130,29 @@ export const loadManualItems = <ThrowOnError extends boolean = false>(options: O
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Saldo de cada comensal de la sesión.
+ *
+ * Para los comensales de esa sesión o el personal del local.
+ */
+export const listSessionBalances = <ThrowOnError extends boolean = false>(options: Options<ListSessionBalancesData, ThrowOnError>): RequestResult<ListSessionBalancesResponses, ListSessionBalancesErrors, ThrowOnError> => (options.client ?? client).get<ListSessionBalancesResponses, ListSessionBalancesErrors, ThrowOnError>({
+    security: [
+        {
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        },
+        {
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        },
+        { scheme: 'bearer', type: 'http' }
+    ],
+    url: '/v1/sessions/{sessionId}/balances',
+    ...options
 });
 
 /**

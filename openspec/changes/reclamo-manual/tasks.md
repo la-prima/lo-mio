@@ -24,7 +24,7 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 5. Contexto `settlement`
 
-- [ ] 5.1 Proyección de saldo desde los eventos de `claims`; verificar con unit tests y un test de integración con eventos de entrada
+- [x] 5.1 Proyección de saldo desde los eventos de `claims`; verificar con unit tests y un test de integración con eventos de entrada
 
 ## 6. Tiempo real y cliente
 

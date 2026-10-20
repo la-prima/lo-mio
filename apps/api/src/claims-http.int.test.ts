@@ -94,4 +94,20 @@ describe("Reclamar por HTTP, de la carga del mesero al feed del comensal", () =>
     });
     expect((await feed()).map((i) => i.status).sort()).toEqual(["claimed", "unowned"]);
   });
+
+  it("el saldo del comensal refleja su reclamo (claims → settlement por el bus)", async () => {
+    await vi.waitFor(
+      async () => {
+        const res = await api.app.inject({
+          method: "GET",
+          url: `/v1/sessions/${guest.sessionId}/balances`,
+          cookies: { lomio_guest: guest.cookie },
+        });
+        expect(res.json()).toEqual([
+          expect.objectContaining({ alias: "Ana", balance: { amount: 4500, currency: "CLP" } }),
+        ]);
+      },
+      { timeout: 5_000, interval: 100 },
+    );
+  });
 });

@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { claimItem, createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getItemHistory, getLiveness, getReadiness, joinItem, joinTable, listProducts, listSessionItems, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr, shareItem } from '../sdk.gen.ts';
-import type { ClaimItemData, ClaimItemError, ClaimItemResponse, CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetItemHistoryData, GetItemHistoryError, GetItemHistoryResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinItemData, JoinItemError, JoinItemResponse, JoinTableData, JoinTableError, JoinTableResponse, ListProductsData, ListProductsError, ListProductsResponse, ListSessionItemsData, ListSessionItemsError, ListSessionItemsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse, ShareItemData, ShareItemError, ShareItemResponse } from '../types.gen.ts';
+import { claimItem, createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getItemHistory, getLiveness, getReadiness, joinItem, joinTable, listProducts, listSessionBalances, listSessionItems, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr, shareItem } from '../sdk.gen.ts';
+import type { ClaimItemData, ClaimItemError, ClaimItemResponse, CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetItemHistoryData, GetItemHistoryError, GetItemHistoryResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinItemData, JoinItemError, JoinItemResponse, JoinTableData, JoinTableError, JoinTableResponse, ListProductsData, ListProductsError, ListProductsResponse, ListSessionBalancesData, ListSessionBalancesError, ListSessionBalancesResponse, ListSessionItemsData, ListSessionItemsError, ListSessionItemsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse, ShareItemData, ShareItemError, ShareItemResponse } from '../types.gen.ts';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -188,6 +188,26 @@ export const loadManualItemsMutation = (options?: Partial<Options<LoadManualItem
     };
     return mutationOptions;
 };
+
+export const listSessionBalancesQueryKey = (options: Options<ListSessionBalancesData>) => createQueryKey('listSessionBalances', options);
+
+/**
+ * Saldo de cada comensal de la sesión.
+ *
+ * Para los comensales de esa sesión o el personal del local.
+ */
+export const listSessionBalancesOptions = (options: Options<ListSessionBalancesData>) => queryOptions<ListSessionBalancesResponse, ListSessionBalancesError, ListSessionBalancesResponse, ReturnType<typeof listSessionBalancesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listSessionBalances({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listSessionBalancesQueryKey(options)
+});
 
 /**
  * Inicia sesión del personal (12 horas).

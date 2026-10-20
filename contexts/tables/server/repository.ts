@@ -2,7 +2,13 @@ import type { Db } from "@lo-mio/postgres";
 import type { ColumnType, Generated } from "kysely";
 
 type TablesTables = {
-  tables_registry: { table_id: string; venue_id: string; label: string; qr_code: string };
+  tables_registry: {
+    table_id: string;
+    venue_id: string;
+    label: string;
+    qr_code: string;
+    currency: string;
+  };
   table_sessions: {
     id: string;
     venue_id: string;

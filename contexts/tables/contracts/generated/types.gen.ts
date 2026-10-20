@@ -51,6 +51,16 @@ export type GuestJoined = {
     sessionId: string;
     guestId: string;
     alias: string;
+    /**
+     * Moneda de la sesión (la del local).
+     */
+    currency: string;
+};
+
+export type GuestRenamed = {
+    sessionId: string;
+    guestId: string;
+    alias: string;
 };
 
 export type Money = {

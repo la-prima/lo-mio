@@ -238,6 +238,9 @@ importers:
       '@lo-mio/server':
         specifier: workspace:*
         version: link:../../packages/server
+      '@lo-mio/settlement':
+        specifier: workspace:*
+        version: link:../../contexts/settlement
       '@lo-mio/staff':
         specifier: workspace:*
         version: link:../../contexts/staff
@@ -308,6 +311,27 @@ importers:
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  contexts/settlement:
+    dependencies:
+      '@lo-mio/kernel':
+        specifier: workspace:*
+        version: link:../../packages/kernel
+      '@lo-mio/postgres':
+        specifier: workspace:*
+        version: link:../../packages/postgres
+      '@lo-mio/server':
+        specifier: workspace:*
+        version: link:../../packages/server
+      fastify:
+        specifier: ^5.12.5
+        version: 5.12.5
+      kysely:
+        specifier: ^0.29.6
+        version: 0.29.6
       zod:
         specifier: ^4.6.7
         version: 4.6.7
