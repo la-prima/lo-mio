@@ -7,11 +7,11 @@ Este archivo es la fuente de verdad para cualquier agente (y humano). Contexto d
 1. **No hay código de comportamiento sin un change aprobado** en `openspec/changes/`. Se propone con `/opsx:propose`, se implementa con `/opsx:apply` y se archiva con `/opsx:archive`.
 2. Las specs vigentes (`openspec/specs/`) describen lo que el sistema **hace hoy**. Si el código y la spec no coinciden, es un bug de uno de los dos: se reporta, no se elige en silencio.
 3. Tooling, refactors y docs no necesitan specs (`skip_specs: true` en el change), pero sí un change si tocan más de un paquete.
-4. Un change = una rama = un PR. Al terminar, `pnpm verify` pasa y las tareas de `tasks.md` quedan marcadas.
+4. Un change = una rama = un PR. Un change que no se puede revisar en una sesión es demasiado grande: se parte en cortes verticales (ver el roadmap en el README). Al terminar, `pnpm verify` pasa y las tareas de `tasks.md` quedan marcadas.
 
 ## Arquitectura
 
-Monolito modular organizado en **contextos de negocio (DDD)** que se comunican por **eventos asíncronos**. Está diseñado para que cualquier contexto pueda separarse como servicio cambiando el transporte, no el código. Decisiones y su porqué: `design.md` del change vigente.
+Monolito modular organizado en **contextos de negocio (DDD)** que se comunican por **eventos asíncronos**. Está diseñado para que cualquier contexto pueda separarse como servicio cambiando el transporte, no el código. Decisiones y su porqué: [docs/arquitectura.md](docs/arquitectura.md). Cada change agrega en su `design.md` solo las decisiones de su feature.
 
 ```
 packages/
@@ -38,7 +38,7 @@ Comunicación entre contextos:
 - **Escritura:** un contexto nunca escribe en las tablas de otro. Reacciona a sus eventos.
 - **Eventos:** se publican con `EventBus.publish(evento, { tx })` **dentro de la misma transacción** del cambio. Tópico: `<ctx>.<agregado>.<hecho-en-pasado>.v<n>`. El schema vive en el `contracts/` del emisor. Los cambios incompatibles van a una versión nueva.
 - **Handlers idempotentes** por `event.id`, siempre.
-- **Consistencia:** un comando modifica un agregado, de forma síncrona y con control optimista. Entre contextos es eventual: si una regla cruza contextos, va con versión esperada o una saga (ver `design.md`, D5).
+- **Consistencia:** un comando modifica un agregado, de forma síncrona y con control optimista. Entre contextos es eventual: si una regla cruza contextos, va con versión esperada o una saga (ver `docs/arquitectura.md`, sección 5).
 
 Integraciones (POS, pagos, OCR) **siempre detrás de un contrato** definido en el `domain/` del contexto dueño, con un adaptador por proveedor. El dominio nunca sabe que existe Fudo.
 
@@ -64,7 +64,7 @@ Integraciones (POS, pagos, OCR) **siempre detrás de un contrato** definido en e
 | **CI en cada PR** | verify · gitleaks (historial completo) · Semgrep (SAST) · CodeQL (SAST) · osv-scanner (SCA + licencias) · *integración y e2e cuando existan las apps* | minutos |
 | **Nightly / pre-release** | *carga (k6), failover, DAST (ZAP), e2e en matriz completa de navegadores* | — |
 
-En cursiva: se activa con el change que crea la app correspondiente (ver `tasks.md` del MVP).
+En cursiva: se activa con el change que crea la app correspondiente (ver el roadmap en el README).
 
 **Nunca** usar `--no-verify`. Si un hook falla, se arregla la causa.
 
@@ -77,7 +77,7 @@ En cursiva: se activa con el change que crea la app correspondiente (ver `tasks.
 | Contrato | `contexts/pos/server/adapters/` | Vitest | Cada adaptador POS pasa la **misma** suite del contrato `PosAdapter`. |
 | E2E web | `apps/guest-web/e2e/` | Playwright: Chromium, Firefox, WebKit, Pixel y iPhone emulados | Flujos del comensal: unirse, reclamar, compartir, confirmar y ver saldo. |
 | E2E mobile | `apps/mobile/e2e/` | Maestro en emuladores Android e iOS | Flujos del personal: cobro completo con rotación, offline, override. |
-| Carga | `load/` | k6 | Objetivos en `design.md` del MVP. |
+| Carga | `load/` | k6 | Objetivos en `docs/arquitectura.md`, sección 9. |
 | Failover | `load/chaos/` | k6 + detener contenedores | Caída de la API o de la DB a mitad del flujo: ni comandos ni eventos se pierden o duplican. |
 
 Una prueba por comportamiento y no por función. Tiene que fallar si el comportamiento se rompe.

@@ -21,7 +21,7 @@ context: |
   Entre contextos solo eventos asíncronos (pg-boss detrás del puerto EventBus) y contracts.
   API Fastify + Postgres. Fronts: apps/mobile (Expo) y apps/guest-web (React + Vite).
   Dinero siempre en enteros de unidad mínima.
-  Calidad y prácticas obligatorias: AGENTS.md.
+  Decisiones de arquitectura: docs/arquitectura.md. Calidad y prácticas obligatorias: AGENTS.md.
 
   Principios de producto, en orden de prioridad:
   1. No agregar trabajo al mesero en el momento de tomar el pedido.
@@ -34,7 +34,7 @@ rules:
     - Incluir sección "Fuera de alcance" explícita.
     - Si contradice un principio de producto, decirlo y justificarlo.
   specs:
-    - Cada capability pertenece a un solo contexto (ver design.md D1); si cruza contextos, describir los eventos que la conectan.
+    - Cada capability pertenece a un solo contexto (ver docs/arquitectura.md, sección 1); si cruza contextos, describir los eventos que la conectan.
     - Cada requirement tiene al menos un scenario de error o caso de borde, no solo el camino feliz.
     - Nada específico de un POS o país en specs de dominio; eso va en specs de adaptador.
   design:
@@ -42,5 +42,6 @@ rules:
     - Antes de proponer código nuevo, listar qué se reutiliza de packages/ y contexts/.
     - Listar los eventos nuevos o modificados (tópico, versión, emisor, consumidores).
   tasks:
+    - Máximo ~15 tareas por change; si hay más, partir el change en cortes verticales.
     - Cada tarea de comportamiento incluye su prueba (unit, integración o e2e según AGENTS.md).
     - Tareas de máximo ~2 horas de trabajo de un agente.
