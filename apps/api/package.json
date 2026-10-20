@@ -14,7 +14,11 @@
     "@lo-mio/postgres": "workspace:*",
     "@lo-mio/venues": "workspace:*",
     "fastify": "^5.12.5",
+    "fastify-openapi-glue": "^4.11.5",
     "pg-boss": "^12.37.1",
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "yaml": "^2.9.1"
   }
 }

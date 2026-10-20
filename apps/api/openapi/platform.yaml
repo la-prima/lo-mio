@@ -1,0 +1,98 @@
+openapi: 3.1.0
+info:
+  title: lo-mio · plataforma
+  version: 1.0.0
+  description: Endpoints de plataforma (salud) y componentes comunes a todos los contextos.
+# Relativo: el host depende del ambiente (local, staging, producción).
+servers:
+  - url: /
+tags:
+  - name: plataforma
+    description: Salud del sistema.
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      # Mock determinista: responde el ejemplo `ok`, o el que pida el header X-Mock-Example.
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      tags: [plataforma]
+      summary: El proceso responde (liveness). No consulta dependencias.
+      security: []
+      responses:
+        "200":
+          description: El proceso está vivo.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+              examples:
+                ok:
+                  value: { status: ok }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /health:
+    get:
+      operationId: getReadiness
+      # Mock determinista: responde el ejemplo `ok`, o el que pida el header X-Mock-Example.
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      tags: [plataforma]
+      summary: Puede atender tráfico (readiness). Consulta la base de datos.
+      security: []
+      responses:
+        "200":
+          description: Listo para atender tráfico.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+              examples:
+                ok:
+                  value: { status: ok }
+        "503":
+          description: Una dependencia no está disponible.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+              examples:
+                dependency-unavailable:
+                  value:
+                    type: https://lo-mio.cl/problems/dependency-unavailable
+                    title: Dependencia no disponible
+                    status: 503
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+components:
+  responses:
+    # Límite global por IP; puede responderlo cualquier ruta.
+    TooManyRequests:
+      description: Se superó el límite de solicitudes.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            rate-limited:
+              value:
+                type: https://lo-mio.cl/problems/rate-limited
+                title: Demasiadas solicitudes
+                status: 429
+  schemas:
+    HealthStatus:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { type: string, const: ok }
+    # RFC 9457. Todas las respuestas de error de todos los contextos usan este schema.
+    Problem:
+      type: object
+      # Sin miembros de extensión por ahora; si se agregan, se declaran aquí.
+      additionalProperties: false
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri, description: Identificador del tipo de problema. }
+        title: { type: string, description: "Resumen legible, igual para todas las ocurrencias del tipo." }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string, description: Explicación de esta ocurrencia. }
+        instance: { type: string, description: Identificador de esta ocurrencia. }

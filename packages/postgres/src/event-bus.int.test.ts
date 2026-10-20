@@ -2,13 +2,18 @@ import { createEvent, type EventEnvelope, newId } from "@lo-mio/kernel";
 import { sql } from "kysely";
 import { PgBoss } from "pg-boss";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { createDb, type Db, migrate, PgBossEventBus } from "./index.ts";
 import { startPostgres } from "./testing.ts";
 
-const event = (type: string) =>
-  createEvent({ type, version: 1, venueId: newId(), aggregateId: newId(), data: { n: 1 } });
+const payload = z.strictObject({ n: z.int() });
+const catalog = Object.fromEntries(
+  ["rollback", "fanout", "retry", "duplicate"].map((t) => [`test.${t}.happened.v1`, payload]),
+);
+const event = (type: string, data: unknown = { n: 1 }) =>
+  createEvent({ type, version: 1, venueId: newId(), aggregateId: newId(), data });
 
-describe("PgBossEventBus", () => {
+describe("Bus de eventos sobre Postgres", () => {
   let pg: Awaited<ReturnType<typeof startPostgres>>;
   let db: Db;
   let boss: PgBoss;
@@ -21,7 +26,7 @@ describe("PgBossEventBus", () => {
     await sql`create table effects (event_id uuid not null)`.execute(db);
     boss = new PgBoss({ connectionString: pg.url, useListenNotify: true });
     await boss.start();
-    bus = new PgBossEventBus(boss, db);
+    bus = new PgBossEventBus(boss, db, catalog);
   });
   afterAll(async () => {
     await boss.stop({ graceful: false });
@@ -100,5 +105,13 @@ describe("PgBossEventBus", () => {
     await new Promise((r) => setTimeout(r, 1_000));
     expect(await effectsOf(e.id)).toBe(1);
     expect(handled).toHaveLength(1);
+  });
+
+  it("rechaza eventos no declarados o inválidos antes de tocar la transacción", async () => {
+    for (const e of [event("test.unknown.happened"), event("test.fanout.happened", { n: "1" })]) {
+      await expect(db.transaction().execute((tx) => bus.publish(e, { tx }))).rejects.toThrow(
+        /no declarado|no cumple su contrato/,
+      );
+    }
   });
 });

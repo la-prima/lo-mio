@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: lo-mio · plataforma
+  version: 1.0.0
+  description: Endpoints de plataforma (salud) y componentes comunes a todos los contextos.
+servers:
+  - url: /
+tags:
+  - name: plataforma
+    description: Salud del sistema.
+    x-displayName: plataforma
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      tags:
+        - plataforma
+      summary: El proceso responde (liveness). No consulta dependencias.
+      security: []
+      responses:
+        '200':
+          description: El proceso está vivo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              examples:
+                ok:
+                  value:
+                    status: ok
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /health:
+    get:
+      operationId: getReadiness
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      tags:
+        - plataforma
+      summary: Puede atender tráfico (readiness). Consulta la base de datos.
+      security: []
+      responses:
+        '200':
+          description: Listo para atender tráfico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              examples:
+                ok:
+                  value:
+                    status: ok
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          description: Una dependencia no está disponible.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                dependency-unavailable:
+                  value:
+                    type: https://lo-mio.cl/problems/dependency-unavailable
+                    title: Dependencia no disponible
+                    status: 503
+components:
+  responses:
+    TooManyRequests:
+      description: Se superó el límite de solicitudes.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            rate-limited:
+              value:
+                type: https://lo-mio.cl/problems/rate-limited
+                title: Demasiadas solicitudes
+                status: 429
+  schemas:
+    HealthStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          const: ok
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: Identificador del tipo de problema.
+        title:
+          type: string
+          description: Resumen legible, igual para todas las ocurrencias del tipo.
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+          description: Explicación de esta ocurrencia.
+        instance:
+          type: string
+          description: Identificador de esta ocurrencia.

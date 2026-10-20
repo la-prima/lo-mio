@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { addMoney, createEvent, eventEnvelopeSchema, money, newId, topicOf } from "./index.ts";
 
-describe("money", () => {
+describe("Dinero", () => {
   it("suma montos de la misma moneda", () => {
     expect(addMoney(money(4500, "CLP"), money(4000, "CLP"))).toEqual(money(8500, "CLP"));
   });
@@ -14,7 +14,7 @@ describe("money", () => {
   });
 });
 
-describe("newId", () => {
+describe("Identificadores", () => {
   it("genera UUIDv7 válidos, únicos y ordenados por tiempo entre milisegundos", async () => {
     const first = newId();
     await new Promise((r) => setTimeout(r, 2));
@@ -25,7 +25,7 @@ describe("newId", () => {
   });
 });
 
-describe("eventos", () => {
+describe("Sobre de eventos", () => {
   const schema = eventEnvelopeSchema(z.object({ itemId: z.uuid(), amount: z.int() }));
   const event = createEvent({
     type: "claims.item.claimed",

@@ -1,0 +1,11 @@
+{
+  "enabledPlugins": {
+    "engineering@anthropic-plugin-directory": true,
+    "product-management@anthropic-plugin-directory": true,
+    "small-business@anthropic-plugin-directory": true,
+    "legal@anthropic-plugin-directory": true,
+    "feature-dev@anthropic-plugin-directory": true,
+    "pr-review-toolkit@anthropic-plugin-directory": true,
+    "claude-security@anthropic-plugin-directory": true
+  }
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { splitAmount } from "./split.ts";
 
-describe("splitAmount", () => {
+describe("Reparto de montos", () => {
   it("reparte en partes iguales sin perder pesos", () => {
     expect(splitAmount(10_000, [1, 1, 1])).toEqual([3334, 3333, 3333]);
   });

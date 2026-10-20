@@ -6,8 +6,11 @@ import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "./app.ts";
 import { loadEnv } from "./env.ts";
+import { platformHandlers } from "./platform.ts";
 
-describe("api", () => {
+const env = (url: string) => loadEnv({ DATABASE_URL: url, LOG_LEVEL: "fatal" });
+
+describe("API HTTP desde el contrato", () => {
   let pg: Awaited<ReturnType<typeof startPostgres>>;
   let db: Db;
   let app: FastifyInstance;
@@ -15,7 +18,7 @@ describe("api", () => {
   beforeAll(async () => {
     pg = await startPostgres();
     db = createDb(pg.url);
-    app = await buildApp(loadEnv({ DATABASE_URL: pg.url, LOG_LEVEL: "fatal" }), db);
+    app = await buildApp(env(pg.url), platformHandlers(db));
   });
   afterAll(async () => {
     await app.close();
@@ -30,9 +33,52 @@ describe("api", () => {
     expect(res.headers["x-ratelimit-limit"]).toBe("300");
   });
 
-  it("si la base no está disponible, /health responde 503 pero /health/live sigue en 200", async () => {
+  it("una ruta que no está en el contrato responde 404 como problem+json", async () => {
+    const res = await app.inject({ method: "GET", url: "/admin" });
+    expect(res.statusCode).toBe(404);
+    expect(res.headers["content-type"]).toContain("application/problem+json");
+    expect(res.json()).toMatchObject({ status: 404, type: "https://lo-mio.cl/problems/not-found" });
+  });
+
+  it("un método no declarado en una ruta existente responde 405 con Allow (RFC 9110)", async () => {
+    for (const method of ["POST", "DELETE", "TRACE", "QUERY"] as const) {
+      const res = await app.inject({ method, url: "/health/live" });
+      expect(res.statusCode).toBe(405);
+      expect(res.headers.allow).toBe("GET, HEAD");
+      expect(res.headers["content-type"]).toContain("application/problem+json");
+    }
+  });
+
+  it("un campo que el contrato no declara no sale en la respuesta", async () => {
+    const leaky = await buildApp(env(pg.url), {
+      ...platformHandlers(db),
+      getLiveness: async () => ({ status: "ok", internalSecret: "no debería salir" }),
+    });
+    const res = await leaky.inject({ method: "GET", url: "/health/live" });
+    expect(res.json()).toEqual({ status: "ok" });
+    await leaky.close();
+  });
+
+  it("no arranca si el contrato declara una operación sin handler", async () => {
+    const { getReadiness: _missing, ...incomplete } = platformHandlers(db);
+    await expect(buildApp(env(pg.url), incomplete)).rejects.toThrow(
+      /getReadiness del contrato no tiene handler/,
+    );
+  });
+
+  it("no arranca si sobra un handler que no está en el contrato", async () => {
+    const extra = { ...platformHandlers(db), getHealtz: async () => ({}) };
+    await expect(buildApp(env(pg.url), extra)).rejects.toThrow(
+      /sin operación en el contrato: getHealtz/,
+    );
+  });
+
+  it("si la base no está disponible, /health responde 503 como problem+json y /health/live sigue en 200", async () => {
     await db.destroy();
-    expect((await app.inject({ method: "GET", url: "/health" })).statusCode).toBe(503);
+    const ready = await app.inject({ method: "GET", url: "/health" });
+    expect(ready.statusCode).toBe(503);
+    expect(ready.headers["content-type"]).toContain("application/problem+json");
+    expect(ready.json()).toMatchObject({ status: 503, title: "Dependencia no disponible" });
     expect((await app.inject({ method: "GET", url: "/health/live" })).statusCode).toBe(200);
   });
 

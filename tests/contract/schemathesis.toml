@@ -1,0 +1,21 @@
+# Conformidad de la API con su contrato (apps/api/openapi.yaml). Ver tests/contract/run.sh.
+base-url = "${API_URL}"
+tls-verify = "${CA_BUNDLE}"
+
+[checks]
+enabled = true
+
+[phases.coverage]
+# Todos los métodos por defecto salvo QUERY (borrador IETF): Envoy lo rechaza con 400 en HTTP/1.1
+# antes de llegar a la API, que sí responde 405 (lo prueba app.int.test.ts).
+unexpected-methods = ["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH", "TRACE"]
+
+[reports]
+directory = "${REPORT_DIR}"
+
+[reports.junit]
+enabled = true
+
+[reports.allure]
+enabled = true
+path = "${REPORT_DIR}/allure-results"

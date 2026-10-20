@@ -42,10 +42,15 @@ Hoy `apps/api` define rutas a mano y `contracts/` está vacío. Los tests son Vi
 - En kind se instala en modo liviano (*uber*), con `values-local.yaml`, y carga los contratos propios y los externos al arrancar.
 - En los tests de integración se usa `@microcks/microcks-testcontainers` para mockear un contexto o sistema externo dentro de un solo test.
 - Los mocks responden **los ejemplos del contrato**, así que un ejemplo inválido rompe el lint, no el test.
+- **Ejemplos con nombre** (`examples`, no `example`): Microcks empareja request y respuesta por el nombre del ejemplo; con `example` singular no genera el mock. Lo exige la regla `response-has-example`.
+- **Respuesta por defecto declarada en el contrato:** con varias respuestas y sin parámetros, Microcks elige una de forma no determinista (en kind devolvía el 429). Cada operación así declara `x-microcks-operation` con dispatcher `SCRIPT`, que responde el ejemplo `ok` o el que pida el header `X-Mock-Example` (así un consumidor prueba sus caminos de error con ejemplos reales del contrato).
+- **Helper propio en vez de `@microcks/microcks-testcontainers`:** fija `Content-Length` a mano y el `fetch` de Node 24 lo rechaza. `startMicrocks` hace lo mismo con `GenericContainer` y la API de Microcks.
 
 ### Conformidad: Schemathesis
 
 - Corre contra la API desplegada en kind (CI: job `api-flows`). Genera casos desde el OpenAPI (incluidos bordes y datos inválidos) y verifica respuestas, códigos y headers contra el contrato. Exporta JUnit para Allure.
+- **Primer hallazgo real:** un método no declarado en una ruta existente respondía 404, y RFC 9110 exige 405 con `Allow`. Ahora la API registra un 405 para cada método que falte en cada path del contrato, en `onRequest`, antes de que Fastify valide el body.
+- **`QUERY` excluido** de los métodos que prueba (`tests/contract/schemathesis.toml`): Envoy lo rechaza con 400 en HTTP/1.1 antes de llegar a la API, que sí responde 405 (lo cubre el test de integración). Envoy Gateway no tiene opción para aceptar métodos no estándar.
 
 ### Flujos funcionales: Playwright
 

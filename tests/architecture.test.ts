@@ -99,13 +99,30 @@ function* imports() {
   }
 }
 
-describe("arquitectura", () => {
+describe("Límites entre contextos y capas", () => {
   it("todos los imports respetan los límites", () => {
     const errors: string[] = [];
     for (const { file, abs, spec } of imports()) {
       const reason = violation(zoneOfPath(abs), zoneOfSpecifier(spec, abs), spec);
       if (reason) errors.push(`${file} → ${spec}: ${reason}`);
     }
+    expect(errors).toEqual([]);
+  });
+
+  it("contracts/ solo reexporta lo generado desde los contratos (nada escrito a mano)", () => {
+    const reexport =
+      /^export (\*|\* as \w+|\{[^}]*\}|type \{[^}]*\}) from "\.\/generated\/[^"]+";$/;
+    const files = globSync("contexts/*/contracts/**/*.ts", {
+      cwd: ROOT,
+      exclude: (f) => f.includes("generated"),
+    });
+    const errors = files.flatMap((file) =>
+      readFileSync(resolve(ROOT, file), "utf8")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("//") && !reexport.test(line))
+        .map((line) => `${file}: "${line}" (escribirlo en el contrato y correr pnpm contracts)`),
+    );
     expect(errors).toEqual([]);
   });
 });

@@ -1,0 +1,67 @@
+# Mocks desde los contratos (solo local y CI). Modo "uber": un solo contenedor, sin MongoDB ni
+# Keycloak. Los contratos los carga deploy/kind/microcks-load.sh (recurso `microcks-contracts`).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mocks
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microcks
+  namespace: mocks
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: microcks }
+  template:
+    metadata:
+      labels: { app: microcks }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: microcks
+          image: quay.io/microcks/microcks-uber:1.15.0
+          ports:
+            - { name: http, containerPort: 8080 }
+          # ponytail: la imagen uber intenta exportar logs OTLP a un host fijo (o11y_otel) y loguea
+          # "Failed to export"; es inofensivo (no afecta los mocks) y no se apaga con OTEL_* ni con
+          # propiedades de Spring. Montar un application.properties propio si el ruido molesta.
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 384Mi }
+            limits: { memory: 768Mi }
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: microcks
+  namespace: mocks
+spec:
+  selector: { app: microcks }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: microcks
+  namespace: mocks
+spec:
+  parentRefs:
+    - { name: lo-mio, namespace: gateway, sectionName: https }
+  hostnames: ["microcks.lo-mio.localhost"]
+  rules:
+    - backendRefs:
+        - { name: microcks, port: 80 }

@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDb, type Db, migrate } from "./index.ts";
 import { startPostgres } from "./testing.ts";
 
-describe("migrate", () => {
+describe("Migraciones de base de datos", () => {
   let pg: Awaited<ReturnType<typeof startPostgres>>;
   let db: Db;
   const moduleDir = mkdtempSync(join(tmpdir(), "lo-mio-migrations-"));

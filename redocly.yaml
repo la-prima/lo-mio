@@ -1,0 +1,53 @@
+# Reglas de los contratos OpenAPI (ver docs/arquitectura.md, sección 12).
+extends:
+  - recommended
+rules:
+  operation-operationId: error
+  operation-summary: error
+  info-license: off
+  # Los payloads de eventos viven en components y solo los referencia el asyncapi.yaml.
+  no-unused-components: off
+  # Microcks mockea con los ejemplos y empareja request y respuesta por el NOMBRE del ejemplo:
+  # toda respuesta con cuerpo trae `examples` con nombre (el `example` singular no le sirve).
+  rule/response-has-example:
+    subject:
+      type: MediaType
+    where:
+      - subject:
+          type: Response
+        assertions:
+          defined: true
+    assertions:
+      required: [examples]
+      disallowed: [example]
+    message: Cada respuesta usa `examples` con nombre, no `example` (Microcks empareja por nombre).
+    severity: error
+  # Errores en formato RFC 9457.
+  rule/errors-are-problem-json:
+    subject:
+      type: MediaTypesMap
+    where:
+      - subject:
+          type: Response
+          matchParentKeys: /^[45]\d\d$/
+        assertions:
+          defined: true
+    assertions:
+      required: [application/problem+json]
+      disallowed: [application/json]
+    message: Las respuestas 4xx/5xx usan `application/problem+json` (RFC 9457).
+    severity: error
+  # Contratos cerrados: un campo no declarado es un error (el zod generado usa strictObject).
+  rule/objects-are-closed:
+    subject:
+      type: Schema
+    where:
+      - subject:
+          type: Schema
+          property: type
+        assertions:
+          const: object
+    assertions:
+      required: [additionalProperties]
+    message: Todo objeto declara `additionalProperties` (false salvo que sea un mapa a propósito).
+    severity: error

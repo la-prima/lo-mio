@@ -2,6 +2,8 @@ packages:
   - apps/*
   - contexts/*
   - packages/*
+  - tools/*
+  - tests/flows
 
 # Supply chain: no instalar versiones publicadas hace menos de 7 días
 # (ventana típica en que se detectan paquetes comprometidos).
@@ -21,3 +23,10 @@ allowBuilds:
   cpu-features: false
   protobufjs: false
   ssh2: false
+  # Telemetría de instalación (vía @asyncapi/parser).
+  "@scarf/scarf": false
+
+# Versiones con vulnerabilidades corregidas en dependencias transitivas (compatibles por semver).
+overrides:
+  # GHSA-2883-xcg3-v3hh, GHSA-52cp-r559-cp3m, GHSA-5p4m-2wfm-xmqj (vía @hey-api/openapi-ts).
+  "@hey-api/json-schema-ref-parser>js-yaml": ^4.3.2
