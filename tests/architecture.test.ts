@@ -126,4 +126,31 @@ describe("Límites entre contextos y capas", () => {
     );
     expect(errors).toEqual([]);
   });
+
+  it("el código de runtime solo importa dependencias de producción (la imagen no trae las de desarrollo)", () => {
+    const errors: string[] = [];
+    const isTest =
+      /\.(test|int\.test|flow)\.ts$|\/(testing|fixtures|contract-suite)\.ts$|\.config\.ts$/;
+    const runtimeDeps = (pkgDir: string) => {
+      const manifest = JSON.parse(readFileSync(resolve(ROOT, pkgDir, "package.json"), "utf8")) as {
+        dependencies?: Record<string, string>;
+        peerDependencies?: Record<string, string>;
+      };
+      return { ...manifest.dependencies, ...manifest.peerDependencies };
+    };
+    const packageOf = (spec: string) =>
+      spec
+        .split("/")
+        .slice(0, spec.startsWith("@") ? 2 : 1)
+        .join("/");
+    for (const { file, spec } of imports()) {
+      if (isTest.test(file) || spec.startsWith(".") || spec.startsWith("node:")) continue;
+      const pkgDir = file.split("/").slice(0, 2).join("/");
+      const name = packageOf(spec);
+      if (!(name in runtimeDeps(pkgDir))) {
+        errors.push(`${file} → ${name}: no está en dependencies de ${pkgDir}/package.json`);
+      }
+    }
+    expect(errors).toEqual([]);
+  });
 });
