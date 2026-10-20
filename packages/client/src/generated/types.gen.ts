@@ -81,6 +81,55 @@ export type CurrentStaffSession = {
     staff: StaffMember;
 };
 
+export type TableSession = {
+    id: string;
+    tableId: string;
+    openedAt: string;
+};
+
+export type JoinRequest = {
+    alias?: Alias;
+};
+
+export type Rename = {
+    alias: Alias;
+};
+
+/**
+ * Nombre visible en la mesa (sin datos personales obligatorios).
+ */
+export type Alias = string;
+
+export type Guest = {
+    guestId: string;
+    sessionId: string;
+    alias: string;
+    tableLabel: string;
+};
+
+export type SessionOpened = {
+    sessionId: string;
+    tableId: string;
+};
+
+export type ItemSeated = {
+    sessionId: string;
+    tableId: string;
+    /**
+     * Una unidad: `<posItemId>#<n>`.
+     */
+    itemId: string;
+    posItemId: string;
+    name: string;
+    unitPrice: Money;
+};
+
+export type GuestJoined = {
+    sessionId: string;
+    guestId: string;
+    alias: string;
+};
+
 export type Venue = {
     id: string;
     name: string;
@@ -336,6 +385,150 @@ export type GetCurrentStaffSessionResponses = {
 };
 
 export type GetCurrentStaffSessionResponse = GetCurrentStaffSessionResponses[keyof GetCurrentStaffSessionResponses];
+
+export type OpenTableSessionData = {
+    body?: never;
+    path: {
+        tableId: string;
+    };
+    query?: never;
+    url: '/v1/tables/{tableId}/session';
+};
+
+export type OpenTableSessionErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type OpenTableSessionError = OpenTableSessionErrors[keyof OpenTableSessionErrors];
+
+export type OpenTableSessionResponses = {
+    /**
+     * La sesión abierta de la mesa.
+     */
+    200: TableSession;
+};
+
+export type OpenTableSessionResponse = OpenTableSessionResponses[keyof OpenTableSessionResponses];
+
+export type JoinTableData = {
+    body: JoinRequest;
+    path: {
+        qrCode: string;
+    };
+    query?: never;
+    url: '/v1/join/{qrCode}';
+};
+
+export type JoinTableErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * El QR no corresponde a ninguna mesa (inexistente o revocado).
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type JoinTableError = JoinTableErrors[keyof JoinTableErrors];
+
+export type JoinTableResponses = {
+    /**
+     * El comensal (nuevo o el mismo, si ya estaba en la sesión).
+     */
+    200: Guest;
+};
+
+export type JoinTableResponse = JoinTableResponses[keyof JoinTableResponses];
+
+export type GetCurrentGuestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/guests/me';
+};
+
+export type GetCurrentGuestErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetCurrentGuestError = GetCurrentGuestErrors[keyof GetCurrentGuestErrors];
+
+export type GetCurrentGuestResponses = {
+    /**
+     * El comensal.
+     */
+    200: Guest;
+};
+
+export type GetCurrentGuestResponse = GetCurrentGuestResponses[keyof GetCurrentGuestResponses];
+
+export type RenameCurrentGuestData = {
+    body: Rename;
+    path?: never;
+    query?: never;
+    url: '/v1/guests/me';
+};
+
+export type RenameCurrentGuestErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El alias quedó vacío después de quitar espacios.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RenameCurrentGuestError = RenameCurrentGuestErrors[keyof RenameCurrentGuestErrors];
+
+export type RenameCurrentGuestResponses = {
+    /**
+     * El comensal con su alias nuevo.
+     */
+    200: Guest;
+};
+
+export type RenameCurrentGuestResponse = RenameCurrentGuestResponses[keyof RenameCurrentGuestResponses];
 
 export type GetCurrentVenueData = {
     body?: never;

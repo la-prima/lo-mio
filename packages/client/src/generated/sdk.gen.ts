@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses } from './types.gen.ts';
+import type { CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -85,6 +85,65 @@ export const getCurrentStaffSession = <ThrowOnError extends boolean = false>(opt
         }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/staff/sessions/current',
     ...options
+});
+
+/**
+ * Abre la mesa (o devuelve la sesión abierta si ya lo estaba).
+ *
+ * Idempotente por naturaleza: dos meseros que abren la misma mesa ven la misma sesión.
+ */
+export const openTableSession = <ThrowOnError extends boolean = false>(options: Options<OpenTableSessionData, ThrowOnError>): RequestResult<OpenTableSessionResponses, OpenTableSessionErrors, ThrowOnError> => (options.client ?? client).post<OpenTableSessionResponses, OpenTableSessionErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/tables/{tableId}/session',
+    ...options
+});
+
+/**
+ * El comensal se une a la mesa del QR (abre la sesión si hace falta).
+ *
+ * Sin datos personales. Con la cookie de un comensal de la sesión abierta, devuelve ese mismo comensal (recargar la página no crea otro). Límite propio por IP.
+ */
+export const joinTable = <ThrowOnError extends boolean = false>(options: Options<JoinTableData, ThrowOnError>): RequestResult<JoinTableResponses, JoinTableErrors, ThrowOnError> => (options.client ?? client).post<JoinTableResponses, JoinTableErrors, ThrowOnError>({
+    url: '/v1/join/{qrCode}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * El comensal de este dispositivo.
+ */
+export const getCurrentGuest = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentGuestData, ThrowOnError>): RequestResult<GetCurrentGuestResponses, GetCurrentGuestErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentGuestResponses, GetCurrentGuestErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/guests/me',
+    ...options
+});
+
+/**
+ * El comensal cambia su alias.
+ */
+export const renameCurrentGuest = <ThrowOnError extends boolean = false>(options: Options<RenameCurrentGuestData, ThrowOnError>): RequestResult<RenameCurrentGuestResponses, RenameCurrentGuestErrors, ThrowOnError> => (options.client ?? client).patch<RenameCurrentGuestResponses, RenameCurrentGuestErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/guests/me',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

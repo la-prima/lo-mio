@@ -1,6 +1,7 @@
 import type { Db } from "@lo-mio/postgres";
-import { STAFF_COOKIE } from "@lo-mio/server";
+import { GUEST_COOKIE, STAFF_COOKIE } from "@lo-mio/server";
 import { staffService } from "@lo-mio/staff/server";
+import { tablesService } from "@lo-mio/tables/server";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 const fail = (statusCode: 401 | 403, message: string) =>
@@ -28,6 +29,12 @@ async function authenticateStaff(
 export const securityHandlers = (db: Db) => ({
   staffCookie: (req: FastifyRequest, _reply: FastifyReply, roles: string[]) =>
     authenticateStaff(db, req, req.cookies[STAFF_COOKIE], roles),
+  async guestSession(req: FastifyRequest) {
+    const token = req.cookies[GUEST_COOKIE];
+    const actor = token ? await tablesService.authenticate(db, token) : undefined;
+    if (!actor) throw fail(401, "comensal de una sesión abierta requerido");
+    req.actor = actor;
+  },
   staffBearer: (req: FastifyRequest, _reply: FastifyReply, roles: string[]) =>
     authenticateStaff(db, req, req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1], roles),
 });

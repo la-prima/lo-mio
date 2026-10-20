@@ -13,8 +13,8 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 3. Contexto `tables`
 
-- [ ] 3.1 Dominio: apertura única (por el mesero o por el primer ítem), unión, alias generado; verificar con unit tests de cada escenario
-- [ ] 3.2 Server: unirse por QR con cookie de comensal, QR revocado o inexistente; verificar con un test de integración de apertura concurrente (una sola sesión)
+- [x] 3.1 Dominio: apertura única (por el mesero o por el primer ítem), unión, alias generado; verificar con unit tests de cada escenario
+- [x] 3.2 Server: unirse por QR con cookie de comensal, QR revocado o inexistente; verificar con un test de integración de apertura concurrente (una sola sesión)
 
 ## 4. Contexto `claims`
 

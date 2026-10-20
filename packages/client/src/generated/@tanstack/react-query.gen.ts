@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { createStaffSession, deleteCurrentStaffSession, getCurrentStaffSession, getCurrentVenue, getLiveness, getReadiness, listProducts, listTables, loadManualItems, type Options, registerProduct, registerTable, rotateTableQr } from '../sdk.gen.ts';
-import type { CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, ListProductsData, ListProductsError, ListProductsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse } from '../types.gen.ts';
+import { createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getLiveness, getReadiness, joinTable, listProducts, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr } from '../sdk.gen.ts';
+import type { CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinTableData, JoinTableError, JoinTableResponse, ListProductsData, ListProductsError, ListProductsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse } from '../types.gen.ts';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -147,6 +147,79 @@ export const getCurrentStaffSessionOptions = (options?: Options<GetCurrentStaffS
     },
     queryKey: getCurrentStaffSessionQueryKey(options)
 });
+
+/**
+ * Abre la mesa (o devuelve la sesión abierta si ya lo estaba).
+ *
+ * Idempotente por naturaleza: dos meseros que abren la misma mesa ven la misma sesión.
+ */
+export const openTableSessionMutation = (options?: Partial<Options<OpenTableSessionData>>): UseMutationOptions<OpenTableSessionResponse, OpenTableSessionError, Options<OpenTableSessionData>> => {
+    const mutationOptions: UseMutationOptions<OpenTableSessionResponse, OpenTableSessionError, Options<OpenTableSessionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await openTableSession({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * El comensal se une a la mesa del QR (abre la sesión si hace falta).
+ *
+ * Sin datos personales. Con la cookie de un comensal de la sesión abierta, devuelve ese mismo comensal (recargar la página no crea otro). Límite propio por IP.
+ */
+export const joinTableMutation = (options?: Partial<Options<JoinTableData>>): UseMutationOptions<JoinTableResponse, JoinTableError, Options<JoinTableData>> => {
+    const mutationOptions: UseMutationOptions<JoinTableResponse, JoinTableError, Options<JoinTableData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await joinTable({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getCurrentGuestQueryKey = (options?: Options<GetCurrentGuestData>) => createQueryKey('getCurrentGuest', options);
+
+/**
+ * El comensal de este dispositivo.
+ */
+export const getCurrentGuestOptions = (options?: Options<GetCurrentGuestData>) => queryOptions<GetCurrentGuestResponse, GetCurrentGuestError, GetCurrentGuestResponse, ReturnType<typeof getCurrentGuestQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCurrentGuest({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCurrentGuestQueryKey(options)
+});
+
+/**
+ * El comensal cambia su alias.
+ */
+export const renameCurrentGuestMutation = (options?: Partial<Options<RenameCurrentGuestData>>): UseMutationOptions<RenameCurrentGuestResponse, RenameCurrentGuestError, Options<RenameCurrentGuestData>> => {
+    const mutationOptions: UseMutationOptions<RenameCurrentGuestResponse, RenameCurrentGuestError, Options<RenameCurrentGuestData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await renameCurrentGuest({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const getCurrentVenueQueryKey = (options?: Options<GetCurrentVenueData>) => createQueryKey('getCurrentVenue', options);
 

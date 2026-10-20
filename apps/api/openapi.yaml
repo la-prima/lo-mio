@@ -13,6 +13,8 @@ tags:
     description: Ítems que llegan del punto de venta.
   - name: staff
     description: Sesiones del personal.
+  - name: tables
+    description: Sesiones de mesa y comensales.
   - name: venues
     description: Locales, mesas y catálogo.
 paths:
@@ -245,6 +247,173 @@ paths:
           description: Sesión cerrada.
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/tables/{tableId}/session:
+    post:
+      operationId: openTableSession
+      tags:
+        - tables
+      summary: Abre la mesa (o devuelve la sesión abierta si ya lo estaba).
+      description: "Idempotente por naturaleza: dos meseros que abren la misma mesa
+        ven la misma sesión."
+      security:
+        - staffCookie:
+            - waiter
+            - manager
+            - admin
+        - staffBearer:
+            - waiter
+            - manager
+            - admin
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: La sesión abierta de la mesa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TableSession"
+              examples:
+                ok:
+                  $ref: "#/components/examples/TableSession"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/join/{qrCode}:
+    post:
+      operationId: joinTable
+      tags:
+        - tables
+      summary: El comensal se une a la mesa del QR (abre la sesión si hace falta).
+      description: Sin datos personales. Con la cookie de un comensal de la sesión
+        abierta, devuelve ese mismo comensal (recargar la página no crea otro).
+        Límite propio por IP.
+      security: []
+      parameters:
+        - name: qrCode
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 64
+            pattern: ^[A-Za-z0-9_-]+$
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequest"
+            examples:
+              ok:
+                value: {}
+      responses:
+        "200":
+          description: El comensal (nuevo o el mismo, si ya estaba en la sesión).
+          headers:
+            Set-Cookie:
+              description: "`lomio_guest=<token>; HttpOnly; Secure; SameSite=Lax; Path=/;
+                Max-Age=43200`"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Guest"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "404":
+          $ref: "#/components/responses/UnknownQr"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/guests/me:
+    get:
+      operationId: getCurrentGuest
+      tags:
+        - tables
+      summary: El comensal de este dispositivo.
+      security:
+        - guestSession: []
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      responses:
+        "200":
+          description: El comensal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Guest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+    patch:
+      operationId: renameCurrentGuest
+      tags:
+        - tables
+      summary: El comensal cambia su alias.
+      security:
+        - guestSession: []
+      x-microcks-operation:
+        dispatcher: SCRIPT
+        dispatcherRules: |
+          return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Rename"
+            examples:
+              ok:
+                value:
+                  alias: Ana
+      responses:
+        "200":
+          description: El comensal con su alias nuevo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+              examples:
+                ok:
+                  $ref: "#/components/examples/Guest"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          $ref: "#/components/responses/InvalidAlias"
         "429":
           $ref: "#/components/responses/RateLimited"
   /v1/venues/current:
@@ -674,6 +843,117 @@ components:
           format: date-time
         staff:
           $ref: "#/components/schemas/StaffMember"
+    TableSession:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - tableId
+        - openedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        tableId:
+          type: string
+          format: uuid
+        openedAt:
+          type: string
+          format: date-time
+    JoinRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        alias:
+          $ref: "#/components/schemas/Alias"
+    Rename:
+      type: object
+      additionalProperties: false
+      required:
+        - alias
+      properties:
+        alias:
+          $ref: "#/components/schemas/Alias"
+    Alias:
+      type: string
+      minLength: 1
+      maxLength: 30
+      pattern: ^[^\u0000-\u001F\u007F-\u009F]+$
+      description: Nombre visible en la mesa (sin datos personales obligatorios).
+    Guest:
+      type: object
+      additionalProperties: false
+      required:
+        - guestId
+        - sessionId
+        - alias
+        - tableLabel
+      properties:
+        guestId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        alias:
+          type: string
+        tableLabel:
+          type: string
+    SessionOpened:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - tableId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        tableId:
+          type: string
+          format: uuid
+    ItemSeated:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - tableId
+        - itemId
+        - posItemId
+        - name
+        - unitPrice
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        tableId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          description: "Una unidad: `<posItemId>#<n>`."
+        posItemId:
+          type: string
+        name:
+          type: string
+        unitPrice:
+          $ref: "#/components/schemas/Money"
+    GuestJoined:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - guestId
+        - alias
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        guestId:
+          type: string
+          format: uuid
+        alias:
+          type: string
     Venue:
       type: object
       additionalProperties: false
@@ -873,6 +1153,30 @@ components:
                 type: https://lo-mio.cl/problems/invalid-credentials
                 title: Email o contraseña incorrectos
                 status: 401
+    UnknownQr:
+      description: El QR no corresponde a ninguna mesa (inexistente o revocado).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            unknown-qr:
+              value:
+                type: https://lo-mio.cl/problems/unknown-qr
+                title: Este QR no corresponde a una mesa activa
+                status: 404
+    InvalidAlias:
+      description: El alias quedó vacío después de quitar espacios.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalid-alias:
+              value:
+                type: https://lo-mio.cl/problems/invalid-alias
+                title: Alias inválido
+                status: 422
     TableRejected:
       description: Nombre de mesa inválido (ej. solo espacios) o Idempotency-Key
         reutilizada.
@@ -948,6 +1252,11 @@ components:
       type: http
       scheme: bearer
       description: "Sesión del personal en la app (`Authorization: Bearer <token>`)."
+    guestSession:
+      type: apiKey
+      in: cookie
+      name: lomio_guest
+      description: Comensal unido a una sesión de mesa.
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -968,6 +1277,17 @@ components:
           name: Ana
           role: waiter
           venueId: 0199f0a0-0000-7000-8000-000000000001
+    TableSession:
+      value:
+        id: 0199f0a0-0000-7000-8000-0000000000e1
+        tableId: 0199f0a0-0000-7000-8000-000000000005
+        openedAt: 2026-10-20T21:00:00.000Z
+    Guest:
+      value:
+        guestId: 0199f0a0-0000-7000-8000-0000000000f1
+        sessionId: 0199f0a0-0000-7000-8000-0000000000e1
+        alias: Comensal 1
+        tableLabel: "5"
     Venue:
       value:
         id: 0199f0a0-0000-7000-8000-000000000001

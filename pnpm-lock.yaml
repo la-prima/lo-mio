@@ -238,6 +238,9 @@ importers:
       '@lo-mio/staff':
         specifier: workspace:*
         version: link:../../contexts/staff
+      '@lo-mio/tables':
+        specifier: workspace:*
+        version: link:../../contexts/tables
       '@lo-mio/venues':
         specifier: workspace:*
         version: link:../../contexts/venues
@@ -262,6 +265,10 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+    devDependencies:
+      kysely:
+        specifier: ^0.29.6
+        version: 0.29.6
 
   contexts/pos:
     dependencies:
@@ -295,6 +302,27 @@ importers:
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
+  contexts/tables:
+    dependencies:
+      '@lo-mio/kernel':
+        specifier: workspace:*
+        version: link:../../packages/kernel
+      '@lo-mio/postgres':
+        specifier: workspace:*
+        version: link:../../packages/postgres
+      '@lo-mio/server':
+        specifier: workspace:*
+        version: link:../../packages/server
+      fastify:
+        specifier: ^5.12.5
+        version: 5.12.5
+      kysely:
+        specifier: ^0.29.6
+        version: 0.29.6
       zod:
         specifier: ^4.6.7
         version: 4.6.7

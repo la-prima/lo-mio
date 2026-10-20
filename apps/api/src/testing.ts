@@ -6,7 +6,7 @@ import { staffService } from "@lo-mio/staff/server";
 import { PgBoss } from "pg-boss";
 import { buildApp } from "./app.ts";
 import { compose } from "./compose.ts";
-import { contextMigrations, eventCatalog } from "./contexts.ts";
+import { contextMigrations, contexts, eventCatalog } from "./contexts.ts";
 import { loadEnv } from "./env.ts";
 import { seed } from "./seed.ts";
 
@@ -23,6 +23,8 @@ export async function startApi() {
     loadEnv({ DATABASE_URL: pg.url, LOG_LEVEL: "fatal" }),
     compose({ db, bus }),
   );
+  // Mismas suscripciones que main.ts: los eventos viajan por el bus real (pg-boss).
+  for (const context of contexts) await context.subscribe?.({ db, bus });
 
   /** Crea un local con su administrador y devuelve el id del local. */
   const newVenue = async (name = `Local ${newId().slice(-6)}`) => {
