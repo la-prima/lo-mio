@@ -66,6 +66,7 @@ export type Bar = {
   ) => Promise<{ api: Api; guestId: string; sessionId: string; alias: string }>;
 };
 
+// biome-ignore lint/suspicious/noConfusingVoidType: así tipa Playwright un fixture automático sin valor.
 export const test = base.extend<{ api: Api; bar: Bar; allureLabels: void }>({
   // Contexto → flujo → escenario en el reporte, desde los describe (ver tests/allure/labels.ts).
   allureLabels: [
