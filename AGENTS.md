@@ -19,7 +19,7 @@ packages/
   client/        Cliente de API tipado + hooks; lo usan todos los fronts.
 contexts/<ctx>/  Un paquete por contexto (venues, staff, tables, claims, pos, settlement):
   domain/        Agregados, eventos de dominio, reglas. Puro: sin IO ni librerías.
-  contracts/     API pública del contexto: comandos, queries, eventos (zod, versionados).
+  contracts/     openapi.yaml + asyncapi.yaml (fuente de verdad) y generated/ (zod, tipos; no se edita).
   server/        Casos de uso, repositorios, rutas Fastify, handlers de eventos.
 apps/
   api/           Composition root: monta los server/, el bus y los workers. Sin reglas de negocio.
@@ -74,13 +74,35 @@ En cursiva: se activa con el change que crea la app correspondiente (ver el road
 |---|---|---|---|
 | Unit | junto al código: `*.test.ts` | Vitest | Toda regla de `kernel` y de cada `domain/`. Obligatorio para lógica de dinero. |
 | Integración | `**/*.int.test.ts` (`pnpm test:int`, requiere Docker) | Vitest + Testcontainers (Postgres real + pg-boss) | Por contexto: comandos, persistencia y eventos (se publican los de entrada y se verifican los de salida). Nada de mocks de la base de datos. |
-| Contrato | `contexts/pos/server/adapters/` | Vitest | Cada adaptador POS pasa la **misma** suite del contrato `PosAdapter`. |
+| Contrato de la API | `tests/contract/` | Schemathesis | La API implementa exactamente su OpenAPI: códigos, schemas, headers, métodos no permitidos. Casos generados desde el contrato. |
+| Contrato de adaptadores | `contexts/pos/server/adapters/` | Vitest | Cada adaptador POS pasa la **misma** suite del contrato `PosAdapter`. |
+| Flujos de la API | `tests/flows/` | Playwright (cliente generado) | Flujos funcionales por contexto contra el ambiente desplegado, con request/response en cada paso. |
 | E2E web | `apps/guest-web/e2e/` | Playwright: Chromium, Firefox, WebKit, Pixel y iPhone emulados | Flujos del comensal: unirse, reclamar, compartir, confirmar y ver saldo. |
 | E2E mobile | `apps/mobile/e2e/` | Maestro en emuladores Android e iOS | Flujos del personal: cobro completo con rotación, offline, override. |
 | Carga | `load/` | k6 | Objetivos en `docs/arquitectura.md`, sección 9. |
 | Failover | `load/chaos/` | k6 + detener contenedores | Caída de la API o de la DB a mitad del flujo: ni comandos ni eventos se pierden o duplican. |
 
 Una prueba por comportamiento y no por función. Tiene que fallar si el comportamiento se rompe.
+
+### Contract-first
+
+- **Los contratos son la fuente de verdad** (`docs/arquitectura.md`, sección 12): `openapi.yaml` y `asyncapi.yaml` en `contexts/<ctx>/contracts/`; plataforma en `apps/api/openapi/platform.yaml`; terceros en `contracts/external/`.
+- **Orden de trabajo:** 1) escribir o cambiar el contrato, 2) `pnpm contracts` (lint + bundle + generación), 3) implementar. Nunca al revés.
+- **Nunca escribir a mano** un schema, tipo o cliente que exista en un contrato: `contracts/` solo reexporta `generated/` (lo verifica el test de arquitectura) y CI falla si lo generado difiere.
+- **Reglas del contrato** (`redocly.yaml`): `operationId` y `summary` en cada operación; errores como `application/problem+json`; objetos cerrados (`additionalProperties`); cada respuesta con `examples` **con nombre**; endpoints públicos con `security: []` explícito.
+- **Mocks deterministas:** una operación con varias respuestas declara `x-microcks-operation` (dispatcher `SCRIPT`) que responde `ok` por defecto o el ejemplo que pida el header `X-Mock-Example`.
+- **Eventos:** cada tópico en el `asyncapi.yaml` del emisor; su payload es un `$ref` a `components.schemas` del `openapi.yaml` del mismo contexto. El bus rechaza lo que no esté declarado.
+- **Rutas:** los contextos entregan handlers por `operationId`; la API no arranca si falta o sobra uno.
+
+### Evidencias (reporte Allure)
+
+Todo test escribe en `reports/allure-results`; `pnpm report` genera un único HTML (`reports/allure-report/index.html`) agrupado **contexto → flujo de usuario → escenario → paso**. Para que se entienda sin leer código:
+
+- **Nombres en español y en lenguaje de negocio.** El `describe` de primer nivel nombra un comportamiento ("Reparto de montos"), nunca una función (`splitAmount`).
+- **Flujos** (`tests/flows/<contexto>/<flujo>.flow.ts`): `test.describe("<Contexto>")` → `test.describe("<Flujo de usuario>")` → `test("<escenario>")` → `test.step("<paso>")`. El contexto es uno de `DOMAINS` (`tests/allure/labels.ts`); otro nombre hace fallar el flujo. Ej.: Reclamos → Compartir un ítem → "tres comensales reparten una tabla" → "Ana reclama la tabla".
+- **Cada `expect` lleva un mensaje de negocio** (`expect(x, "la API responde 200")`): es el título del chequeo en el reporte.
+- **Adjuntos automáticos:** request/response de cada llamada (fixture `api`); traces y video en e2e web; video en Maestro.
+- La jerarquía se deriva sola (`tests/allure/labels.ts`): no escribir `epic`/`feature`/`story` a mano.
 
 ## Seguridad
 
@@ -99,6 +121,10 @@ pnpm verify         # todo lo de pre-push
 pnpm fix            # formato + autofix de lint
 pnpm test           # unit tests
 pnpm test:int       # integración (requiere Docker)
+pnpm contracts      # lint + bundle + generación desde los contratos
+pnpm test:contract  # Schemathesis contra la API en kind
+pnpm test:flows     # flujos de la API (Playwright) contra kind
+pnpm report         # reporte Allure único con todo lo anterior
 pnpm spec           # valida OpenSpec
 
 # Ambiente local (Docker con ≥ 6 GB de memoria asignada)
