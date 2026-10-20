@@ -9,7 +9,7 @@
 
 - [x] 2.1 @hey-api/openapi-ts: zod y tipos por contexto, y cliente con TanStack Query en `packages/client`; job `contracts` que falla si lo generado difiere; verificar con un cambio de contrato sin regenerar
 - [x] 2.2 AsyncAPI → zod (elegir la herramienta con un evento real) y validación en `PgBossEventBus.publish`; verificar con tests: evento no declarado y payload inválido se rechazan
-- [ ] 2.3 Regla en el test de arquitectura: `contracts/` solo exporta `generated/`; verificar con un schema escrito a mano
+- [x] 2.3 Regla en el test de arquitectura: `contracts/` solo exporta `generated/`; verificar con un schema escrito a mano
 
 ## 3. La API implementa solo su contrato
 
