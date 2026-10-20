@@ -18,14 +18,25 @@ Primer change con reglas de negocio. Aplica `docs/arquitectura.md` completo; aqu
 - **Identificación del comensal:** cookie httpOnly `SameSite=Lax` ligada a la sesión de mesa. El QR de la mesa lleva un código aleatorio revocable, no el número de mesa.
 - **Auth del personal:** usuario y contraseña con `scrypt` (`node:crypto`). La sesión es una cookie httpOnly en la web y un token en `expo-secure-store` en la app. `@fastify/rate-limit` en el login.
 - **Carga manual como POS:** el adaptador manual publica el mismo `pos.item.received.v1` que publicará Fudo. `claims` no sabe de dónde viene el ítem.
-- **Eventos de este change** (cada uno declarado en el `asyncapi.yaml` de su emisor):
+- **Flujo de eventos.** `tables` decide a qué sesión pertenece cada ítem; si `claims` consumiera directo el evento del POS, podría recibir un ítem antes de que exista la sesión.
 
-| Tópico | Emisor | Consumidores |
-|---|---|---|
-| `pos.item.received.v1` | pos | claims |
-| `tables.guest.joined.v1` | tables | claims, settlement |
-| `claims.item.assigned.v1` | claims | settlement, gateway WS |
-| `settlement.balance.changed.v1` | settlement | gateway WS |
+| Tópico | Emisor | Consumidores | Para qué |
+|---|---|---|---|
+| `pos.item.received.v1` | pos | tables | Ítem nuevo en una mesa (manual hoy, Fudo después) |
+| `tables.session.opened.v1` | tables | gateway WS | Se abrió la mesa |
+| `tables.item.seated.v1` | tables | claims | El ítem quedó en la sesión abierta (una unidad por evento) |
+| `tables.guest.joined.v1` | tables | claims, settlement, gateway WS | Comensal nuevo en la sesión |
+| `claims.item.changed.v1` | claims | settlement, gateway WS | Estado completo del ítem (dueños y partes) con su `version` |
+| `settlement.balance.changed.v1` | settlement | gateway WS | Saldo nuevo de un comensal |
+
+  - `claims` guarda sus **eventos de dominio** (reclamado, compartido, sumado) en su propia tabla y publica hacia afuera un solo evento de integración con el **estado completo** del ítem. Los consumidores proyectan por `version` sin conocer la lógica de reclamos y descartan versiones viejas.
+  - La cantidad se expande en `tables`: 2 cervezas = 2 `tables.item.seated.v1`, cada una con su id (spec `pos-integration`, escenario "Carga manual").
+- **Carga manual con nombre y precio del catálogo elegidos en la app.** `pos` no lee el catálogo de `venues`: el mesero autenticado elige el producto y la app envía nombre y precio. Hoy el mesero ya puede escribir cualquier precio en el POS, así que no agrega un riesgo nuevo.
+- **Autenticación declarada en el contrato.** Dos esquemas de seguridad en OpenAPI: `staffSession` (cookie `lomio_staff` o `Authorization: Bearer`) y `guestSession` (cookie `lomio_guest`). Cada operación declara cuál acepta y fastify-openapi-glue aplica los `securityHandlers`. Los tokens son **opacos y aleatorios**: en la base se guarda solo su hash SHA-256, así que se pueden revocar y una filtración de la base no los expone. `apps/api` resuelve el actor (`staff` o `guest`, siempre con su `venueId`) usando el `server/` de `staff` y de `tables`; los handlers reciben el actor ya resuelto.
+- **Proyecciones locales en vez de consultas entre contextos.** `claims` valida que los comensales de un reparto pertenezcan a la sesión usando su propia proyección de `tables.guest.joined.v1`; `settlement` calcula los saldos con su proyección de `claims.item.changed.v1`.
+- **Idempotencia de comandos:** header `Idempotency-Key` en las operaciones que crean o cambian estado; tabla de plataforma `idempotency_keys` (clave, actor, hash del request, respuesta). Reintentar con la misma clave devuelve la misma respuesta; la misma clave con otro request responde 422.
+- **Locales y personal iniciales por script** (`apps/api/src/seed.ts`): el MVP no tiene autoservicio para crear locales ni el primer administrador.
+- **WebSocket fuera de fastify-openapi-glue** (glue solo monta HTTP): la ruta `/v1/sessions/{sessionId}/events` se declara en el `asyncapi.yaml` de la API y la registra `apps/api`, con la misma autenticación.
 
 - **Gateway WebSocket** en `apps/api` (`docs/arquitectura.md`, sección 6): reenvía los eventos de la sesión a sus clientes y reanuda desde el último `event.id`.
 

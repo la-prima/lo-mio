@@ -1,3 +1,4 @@
+# Generado por scripts/contracts.ts desde los contratos de plataforma y contextos. No editar.
 openapi: 3.1.0
 info:
   title: lo-mio · plataforma
@@ -8,7 +9,6 @@ servers:
 tags:
   - name: plataforma
     description: Salud del sistema.
-    x-displayName: plataforma
 paths:
   /health/live:
     get:
@@ -22,18 +22,18 @@ paths:
       summary: El proceso responde (liveness). No consulta dependencias.
       security: []
       responses:
-        '200':
+        "200":
           description: El proceso está vivo.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthStatus'
+                $ref: "#/components/schemas/HealthStatus"
               examples:
                 ok:
                   value:
                     status: ok
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
+        "429":
+          $ref: "#/components/responses/RateLimited"
   /health:
     get:
       operationId: getReadiness
@@ -46,24 +46,24 @@ paths:
       summary: Puede atender tráfico (readiness). Consulta la base de datos.
       security: []
       responses:
-        '200':
+        "200":
           description: Listo para atender tráfico.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthStatus'
+                $ref: "#/components/schemas/HealthStatus"
               examples:
                 ok:
                   value:
                     status: ok
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '503':
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
           description: Una dependencia no está disponible.
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/Problem'
+                $ref: "#/components/schemas/Problem"
               examples:
                 dependency-unavailable:
                   value:
@@ -71,19 +71,6 @@ paths:
                     title: Dependencia no disponible
                     status: 503
 components:
-  responses:
-    TooManyRequests:
-      description: Se superó el límite de solicitudes.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          examples:
-            rate-limited:
-              value:
-                type: https://lo-mio.cl/problems/rate-limited
-                title: Demasiadas solicitudes
-                status: 429
   schemas:
     HealthStatus:
       type: object
@@ -119,3 +106,16 @@ components:
         instance:
           type: string
           description: Identificador de esta ocurrencia.
+  responses:
+    RateLimited:
+      description: Se superó el límite de solicitudes.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            rate-limited:
+              value:
+                type: https://lo-mio.cl/problems/rate-limited
+                title: Demasiadas solicitudes
+                status: 429

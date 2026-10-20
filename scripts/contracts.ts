@@ -4,11 +4,13 @@
  * tipos, zod y cliente (tools/codegen). `--check`: falla si lo generado difiere de lo commiteado.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, resolve } from "node:path";
+import { existsSync, globSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, dirname, join, resolve } from "node:path";
 import { Parser } from "@asyncapi/parser";
-import { parse } from "yaml";
+import { parse, stringify } from "yaml";
 import { eventCatalogSource } from "./events.ts";
+import { mergeOpenApi } from "./merge-openapi.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const BUNDLE = "apps/api/openapi.yaml";
@@ -26,8 +28,19 @@ const openapis = [
   ...globSync("contexts/*/contracts/openapi.yaml", { cwd: ROOT }).sort(),
 ];
 
-run("pnpm", ["exec", "redocly", "lint", "--format=stylish", ...openapis]);
-run("pnpm", ["exec", "redocly", "join", ...openapis, "-o", BUNDLE, "--without-x-tag-groups"]);
+run("pnpm", ["exec", "redocly", "lint", "--format=stylish", "contracts/common.yaml", ...openapis]);
+// Cada contrato se empaqueta (resuelve $ref externos, ej. contracts/common.yaml) y se une.
+const tmp = mkdtempSync(join(tmpdir(), "lo-mio-contracts-"));
+const bundled = openapis.map((file, i): [string, Parameters<typeof mergeOpenApi>[0]] => {
+  const out = join(tmp, `${i}.yaml`);
+  run("pnpm", ["exec", "redocly", "bundle", file, "-o", out]);
+  return [file, parse(readFileSync(out, "utf8"))];
+});
+const [[, base] = ["", {}], ...rest] = bundled;
+writeFileSync(
+  resolve(ROOT, BUNDLE),
+  `# Generado por scripts/contracts.ts desde los contratos de plataforma y contextos. No editar.\n${stringify(mergeOpenApi(base, rest))}`,
+);
 run("pnpm", ["--filter", "@lo-mio/codegen", "generate"]);
 
 // hey-api genera `z.object`, que descarta en silencio los campos no declarados. Nuestros contratos
