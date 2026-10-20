@@ -1,0 +1,33 @@
+# Valores por defecto = producción. values-local.yaml los ajusta para kind.
+
+# Gateway (Gateway API) que expone los componentes. Lo administra la plataforma, no este chart.
+gateway:
+  name: lo-mio
+  namespace: gateway
+  sectionName: https
+
+api:
+  image:
+    repository: lo-mio-api
+    tag: ""  # por defecto, appVersion del chart
+    pullPolicy: IfNotPresent
+  replicas: 2
+  hostname: api.lo-mio.cl
+  # Secret con la URL de Postgres (en kind la crea CloudNativePG).
+  database:
+    secretName: lo-mio-db-app
+    secretKey: uri
+  env:
+    LOG_LEVEL: info
+    CORS_ORIGINS: ""
+  # Sin límite de CPU a propósito: provoca throttling aunque el nodo tenga CPU libre (Trivy KSV-0011, LOW).
+  # El namespace lo define `helm install -n` (Trivy KSV-0110, LOW).
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 256Mi }
+  networkPolicy:
+    enabled: true
+    # Namespace de los pods de Envoy que reenvían el tráfico a la API.
+    gatewayNamespace: envoy-gateway-system
+    # Reglas `to` de salida hacia Postgres (en producción: el rango de IPs del Postgres administrado).
+    databaseEgress: []

@@ -1,0 +1,16 @@
+# Contexto de build mínimo: solo manifiestos y código fuente de runtime.
+**/node_modules
+.git
+.github
+.claude
+.agents
+openspec
+docs
+deploy
+tests
+**/*.test.ts
+**/.env
+**/.env.*
+coverage
+playwright-report
+test-results

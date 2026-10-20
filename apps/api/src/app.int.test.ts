@@ -30,10 +30,10 @@ describe("api", () => {
     expect(res.headers["x-ratelimit-limit"]).toBe("300");
   });
 
-  it("GET /health responde 503 si la base no está disponible", async () => {
+  it("si la base no está disponible, /health responde 503 pero /health/live sigue en 200", async () => {
     await db.destroy();
-    const res = await app.inject({ method: "GET", url: "/health" });
-    expect(res.statusCode).toBe(503);
+    expect((await app.inject({ method: "GET", url: "/health" })).statusCode).toBe(503);
+    expect((await app.inject({ method: "GET", url: "/health/live" })).statusCode).toBe(200);
   });
 
   it("el proceso no arranca si falta una variable de entorno", () => {

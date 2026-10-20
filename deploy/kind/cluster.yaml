@@ -1,0 +1,21 @@
+# Clúster local que simula producción: `ctlptl apply -f deploy/kind/cluster.yaml` (idempotente).
+# 1 control plane + 2 workers, registro local para Tilt y los puertos 80/443 del host hacia Envoy.
+apiVersion: ctlptl.dev/v1alpha1
+kind: Registry
+name: lo-mio-registry
+port: 5005
+---
+apiVersion: ctlptl.dev/v1alpha1
+kind: Cluster
+product: kind
+registry: lo-mio-registry
+kindV1Alpha4Cluster:
+  name: lo-mio
+  nodes:
+    - role: control-plane
+      # NodePorts fijos del servicio de Envoy (ver infra/gateway.yaml).
+      extraPortMappings:
+        - { containerPort: 30080, hostPort: 80, protocol: TCP }
+        - { containerPort: 30443, hostPort: 443, protocol: TCP }
+    - role: worker
+    - role: worker

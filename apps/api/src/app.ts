@@ -18,6 +18,11 @@ export async function buildApp(env: Env, db: Db): Promise<FastifyInstance> {
   // ponytail: límite global por IP; los endpoints sensibles (login, PIN) suman el suyo.
   await app.register(rateLimit, { max: 300, timeWindow: "1 minute" });
 
+  // liveness: el proceso responde. No toca la base, para que una caída de Postgres no
+  // reinicie todos los pods en cascada.
+  app.get("/health/live", async () => ({ status: "ok" }));
+
+  // readiness: puede atender tráfico (la base responde).
   app.get("/health", async (_req, reply) => {
     try {
       await ping(db);

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: lo-mio
+description: lo-mio en Kubernetes. Mismo chart para local (kind), CI y producción; cambian los values.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

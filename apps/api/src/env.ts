@@ -5,6 +5,8 @@ const envSchema = z.object({
   HOST: z.string().default("0.0.0.0"),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  /** En Kubernetes las migraciones corren en un Job previo al despliegue (`src/migrate.ts`). */
+  MIGRATE_ON_START: z.stringbool().default(true),
   /** Orígenes permitidos para CORS, separados por coma. Vacío = ninguno. */
   CORS_ORIGINS: z
     .string()

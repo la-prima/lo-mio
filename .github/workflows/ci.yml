@@ -38,6 +38,44 @@ jobs:
       # Testcontainers usa el Docker que ya trae el runner.
       - run: pnpm test:int
 
+  image:
+    runs-on: ubuntu-latest
+    env:
+      TRIVY: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}:/work -w /work aquasec/trivy:0.75.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker build -t lo-mio-api:${{ github.sha }} -f apps/api/Dockerfile .
+      # Vulnerabilidades de la imagen (SO + dependencias de Node).
+      - run: $TRIVY image --quiet --scanners vuln --severity HIGH,CRITICAL --exit-code 1 lo-mio-api:${{ github.sha }}
+      - run: $TRIVY image --quiet --format cyclonedx --output sbom-api.cdx.json lo-mio-api:${{ github.sha }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: sbom-api.cdx.json
+      # Chart: lint, esquemas de Kubernetes y malas configuraciones de seguridad.
+      - run: helm lint deploy/helm/lo-mio -f deploy/helm/lo-mio/values-local.yaml
+      - run: >
+          helm template lo-mio deploy/helm/lo-mio -f deploy/helm/lo-mio/values-local.yaml
+          | docker run --rm -i ghcr.io/yannh/kubeconform:v0.8.0 -strict -summary
+          -schema-location default
+          -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+      - run: $TRIVY config --quiet --severity HIGH,CRITICAL --exit-code 1 --helm-values deploy/helm/lo-mio/values-local.yaml deploy/helm/lo-mio
+
+  k8s-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: deploy/ci/install-k8s-tools.sh
+      # Mismo clúster y mismo Tiltfile que en local; `tilt ci` termina cuando todo está listo
+      # (incluida la prueba de humo por el Gateway) o falla.
+      - run: ctlptl apply -f deploy/kind/cluster.yaml
+      - run: tilt ci --timeout 25m
+      - if: failure()
+        run: |
+          kubectl get pods -A -o wide
+          kubectl get events -A --sort-by=.lastTimestamp | tail -50
+
   secrets:
     runs-on: ubuntu-latest
     steps:

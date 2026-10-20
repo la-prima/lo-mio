@@ -1,0 +1,24 @@
+# Postgres con CloudNativePG: primario + réplica, como un Postgres administrado.
+# Crea el Secret `lo-mio-db-app` (clave `uri`) que usa el chart.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lo-mio
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: lo-mio-db
+  namespace: lo-mio
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  storage:
+    size: 1Gi
+  bootstrap:
+    initdb:
+      database: lomio
+      owner: lomio
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }

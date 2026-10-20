@@ -1,1 +1,8 @@
-{ "$schema": "https://unpkg.com/knip@6/schema.json" }
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "apps/api": {
+      "entry": ["src/migrate.ts"]
+    }
+  }
+}
