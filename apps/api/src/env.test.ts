@@ -10,8 +10,14 @@ describe("loadEnv", () => {
     expect(env).toMatchObject({
       PORT: 3000,
       LOG_LEVEL: "info",
+      MIGRATE_ON_START: true,
       CORS_ORIGINS: ["https://a.cl", "https://b.cl"],
     });
+  });
+
+  it("permite desactivar la migración al arrancar (Kubernetes usa un Job)", () => {
+    const env = loadEnv({ DATABASE_URL: "postgres://localhost/db", MIGRATE_ON_START: "false" });
+    expect(env.MIGRATE_ON_START).toBe(false);
   });
 
   it("nombra cada variable inválida o faltante", () => {

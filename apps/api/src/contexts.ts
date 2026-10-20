@@ -12,3 +12,7 @@ type ServerContext = {
 };
 
 export const contexts: ServerContext[] = [venues];
+
+/** Carpetas de migraciones de los contextos que tienen tablas, por nombre de contexto. */
+export const contextMigrations = (): Record<string, string> =>
+  Object.fromEntries(contexts.flatMap((c) => (c.migrations ? [[c.name, c.migrations]] : [])));
