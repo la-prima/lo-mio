@@ -7,6 +7,8 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   /** En Kubernetes las migraciones corren en un Job previo al despliegue (`src/migrate.ts`). */
   MIGRATE_ON_START: z.stringbool().default(true),
+  /** Solicitudes por minuto e IP (límite global). En kind se sube para que el fuzzing no lo agote. */
+  RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(300),
   /** Orígenes permitidos para CORS, separados por coma. Vacío = ninguno. */
   CORS_ORIGINS: z
     .string()

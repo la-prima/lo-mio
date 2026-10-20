@@ -23,7 +23,8 @@ const relabel = (result: Result): Result => {
     ...result,
     labels: [
       ...labels.filter((l) => !["epic", "feature", "story"].includes(l.name)),
-      { name: "epic", value: DOMAINS[tag as keyof typeof DOMAINS] ?? tag },
+      // Sin tag: los tests stateful recorren operaciones de varios contextos.
+      { name: "epic", value: DOMAINS[tag as keyof typeof DOMAINS] ?? (tag || DOMAINS.plataforma) },
       { name: "feature", value: "Conformidad con el contrato" },
       { name: "story", value: value("story") },
       { name: "tag", value: "contrato" },

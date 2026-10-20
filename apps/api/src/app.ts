@@ -45,6 +45,24 @@ function securityByOperation(specification: string) {
   return new Map(operations.map((op) => [String(op.operationId), op.security ?? doc.security]));
 }
 
+/** Políticas HTTP comunes a todas las operaciones: tipos de contenido, headers, CORS y límites. */
+async function registerHttpPolicies(app: FastifyInstance, env: Env) {
+  // El contrato solo acepta JSON: sin el parser de texto que Fastify trae por defecto, otro
+  // Content-Type responde 415 antes de llegar al handler (que no valida un body no declarado).
+  app.removeContentTypeParser("text/plain");
+  await app.register(helmet);
+  await app.register(cors, { origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false });
+  // ponytail: límites en memoria de cada pod (con N réplicas el límite efectivo es N veces);
+  // pasar a un contador compartido en Postgres si hace falta un límite exacto.
+  // Global por IP; los endpoints sensibles (login, PIN) suman el suyo.
+  await app.register(rateLimit, {
+    max: env.RATE_LIMIT_MAX,
+    timeWindow: "1 minute",
+    // Sin IP de origen (ej. inyección en tests) el generador por defecto falla; nunca debe tumbar la request.
+    keyGenerator: (req) => req.ip || req.socket?.remoteAddress || "sin-ip",
+  });
+}
+
 /**
  * Arma la API sin escuchar en un puerto (los tests usan `inject`). Las rutas salen del contrato:
  * no existe ninguna que no esté declarada, y las respuestas se serializan con su schema.
@@ -79,17 +97,7 @@ export async function buildApp(env: Env, options: AppOptions): Promise<FastifyIn
       });
     }
   });
-  await app.register(helmet);
-  await app.register(cors, { origin: env.CORS_ORIGINS.length > 0 ? env.CORS_ORIGINS : false });
-  // ponytail: límites en memoria de cada pod (con N réplicas el límite efectivo es N veces);
-  // pasar a un contador compartido en Postgres si hace falta un límite exacto.
-  // Global por IP; los endpoints sensibles (login, PIN) suman el suyo.
-  await app.register(rateLimit, {
-    max: 300,
-    timeWindow: "1 minute",
-    // Sin IP de origen (ej. inyección en tests) el generador por defecto falla; nunca debe tumbar la request.
-    keyGenerator: (req) => req.ip || req.socket?.remoteAddress || "sin-ip",
-  });
+  await registerHttpPolicies(app, env);
 
   const mounted = new Set<string>();
   const securityOf = securityByOperation(specification);

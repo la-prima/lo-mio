@@ -22,9 +22,21 @@ login() {
 for _ in $(seq 1 15); do session="$(login 2>/dev/null)" && break; sleep 5; done
 token="$(echo "${session:?no se pudo iniciar sesión}" | sed -E 's/.*"token":"([^"]+)".*/\1/')"
 
+# Un comensal en una mesa nueva: sin él, las operaciones del comensal solo verían 401.
+api() { curl -fsS --cacert "$ca" -H 'content-type: application/json' "$@"; }
+qr="$(api -H "authorization: Bearer $token" -H "idempotency-key: $(uuidgen)" \
+  "$url/v1/venues/current/tables" -d "{\"label\":\"C$(date +%s | tail -c 6)\"}" |
+  sed -E 's/.*"qrCode":"([^"]+)".*/\1/')"
+# La mesa llega a `tables` por el bus; el join tiene su propio límite (429) si se corrió hace poco.
+for _ in $(seq 1 30); do
+  guest="$(api -D - -o /dev/null "$url/v1/join/$qr" -d '{"alias":"Schemathesis"}' 2>/dev/null |
+    sed -nE 's/^set-cookie: lomio_guest=([^;]+).*/\1/ip')" && [ -n "$guest" ] && break
+  sleep 2
+done
+
 # Con el usuario actual: en Linux el contenedor no podría escribir el reporte en la carpeta montada.
-docker run --rm --user "$(id -u):$(id -g)" --add-host "$host:host-gateway" \
-  -e API_URL="$url" -e CA_BUNDLE=/out/ca.crt -e REPORT_DIR=/out -e API_TOKEN="$token" \
+docker run --rm --user "$(id -u):$(id -g)" -w /out --add-host "$host:host-gateway" \
+  -e API_URL="$url" -e CA_BUNDLE=/out/ca.crt -e REPORT_DIR=/out -e API_TOKEN="$token" -e GUEST_TOKEN="${guest:?no se pudo unir un comensal}" \
   -v "$PWD/apps/api/openapi.yaml:/spec/openapi.yaml:ro" \
   -v "$PWD/tests/contract/schemathesis.toml:/spec/schemathesis.toml:ro" \
   -v "$out:/out" \

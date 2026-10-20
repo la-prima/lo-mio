@@ -10,6 +10,9 @@ api_key = "${API_TOKEN}"
 [auth.openapi.staffBearer]
 bearer = "${API_TOKEN}"
 
+[auth.openapi.guestSession]
+api_key = "${GUEST_TOKEN}"
+
 # Cerraría la sesión que usa el resto de la corrida; la cubre staff-access.int.test.ts.
 [[operations]]
 include-operation-id = "deleteCurrentStaffSession"
@@ -21,6 +24,11 @@ enabled = true
 # Reusar una Idempotency-Key con otra solicitud responde 422 por contrato: es aceptación válida.
 [checks.positive_data_acceptance]
 expected-statuses = ["2XX", "3XX", 401, 403, 404, 409, 422, 429]
+
+# El límite global por IP (429, documentado en el contrato) puede responder antes que la
+# validación cuando se corre varias veces seguidas: también es un rechazo válido.
+[checks.missing_required_header]
+expected-statuses = [400, 401, 403, 406, 415, 422, 429]
 
 [phases.coverage]
 # Todos los métodos por defecto salvo QUERY (borrador IETF): Envoy lo rechaza con 400 en HTTP/1.1

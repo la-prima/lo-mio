@@ -55,6 +55,17 @@ describe("API HTTP desde el contrato", () => {
     await leaky.close();
   });
 
+  it("un body que no es JSON responde 415 como problem+json, sin llegar al handler", async () => {
+    const res = await api.app.inject({
+      method: "POST",
+      url: "/v1/staff/sessions",
+      headers: { "content-type": "text/plain" },
+      payload: '{"email":"a@b.cl","password":"x"}',
+    });
+    expect(res.statusCode).toBe(415);
+    expect(res.headers["content-type"]).toContain("application/problem+json");
+  });
+
   it("una operación protegida sin sesión responde 401 como problem+json", async () => {
     const res = await api.app.inject({ method: "GET", url: "/v1/venues/current" });
     expect(res.statusCode).toBe(401);
