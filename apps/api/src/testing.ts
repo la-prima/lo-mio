@@ -14,8 +14,15 @@ export const PASSWORD = "una-clave-larga-de-prueba";
 
 /** Una instancia de la API (como un pod) sobre una base ya migrada. */
 async function instance(url: string) {
-  const db = createDb(url);
+  // Al apagar, Postgres puede cortar una conexión que se está cerrando: se ignora solo entonces.
+  // Fuera del apagado, se relanza (un test nunca debe esconder un error de conexión).
+  let stopping = false;
+  const onError = (error: Error) => {
+    if (!stopping) throw error;
+  };
+  const db = createDb(url, onError);
   const boss = createBoss(url);
+  boss.on("error", onError);
   await boss.start();
   const bus = new PgBossEventBus(boss, db, eventCatalog());
   const app = await buildApp(
@@ -28,6 +35,7 @@ async function instance(url: string) {
   // Como listen() en main.ts: deja la app lista (injectWS, a diferencia de inject, no lo hace solo).
   await app.ready();
   const stop = async () => {
+    stopping = true;
     await app.close();
     await boss.stop({ graceful: false });
     await db.destroy();

@@ -86,6 +86,12 @@ export async function registerRealtime(app: FastifyInstance, { db, bus, connecti
 
   // Cada instancia escucha el canal con una conexión dedicada y reenvía a sus sockets.
   const listener = new pg.Client({ connectionString });
+  // Sin LISTEN el pod seguiría vivo sin enviar nada en vivo: se registra y el proceso cae, para
+  // que Kubernetes lo reinicie y vuelva a escuchar (el snapshot al reconectar evita perder estado).
+  listener.on("error", (err) => {
+    app.log.fatal({ err }, "se perdió la conexión LISTEN del tiempo real");
+    throw err;
+  });
   await listener.connect();
   await listener.query(`listen ${CHANNEL}`);
   listener.on("notification", ({ payload }) => {
