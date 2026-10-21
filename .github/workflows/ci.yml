@@ -196,9 +196,10 @@ jobs:
           rm -rf "$ANDROID_HOME/cmdline-tools/latest" && mkdir -p "$ANDROID_HOME/cmdline-tools"
           unzip -q clt.zip -d "$ANDROID_HOME/cmdline-tools" && mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
           sdk="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          yes | "$sdk" --licenses >/dev/null
+          # Licencias e instalación consultan el catálogo de Google: las dos van con reintentos.
           for attempt in 1 2 3 4 5; do
-            "$sdk" --install emulator "system-images;android-36;google_apis;x86_64" >/dev/null && break
+            { yes | "$sdk" --licenses >/dev/null; } &&
+              "$sdk" --install emulator "system-images;android-36;google_apis;x86_64" >/dev/null && break
             echo "intento $attempt falló; reintento en 20 s" && sleep 20
           done
           test -x "$ANDROID_HOME/emulator/emulator"
