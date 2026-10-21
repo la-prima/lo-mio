@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startMicrocks } from "@lo-mio/postgres/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -14,7 +16,12 @@ describe("mocks desde el contrato (Microcks)", () => {
   let mock: string;
 
   beforeAll(async () => {
-    microcks = await startMicrocks([PLATFORM]);
+    // Microcks no sigue $ref a otros archivos (contracts/common.yaml): se sube el contrato empaquetado.
+    const bundled = join(mkdtempSync(join(tmpdir(), "lo-mio-mock-")), "platform.yaml");
+    execFileSync("pnpm", ["exec", "redocly", "bundle", PLATFORM, "-o", bundled], {
+      stdio: "ignore",
+    });
+    microcks = await startMicrocks([bundled]);
     mock = microcks.mockUrl(contract.info.title, contract.info.version);
   });
   afterAll(() => microcks.stop());

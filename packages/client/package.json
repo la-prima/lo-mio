@@ -2,8 +2,12 @@
   "name": "@lo-mio/client",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "description": "Cliente de la API para todos los fronts y los flujos de prueba. Generado desde apps/api/openapi.yaml.",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas": "./src/generated/zod.gen.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p ."
   },

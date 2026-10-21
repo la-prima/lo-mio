@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: lo-mio · claims
+  version: 1.0.0
+  description: >-
+    Quién consumió qué en la mesa: cada ítem tiene dueños y partes (que suman exactamente su precio).
+    Cada cambio es un evento inmutable: el historial de un ítem es su auditoría.
+servers:
+  - url: /
+tags:
+  - name: claims
+    description: Reclamos y repartos de ítems.
+x-common:
+  dispatcher: &defaultExample
+    dispatcher: SCRIPT
+    dispatcherRules: |
+      return mockRequest.getRequest().getHeader("X-Mock-Example") ?: "ok"
+paths:
+  /v1/sessions/{sessionId}/items:
+    get:
+      operationId: listSessionItems
+      tags: [claims]
+      summary: Feed de la mesa, con dueños y partes de cada ítem.
+      description: "Para los comensales de esa sesión o el personal del local."
+      security: [{ guestSession: [] }, { staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
+      parameters:
+        - { name: sessionId, in: path, required: true, schema: { type: string, format: uuid } }
+      x-microcks-operation: *defaultExample
+      responses:
+        "200":
+          description: Ítems de la sesión, del más antiguo al más nuevo.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Item" } }
+              examples:
+                ok:
+                  value:
+                    - itemId: 0199f0a0-0000-7000-8000-0000000000d1
+                      sessionId: 0199f0a0-0000-7000-8000-0000000000e1
+                      name: Schop Kunstmann
+                      price: { amount: 4500, currency: CLP }
+                      status: unowned
+                      version: 1
+                      shares: []
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+  /v1/items/{itemId}/claim:
+    post:
+      operationId: claimItem
+      tags: [claims]
+      summary: El comensal reclama el ítem completo (lo mío).
+      description: "Solo si no tiene dueño; si ya lo tiene, 409 (se puede proponer compartirlo)."
+      security: [{ guestSession: [] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }
+      x-microcks-operation: *defaultExample
+      responses:
+        "200":
+          description: El ítem con su reparto actualizado.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Item" }
+              examples: { ok: { $ref: "#/components/examples/Item" } }
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ClaimConflict" }
+        "422": { $ref: "#/components/responses/ClaimRejected" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+  /v1/items/{itemId}/share:
+    post:
+      operationId: shareItem
+      tags: [claims]
+      summary: El comensal reparte el ítem entre varios (partes iguales o porciones).
+      description: "Comparte un dueño del ítem, o cualquiera si no tiene dueño; siempre incluyéndose."
+      security: [{ guestSession: [] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }
+      x-microcks-operation: *defaultExample
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Share" }
+            examples: { ok: { $ref: "#/components/examples/Share" } }
+      responses:
+        "200":
+          description: El ítem con su reparto actualizado.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Item" }
+              examples: { ok: { $ref: "#/components/examples/Item" } }
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ClaimConflict" }
+        "422": { $ref: "#/components/responses/ClaimRejected" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+  /v1/items/{itemId}/join:
+    post:
+      operationId: joinItem
+      tags: [claims]
+      summary: El comensal se suma a un ítem con dueño (yo también comí).
+      description: "Lleva una porción, igual que los demás en partes iguales."
+      security: [{ guestSession: [] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "../../../contracts/common.yaml#/components/parameters/IdempotencyKey" }
+      x-microcks-operation: *defaultExample
+      responses:
+        "200":
+          description: El ítem con su reparto actualizado.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Item" }
+              examples: { ok: { $ref: "#/components/examples/Item" } }
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ClaimConflict" }
+        "422": { $ref: "#/components/responses/ClaimRejected" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+  /v1/items/{itemId}/history:
+    get:
+      operationId: getItemHistory
+      tags: [claims]
+      summary: Historial completo de un ítem (auditoría), en orden.
+      security: [{ staffCookie: [manager, admin] }, { staffBearer: [manager, admin] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+      x-microcks-operation: *defaultExample
+      responses:
+        "200":
+          description: Cada cambio con su autor y momento.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/HistoryEntry" } }
+              examples:
+                ok:
+                  value:
+                    - { version: 1, type: added, at: "2026-10-20T21:00:00.000Z", actor: { kind: system }, data: { name: Tabla, price: { amount: 12000, currency: CLP } } }
+                    - { version: 2, type: claimed, at: "2026-10-20T21:05:00.000Z", actor: { kind: guest, id: 0199f0a0-0000-7000-8000-0000000000f1 }, data: { guestId: 0199f0a0-0000-7000-8000-0000000000f1 } }
+        "400": { $ref: "../../../contracts/common.yaml#/components/responses/InvalidRequest" }
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
+        "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+components:
+  securitySchemes:
+    staffCookie: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffCookie" }
+    staffBearer: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/staffBearer" }
+    guestSession: { $ref: "../../../contracts/common.yaml#/components/securitySchemes/guestSession" }
+  schemas:
+    Share:
+      type: object
+      additionalProperties: false
+      required: [owners]
+      properties:
+        owners:
+          type: array
+          minItems: 2
+          maxItems: 30
+          items:
+            type: object
+            additionalProperties: false
+            required: [guestId, portions]
+            properties:
+              guestId: { type: string, format: uuid }
+              portions: { type: integer, minimum: 1, maximum: 100, description: "Partes iguales = 1 para todos." }
+    Item:
+      type: object
+      additionalProperties: false
+      required: [itemId, sessionId, name, price, status, version, shares]
+      properties:
+        itemId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        name: { type: string }
+        price: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
+        status: { type: string, enum: [unowned, claimed, shared] }
+        version: { type: integer, minimum: 1, description: "Aumenta con cada cambio: los consumidores descartan versiones viejas." }
+        shares:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [guestId, alias, portions, amount]
+            properties:
+              guestId: { type: string, format: uuid }
+              alias: { type: string }
+              portions: { type: integer, minimum: 1 }
+              amount: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
+    HistoryEntry:
+      type: object
+      additionalProperties: false
+      required: [version, type, at, actor, data]
+      properties:
+        version: { type: integer, minimum: 1 }
+        type: { type: string, enum: [added, claimed, shared, joined] }
+        at: { type: string, format: date-time }
+        actor:
+          type: object
+          additionalProperties: false
+          required: [kind]
+          properties:
+            kind: { type: string, enum: [guest, staff, system] }
+            id: { type: string, format: uuid }
+        data: { type: object, additionalProperties: true, description: "Detalle del evento (depende del tipo)." }
+    # Payload de claims.item.changed.v1: el estado completo del ítem.
+    ItemChanged:
+      type: object
+      additionalProperties: false
+      required: [itemId, sessionId, name, price, status, version, shares]
+      properties:
+        itemId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        name: { type: string }
+        price: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
+        status: { type: string, enum: [unowned, claimed, shared] }
+        version: { type: integer, minimum: 1 }
+        shares:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [guestId, portions, amount]
+            properties:
+              guestId: { type: string, format: uuid }
+              portions: { type: integer, minimum: 1 }
+              amount: { $ref: "../../../contracts/common.yaml#/components/schemas/Money" }
+  responses:
+    ClaimConflict:
+      description: El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+      content:
+        application/problem+json:
+          schema: { $ref: "../../../contracts/common.yaml#/components/schemas/Problem" }
+          examples:
+            already-owned:
+              value: { type: https://lo-mio.cl/problems/already-owned, title: El ítem ya tiene dueño, status: 409 }
+    ClaimRejected:
+      description: El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+      content:
+        application/problem+json:
+          schema: { $ref: "../../../contracts/common.yaml#/components/schemas/Problem" }
+          examples:
+            claim-rejected:
+              value: { type: https://lo-mio.cl/problems/not-in-share, title: Quien comparte debe estar en el reparto, status: 422 }
+            idempotency-key-reused:
+              value: { type: https://lo-mio.cl/problems/idempotency-key-reused, title: Idempotency-Key reutilizada, status: 422 }
+  examples:
+    Share:
+      value:
+        owners:
+          - { guestId: 0199f0a0-0000-7000-8000-0000000000f1, portions: 1 }
+          - { guestId: 0199f0a0-0000-7000-8000-0000000000f2, portions: 1 }
+    Item:
+      value:
+        itemId: 0199f0a0-0000-7000-8000-0000000000d1
+        sessionId: 0199f0a0-0000-7000-8000-0000000000e1
+        name: Tabla de quesos
+        price: { amount: 12000, currency: CLP }
+        status: shared
+        version: 2
+        shares:
+          - { guestId: 0199f0a0-0000-7000-8000-0000000000f1, alias: Ana, portions: 1, amount: { amount: 6000, currency: CLP } }
+          - { guestId: 0199f0a0-0000-7000-8000-0000000000f2, alias: Beto, portions: 1, amount: { amount: 6000, currency: CLP } }

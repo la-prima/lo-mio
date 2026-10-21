@@ -1,0 +1,134 @@
+openapi: 3.1.0
+info:
+  title: lo-mio · componentes comunes
+  version: 1.0.0
+  description: >-
+    Componentes que referencian todos los contratos (errores, dinero, seguridad). No define
+    operaciones. Un componente con el mismo nombre en dos contratos debe ser idéntico.
+servers:
+  - url: /
+paths: {}
+components:
+  securitySchemes:
+    # Personal del local, dos formas equivalentes (cada operación declara ambas como alternativas):
+    # la web usa la cookie httpOnly y la app el token Bearer. Roles en cada operación.
+    staffCookie:
+      type: apiKey
+      in: cookie
+      name: lomio_staff
+      description: Sesión del personal en la web (cookie httpOnly).
+    staffBearer:
+      type: http
+      scheme: bearer
+      description: "Sesión del personal en la app (`Authorization: Bearer <token>`)."
+    # Comensal anónimo de una sesión de mesa (cookie httpOnly emitida al unirse por QR).
+    guestSession:
+      type: apiKey
+      in: cookie
+      name: lomio_guest
+      description: Comensal unido a una sesión de mesa.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+      schema: { type: string, format: uuid }
+  schemas:
+    # RFC 9457. Todas las respuestas de error usan este schema.
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri, description: Identificador del tipo de problema. }
+        title: { type: string, description: "Resumen legible, igual para todas las ocurrencias del tipo." }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string, description: Explicación de esta ocurrencia. }
+        instance: { type: string, description: Identificador de esta ocurrencia. }
+    # Monto en la unidad mínima de la moneda (CLP: pesos, sin decimales). Nunca float.
+    Money:
+      type: object
+      additionalProperties: false
+      required: [amount, currency]
+      properties:
+        amount: { type: integer, minimum: 0, maximum: 1000000000000, description: Tope de un billón de unidades mínimas. }
+        currency: { type: string, pattern: "^[A-Z]{3}$" }
+  responses:
+    InvalidRequest:
+      description: La solicitud no cumple el contrato.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            invalid-request:
+              value:
+                type: https://lo-mio.cl/problems/invalid-request
+                title: Solicitud inválida
+                status: 400
+    Unauthenticated:
+      description: Falta la sesión o no es válida.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            unauthenticated:
+              value:
+                type: https://lo-mio.cl/problems/unauthenticated
+                title: Sesión requerida
+                status: 401
+    Forbidden:
+      description: La sesión no tiene permiso para esta operación.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            forbidden:
+              value:
+                type: https://lo-mio.cl/problems/forbidden
+                title: Sin permiso
+                status: 403
+    NotFound:
+      description: El recurso no existe.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            not-found:
+              value:
+                type: https://lo-mio.cl/problems/not-found
+                title: Recurso no encontrado
+                status: 404
+    Conflict:
+      description: El recurso cambió desde que se leyó; volver a leer y reintentar.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            conflict:
+              value:
+                type: https://lo-mio.cl/problems/conflict
+                title: Conflicto de versión
+                status: 409
+    IdempotencyKeyReused:
+      description: La misma Idempotency-Key se usó con otra solicitud.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            idempotency-key-reused:
+              value:
+                type: https://lo-mio.cl/problems/idempotency-key-reused
+                title: Idempotency-Key reutilizada
+                status: 422
+    RateLimited:
+      description: Se superó el límite de solicitudes.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          examples:
+            rate-limited:
+              value:
+                type: https://lo-mio.cl/problems/rate-limited
+                title: Demasiadas solicitudes
+                status: 429

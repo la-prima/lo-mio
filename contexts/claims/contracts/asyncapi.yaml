@@ -1,0 +1,14 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · claims (eventos)
+  version: 1.0.0
+  description: Eventos que publica el contexto claims.
+channels:
+  itemChanged:
+    address: claims.item.changed.v1
+    description: Estado completo de un ítem tras cualquier cambio (nuevo, reclamado, compartido). Proyectar por version.
+    messages:
+      itemChanged:
+        payload: { $ref: "./openapi.yaml#/components/schemas/ItemChanged" }
+operations:
+  publishItemChanged: { action: send, channel: { $ref: "#/channels/itemChanged" } }

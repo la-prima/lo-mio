@@ -1,0 +1,38 @@
+# Lo lanza apps/guest-web/e2e/mesero-y-comensales.e2e.ts (con -e MESA, PRODUCTO_1 y PRODUCTO_2)
+# mientras los comensales esperan en la web.
+appId: cl.lomio.staff
+name: El mesero abre la mesa y carga ítems del catálogo
+tags: [POS, Carga manual]
+---
+- launchApp:
+    clearState: true
+- runFlow: ../subflows/login.yaml
+- startRecording: cargar-items
+- tapOn:
+    id: open-table
+- tapOn:
+    id: search
+- inputText: ${MESA}
+- tapOn: Mesa ${MESA}
+# Sin hideKeyboard: en Android es un "back" que cerraría la pantalla. Con el filtro, la fila
+# queda arriba, sobre el teclado.
+- tapOn:
+    id: search
+- inputText: ${PRODUCTO_1}
+- tapOn: Agregar ${PRODUCTO_1}
+- tapOn: Agregar ${PRODUCTO_1}
+- tapOn:
+    id: search
+- eraseText
+- inputText: ${PRODUCTO_2}
+- tapOn: Agregar ${PRODUCTO_2}
+- tapOn:
+    id: load-items
+# Los ítems llegan a la cuenta por el bus: la app refresca cada 3 s.
+- extendedWaitUntil:
+    visible: "En la cuenta: 3 ítems"
+    timeout: 15000
+# Vuelve a las mesas abiertas: la recién abierta está arriba (la más reciente primero).
+- back
+- assertVisible: Mesa ${MESA}
+- stopRecording

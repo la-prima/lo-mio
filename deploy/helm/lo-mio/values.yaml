@@ -6,6 +6,18 @@ gateway:
   namespace: gateway
   sectionName: https
 
+# Web del comensal (apps/guest-web). Comparte origen con la API: el QR apunta aquí.
+guestWeb:
+  image:
+    repository: lo-mio-guest-web
+    tag: ""  # por defecto, appVersion del chart
+    pullPolicy: IfNotPresent
+  replicas: 2
+  hostname: mesa.lo-mio.cl
+  resources:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits: { memory: 64Mi }
+
 api:
   image:
     repository: lo-mio-api
@@ -25,6 +37,9 @@ api:
   resources:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { memory: 256Mi }
+  # Local de demostración con su administrador. Nunca en producción.
+  seed:
+    enabled: false
   networkPolicy:
     enabled: true
     # Namespace de los pods de Envoy que reenvían el tráfico a la API.

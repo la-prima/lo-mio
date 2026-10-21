@@ -1,0 +1,13 @@
+# Login del administrador del seed local (deploy/helm/lo-mio/values-local.yaml).
+appId: cl.lomio.staff
+---
+- tapOn:
+    id: login-email
+- inputText: admin@lo-mio.localhost
+- tapOn:
+    id: login-password
+- inputText: admin-local-123
+- hideKeyboard
+- tapOn:
+    id: login-submit
+- assertVisible: Hola, Administración local

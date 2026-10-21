@@ -1,9 +1,17 @@
 # kind + Tilt. Ver deploy/kind/.
 api:
+  # Credenciales solo de desarrollo (kind y CI). tests/contract y tests/flows las usan.
+  seed:
+    enabled: true
+    venueName: Bar La Prima (local)
+    adminEmail: admin@lo-mio.localhost
+    adminPassword: admin-local-123
   replicas: 2
   hostname: api.lo-mio.localhost
   env:
     LOG_LEVEL: debug
+    # Schemathesis manda miles de solicitudes desde una IP; el límite lo prueba app.int.test.ts.
+    RATE_LIMIT_MAX: "100000"
   resources:
     requests: { cpu: 50m, memory: 96Mi }
     limits: { memory: 256Mi }
@@ -12,3 +20,6 @@ api:
       - podSelector:
           matchLabels:
             cnpg.io/cluster: lo-mio-db
+guestWeb:
+  replicas: 1
+  hostname: mesa.lo-mio.localhost

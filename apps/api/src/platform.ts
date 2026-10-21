@@ -1,6 +1,6 @@
 import { type Db, ping } from "@lo-mio/postgres";
+import { sendProblem } from "@lo-mio/server";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { sendProblem } from "./problem.ts";
 
 /** Handlers de apps/api/openapi/platform.yaml, por operationId. */
 export const platformHandlers = (db: Db) => ({

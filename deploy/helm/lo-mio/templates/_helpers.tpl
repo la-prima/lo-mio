@@ -33,3 +33,8 @@ seccompProfile:
       name: {{ .Values.api.database.secretName }}
       key: {{ .Values.api.database.secretKey }}
 {{- end }}
+
+{{- define "lo-mio.guestWeb.selector" -}}
+app.kubernetes.io/name: guest-web
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

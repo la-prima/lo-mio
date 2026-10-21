@@ -2,6 +2,7 @@
   "name": "@lo-mio/kernel",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc -p ."

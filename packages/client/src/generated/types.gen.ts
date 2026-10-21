@@ -28,6 +28,259 @@ export type Problem = {
     instance?: string;
 };
 
+export type Share = {
+    owners: Array<{
+        guestId: string;
+        /**
+         * Partes iguales = 1 para todos.
+         */
+        portions: number;
+    }>;
+};
+
+export type Item = {
+    itemId: string;
+    sessionId: string;
+    name: string;
+    price: Money;
+    status: 'unowned' | 'claimed' | 'shared';
+    /**
+     * Aumenta con cada cambio: los consumidores descartan versiones viejas.
+     */
+    version: number;
+    shares: Array<{
+        guestId: string;
+        alias: string;
+        portions: number;
+        amount: Money;
+    }>;
+};
+
+export type HistoryEntry = {
+    version: number;
+    type: 'added' | 'claimed' | 'shared' | 'joined';
+    at: string;
+    actor: {
+        kind: 'guest' | 'staff' | 'system';
+        id?: string;
+    };
+    /**
+     * Detalle del evento (depende del tipo).
+     */
+    data: {
+        [key: string]: unknown;
+    };
+};
+
+export type ItemChanged = {
+    itemId: string;
+    sessionId: string;
+    name: string;
+    price: Money;
+    status: 'unowned' | 'claimed' | 'shared';
+    version: number;
+    shares: Array<{
+        guestId: string;
+        portions: number;
+        amount: Money;
+    }>;
+};
+
+export type Money = {
+    /**
+     * Tope de un billón de unidades mínimas.
+     */
+    amount: number;
+    currency: string;
+};
+
+export type ManualItems = {
+    tableId: string;
+    name: string;
+    unitPrice: Money;
+    quantity: number;
+};
+
+export type ReceivedItems = {
+    posItemIds: Array<string>;
+};
+
+export type ItemReceived = {
+    posItemId: string;
+    tableId: string;
+    name: string;
+    unitPrice: Money;
+    quantity: number;
+};
+
+export type Balance = {
+    guestId: string;
+    alias: string;
+    balance: Money;
+};
+
+export type BalanceChanged = {
+    sessionId: string;
+    guestId: string;
+    balance: Money;
+};
+
+export type Credentials = {
+    email: string;
+    password: string;
+};
+
+export type StaffMember = {
+    id: string;
+    name: string;
+    role: 'waiter' | 'manager' | 'admin';
+    venueId: string;
+};
+
+export type StaffSession = {
+    /**
+     * Para la app: enviar como `Authorization: Bearer <token>`.
+     */
+    token: string;
+    expiresAt: string;
+    staff: StaffMember;
+};
+
+export type CurrentStaffSession = {
+    expiresAt: string;
+    staff: StaffMember;
+};
+
+export type TableSession = {
+    id: string;
+    tableId: string;
+    openedAt: string;
+};
+
+export type OpenSession = {
+    id: string;
+    tableId: string;
+    tableLabel: string;
+    openedAt: string;
+    /**
+     * Comensales que se unieron.
+     */
+    guests: number;
+};
+
+export type JoinRequest = {
+    alias?: Alias;
+};
+
+export type Rename = {
+    alias: Alias;
+};
+
+/**
+ * Nombre visible en la mesa (sin datos personales obligatorios).
+ */
+export type Alias = string;
+
+export type Guest = {
+    guestId: string;
+    sessionId: string;
+    alias: string;
+    tableLabel: string;
+};
+
+export type SessionOpened = {
+    sessionId: string;
+    tableId: string;
+};
+
+export type ItemSeated = {
+    sessionId: string;
+    tableId: string;
+    /**
+     * Una unidad: `<posItemId>#<n>`.
+     */
+    itemId: string;
+    posItemId: string;
+    name: string;
+    unitPrice: Money;
+};
+
+export type GuestJoined = {
+    sessionId: string;
+    guestId: string;
+    alias: string;
+    /**
+     * Moneda de la sesión (la del local).
+     */
+    currency: string;
+};
+
+export type GuestRenamed = {
+    sessionId: string;
+    guestId: string;
+    alias: string;
+};
+
+export type Venue = {
+    id: string;
+    name: string;
+    /**
+     * ISO 3166-1 alfa-2. Solo CL por ahora.
+     */
+    country: string;
+    /**
+     * ISO 4217. Define la unidad mínima de los montos.
+     */
+    currency: string;
+};
+
+export type NewTable = {
+    /**
+     * Nombre visible (ej. "5", "Terraza 2").
+     */
+    label: string;
+};
+
+export type Table = {
+    id: string;
+    label: string;
+    /**
+     * Código aleatorio del QR impreso. Revocable.
+     */
+    qrCode: string;
+};
+
+export type NewProduct = {
+    name: string;
+    price: Money;
+};
+
+export type Product = {
+    id: string;
+    name: string;
+    price: Money;
+};
+
+export type TableRegistered = {
+    tableId: string;
+    label: string;
+    qrCode: string;
+    /**
+     * Moneda del local (en la que se cobra en la mesa).
+     */
+    currency: string;
+};
+
+export type TableQrRotated = {
+    tableId: string;
+    qrCode: string;
+};
+
+/**
+ * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+ */
+export type IdempotencyKey = string;
+
 export type GetLivenessData = {
     body?: never;
     path?: never;
@@ -81,3 +334,840 @@ export type GetReadinessResponses = {
 };
 
 export type GetReadinessResponse = GetReadinessResponses[keyof GetReadinessResponses];
+
+export type ListSessionItemsData = {
+    body?: never;
+    path: {
+        sessionId: string;
+    };
+    query?: never;
+    url: '/v1/sessions/{sessionId}/items';
+};
+
+export type ListSessionItemsErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListSessionItemsError = ListSessionItemsErrors[keyof ListSessionItemsErrors];
+
+export type ListSessionItemsResponses = {
+    /**
+     * Ítems de la sesión, del más antiguo al más nuevo.
+     */
+    200: Array<Item>;
+};
+
+export type ListSessionItemsResponse = ListSessionItemsResponses[keyof ListSessionItemsResponses];
+
+export type ClaimItemData = {
+    body?: never;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/claim';
+};
+
+export type ClaimItemErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+     */
+    409: Problem;
+    /**
+     * El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ClaimItemError = ClaimItemErrors[keyof ClaimItemErrors];
+
+export type ClaimItemResponses = {
+    /**
+     * El ítem con su reparto actualizado.
+     */
+    200: Item;
+};
+
+export type ClaimItemResponse = ClaimItemResponses[keyof ClaimItemResponses];
+
+export type ShareItemData = {
+    body: Share;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/share';
+};
+
+export type ShareItemErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+     */
+    409: Problem;
+    /**
+     * El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ShareItemError = ShareItemErrors[keyof ShareItemErrors];
+
+export type ShareItemResponses = {
+    /**
+     * El ítem con su reparto actualizado.
+     */
+    200: Item;
+};
+
+export type ShareItemResponse = ShareItemResponses[keyof ShareItemResponses];
+
+export type JoinItemData = {
+    body?: never;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/join';
+};
+
+export type JoinItemErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El ítem ya tiene dueño, o cambió mientras se decidía (volver a leer el feed).
+     */
+    409: Problem;
+    /**
+     * El reparto o la acción no cumple las reglas (ej. compartir sin incluirse), o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type JoinItemError = JoinItemErrors[keyof JoinItemErrors];
+
+export type JoinItemResponses = {
+    /**
+     * El ítem con su reparto actualizado.
+     */
+    200: Item;
+};
+
+export type JoinItemResponse = JoinItemResponses[keyof JoinItemResponses];
+
+export type GetItemHistoryData = {
+    body?: never;
+    path: {
+        itemId: string;
+    };
+    query?: never;
+    url: '/v1/items/{itemId}/history';
+};
+
+export type GetItemHistoryErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetItemHistoryError = GetItemHistoryErrors[keyof GetItemHistoryErrors];
+
+export type GetItemHistoryResponses = {
+    /**
+     * Cada cambio con su autor y momento.
+     */
+    200: Array<HistoryEntry>;
+};
+
+export type GetItemHistoryResponse = GetItemHistoryResponses[keyof GetItemHistoryResponses];
+
+export type LoadManualItemsData = {
+    body: ManualItems;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/pos/manual/items';
+};
+
+export type LoadManualItemsErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * El precio no está en la moneda del local o la Idempotency-Key se reutilizó.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type LoadManualItemsError = LoadManualItemsErrors[keyof LoadManualItemsErrors];
+
+export type LoadManualItemsResponses = {
+    /**
+     * Ítems recibidos. Aparecen en la mesa de forma asíncrona (`tables` los asigna a la sesión abierta, abriéndola si hace falta).
+     */
+    202: ReceivedItems;
+};
+
+export type LoadManualItemsResponse = LoadManualItemsResponses[keyof LoadManualItemsResponses];
+
+export type ListSessionBalancesData = {
+    body?: never;
+    path: {
+        sessionId: string;
+    };
+    query?: never;
+    url: '/v1/sessions/{sessionId}/balances';
+};
+
+export type ListSessionBalancesErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListSessionBalancesError = ListSessionBalancesErrors[keyof ListSessionBalancesErrors];
+
+export type ListSessionBalancesResponses = {
+    /**
+     * Un saldo por comensal (incluidos los que todavía no reclamaron nada).
+     */
+    200: Array<Balance>;
+};
+
+export type ListSessionBalancesResponse = ListSessionBalancesResponses[keyof ListSessionBalancesResponses];
+
+export type CreateStaffSessionData = {
+    body: Credentials;
+    path?: never;
+    query?: never;
+    url: '/v1/staff/sessions';
+};
+
+export type CreateStaffSessionErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Email o contraseña incorrectos (no se distingue cuál).
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type CreateStaffSessionError = CreateStaffSessionErrors[keyof CreateStaffSessionErrors];
+
+export type CreateStaffSessionResponses = {
+    /**
+     * Sesión iniciada. También se envía como cookie httpOnly `lomio_staff`.
+     */
+    201: StaffSession;
+};
+
+export type CreateStaffSessionResponse = CreateStaffSessionResponses[keyof CreateStaffSessionResponses];
+
+export type DeleteCurrentStaffSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/staff/sessions/current';
+};
+
+export type DeleteCurrentStaffSessionErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type DeleteCurrentStaffSessionError = DeleteCurrentStaffSessionErrors[keyof DeleteCurrentStaffSessionErrors];
+
+export type DeleteCurrentStaffSessionResponses = {
+    /**
+     * Sesión cerrada.
+     */
+    204: void;
+};
+
+export type DeleteCurrentStaffSessionResponse = DeleteCurrentStaffSessionResponses[keyof DeleteCurrentStaffSessionResponses];
+
+export type GetCurrentStaffSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/staff/sessions/current';
+};
+
+export type GetCurrentStaffSessionErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetCurrentStaffSessionError = GetCurrentStaffSessionErrors[keyof GetCurrentStaffSessionErrors];
+
+export type GetCurrentStaffSessionResponses = {
+    /**
+     * La sesión vigente.
+     */
+    200: CurrentStaffSession;
+};
+
+export type GetCurrentStaffSessionResponse = GetCurrentStaffSessionResponses[keyof GetCurrentStaffSessionResponses];
+
+export type OpenTableSessionData = {
+    body?: never;
+    path: {
+        tableId: string;
+    };
+    query?: never;
+    url: '/v1/tables/{tableId}/session';
+};
+
+export type OpenTableSessionErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type OpenTableSessionError = OpenTableSessionErrors[keyof OpenTableSessionErrors];
+
+export type OpenTableSessionResponses = {
+    /**
+     * La sesión abierta de la mesa.
+     */
+    200: TableSession;
+};
+
+export type OpenTableSessionResponse = OpenTableSessionResponses[keyof OpenTableSessionResponses];
+
+export type ListOpenSessionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/sessions/open';
+};
+
+export type ListOpenSessionsErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListOpenSessionsError = ListOpenSessionsErrors[keyof ListOpenSessionsErrors];
+
+export type ListOpenSessionsResponses = {
+    /**
+     * Sesiones abiertas, la más reciente primero.
+     */
+    200: Array<OpenSession>;
+};
+
+export type ListOpenSessionsResponse = ListOpenSessionsResponses[keyof ListOpenSessionsResponses];
+
+export type JoinTableData = {
+    body: JoinRequest;
+    path: {
+        qrCode: string;
+    };
+    query?: never;
+    url: '/v1/join/{qrCode}';
+};
+
+export type JoinTableErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * El QR no corresponde a ninguna mesa (inexistente o revocado).
+     */
+    404: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type JoinTableError = JoinTableErrors[keyof JoinTableErrors];
+
+export type JoinTableResponses = {
+    /**
+     * El comensal (nuevo o el mismo, si ya estaba en la sesión).
+     */
+    200: Guest;
+};
+
+export type JoinTableResponse = JoinTableResponses[keyof JoinTableResponses];
+
+export type GetCurrentGuestData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/guests/me';
+};
+
+export type GetCurrentGuestErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetCurrentGuestError = GetCurrentGuestErrors[keyof GetCurrentGuestErrors];
+
+export type GetCurrentGuestResponses = {
+    /**
+     * El comensal.
+     */
+    200: Guest;
+};
+
+export type GetCurrentGuestResponse = GetCurrentGuestResponses[keyof GetCurrentGuestResponses];
+
+export type RenameCurrentGuestData = {
+    body: Rename;
+    path?: never;
+    query?: never;
+    url: '/v1/guests/me';
+};
+
+export type RenameCurrentGuestErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * El alias quedó vacío después de quitar espacios.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RenameCurrentGuestError = RenameCurrentGuestErrors[keyof RenameCurrentGuestErrors];
+
+export type RenameCurrentGuestResponses = {
+    /**
+     * El comensal con su alias nuevo.
+     */
+    200: Guest;
+};
+
+export type RenameCurrentGuestResponse = RenameCurrentGuestResponses[keyof RenameCurrentGuestResponses];
+
+export type GetCurrentVenueData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current';
+};
+
+export type GetCurrentVenueErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type GetCurrentVenueError = GetCurrentVenueErrors[keyof GetCurrentVenueErrors];
+
+export type GetCurrentVenueResponses = {
+    /**
+     * El local.
+     */
+    200: Venue;
+};
+
+export type GetCurrentVenueResponse = GetCurrentVenueResponses[keyof GetCurrentVenueResponses];
+
+export type ListTablesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/tables';
+};
+
+export type ListTablesErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListTablesError = ListTablesErrors[keyof ListTablesErrors];
+
+export type ListTablesResponses = {
+    /**
+     * Mesas ordenadas por nombre.
+     */
+    200: Array<Table>;
+};
+
+export type ListTablesResponse = ListTablesResponses[keyof ListTablesResponses];
+
+export type RegisterTableData = {
+    body: NewTable;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/tables';
+};
+
+export type RegisterTableErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * Ya existe una mesa con ese nombre en el local.
+     */
+    409: Problem;
+    /**
+     * Nombre de mesa inválido (ej. solo espacios) o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RegisterTableError = RegisterTableErrors[keyof RegisterTableErrors];
+
+export type RegisterTableResponses = {
+    /**
+     * Mesa registrada.
+     */
+    201: Table;
+};
+
+export type RegisterTableResponse = RegisterTableResponses[keyof RegisterTableResponses];
+
+export type RotateTableQrData = {
+    body?: never;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        tableId: string;
+    };
+    query?: never;
+    url: '/v1/venues/current/tables/{tableId}/qr-rotation';
+};
+
+export type RotateTableQrErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * El recurso no existe.
+     */
+    404: Problem;
+    /**
+     * La misma Idempotency-Key se usó con otra solicitud.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RotateTableQrError = RotateTableQrErrors[keyof RotateTableQrErrors];
+
+export type RotateTableQrResponses = {
+    /**
+     * Mesa con su QR nuevo. El anterior deja de servir.
+     */
+    200: Table;
+};
+
+export type RotateTableQrResponse = RotateTableQrResponses[keyof RotateTableQrResponses];
+
+export type ListProductsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/products';
+};
+
+export type ListProductsErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListProductsError = ListProductsErrors[keyof ListProductsErrors];
+
+export type ListProductsResponses = {
+    /**
+     * Productos ordenados por nombre.
+     */
+    200: Array<Product>;
+};
+
+export type ListProductsResponse = ListProductsResponses[keyof ListProductsResponses];
+
+export type RegisterProductData = {
+    body: NewProduct;
+    headers: {
+        /**
+         * Identificador único del comando (UUIDv7). Reintentar con la misma clave no lo aplica dos veces.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/venues/current/products';
+};
+
+export type RegisterProductErrors = {
+    /**
+     * La solicitud no cumple el contrato.
+     */
+    400: Problem;
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * Precio en otra moneda que la del local, nombre inválido o Idempotency-Key reutilizada.
+     */
+    422: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type RegisterProductError = RegisterProductErrors[keyof RegisterProductErrors];
+
+export type RegisterProductResponses = {
+    /**
+     * Producto registrado.
+     */
+    201: Product;
+};
+
+export type RegisterProductResponse = RegisterProductResponses[keyof RegisterProductResponses];

@@ -72,14 +72,22 @@ local_resource(
 # (igual que en producción), así que cada cambio reconstruye la imagen (con caché de capas).
 docker_build("lo-mio-api", ".", dockerfile="apps/api/Dockerfile", only=[
     "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "apps/api", "packages", "contexts",
+    "scripts/prune-store.ts",
 ])
+docker_build("lo-mio-guest-web", ".", dockerfile="apps/guest-web/Dockerfile", only=[
+    "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "tsconfig.base.json", "apps/guest-web",
+    "packages",
+], ignore=["apps/guest-web/dist", "apps/guest-web/e2e"])
 helm_resource(
     "lo-mio",
     "deploy/helm/lo-mio",
     namespace="lo-mio",
     flags=["--values", "deploy/helm/lo-mio/values-local.yaml"],
-    image_deps=["lo-mio-api"],
-    image_keys=[("api.image.repository", "api.image.tag")],
+    image_deps=["lo-mio-api", "lo-mio-guest-web"],
+    image_keys=[
+        ("api.image.repository", "api.image.tag"),
+        ("guestWeb.image.repository", "guestWeb.image.tag"),
+    ],
     resource_deps=["platform"],
     labels=["app"],
 )

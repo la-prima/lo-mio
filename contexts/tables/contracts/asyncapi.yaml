@@ -1,0 +1,35 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · tables (eventos)
+  version: 1.0.0
+  description: Eventos que publica el contexto tables.
+channels:
+  sessionOpened:
+    address: tables.session.opened.v1
+    description: Se abrió una mesa (por el mesero, el primer ítem o el primer comensal).
+    messages:
+      sessionOpened:
+        payload: { $ref: "./openapi.yaml#/components/schemas/SessionOpened" }
+  itemSeated:
+    address: tables.item.seated.v1
+    description: Una unidad de un ítem del POS quedó en la sesión abierta de su mesa.
+    messages:
+      itemSeated:
+        payload: { $ref: "./openapi.yaml#/components/schemas/ItemSeated" }
+  guestJoined:
+    address: tables.guest.joined.v1
+    description: Comensal nuevo en la sesión.
+    messages:
+      guestJoined:
+        payload: { $ref: "./openapi.yaml#/components/schemas/GuestJoined" }
+  guestRenamed:
+    address: tables.guest.renamed.v1
+    description: El comensal cambió su alias.
+    messages:
+      guestRenamed:
+        payload: { $ref: "./openapi.yaml#/components/schemas/GuestRenamed" }
+operations:
+  publishSessionOpened: { action: send, channel: { $ref: "#/channels/sessionOpened" } }
+  publishItemSeated: { action: send, channel: { $ref: "#/channels/itemSeated" } }
+  publishGuestJoined: { action: send, channel: { $ref: "#/channels/guestJoined" } }
+  publishGuestRenamed: { action: send, channel: { $ref: "#/channels/guestRenamed" } }

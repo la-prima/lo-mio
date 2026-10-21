@@ -28,6 +28,10 @@ export function registerProblemHandlers(app: FastifyInstance): void {
   app.setErrorHandler((error: FastifyError, req, reply) => {
     if (error.validation)
       return sendProblem(reply, 400, "invalid-request", "Solicitud inválida", error.message);
+    if (error.statusCode === 401)
+      return sendProblem(reply, 401, "unauthenticated", "Sesión requerida");
+    if (error.statusCode === 403)
+      return sendProblem(reply, 403, "forbidden", "Sin permiso", error.message);
     if (error.statusCode === 429)
       return sendProblem(reply, 429, "rate-limited", "Demasiadas solicitudes");
     if (error.statusCode && error.statusCode < 500) {

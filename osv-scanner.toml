@@ -5,6 +5,21 @@ id = "GHSA-vfj7-8cjw-p6xm"
 ignoreUntil = 2027-01-15
 reason = "braces (DoS por patrón anidado) solo llega vía @fission-ai/openspec (devDependency, CLI local); procesa patrones nuestros, no input de usuarios. Sin versión corregida al 2026-10-19."
 
+[[IgnoredVulns]]
+id = "GHSA-gfr2-rv44-r23c"
+ignoreUntil = 2026-10-31
+reason = "markdown-it vía allure (genera el reporte HTML de pruebas; no llega a runtime). La 14.3.3 corregida salió el 2026-10-16: se sube al cumplir los 7 días de minimumReleaseAge."
+
+[[IgnoredVulns]]
+id = "GHSA-vfgh-jcmw-g37q"
+ignoreUntil = 2026-10-31
+reason = "markdown-it, mismo caso que GHSA-gfr2-rv44-r23c (CVSS 3.7)."
+
+[[IgnoredVulns]]
+id = "GHSA-86w9-cpqp-85rv"
+ignoreUntil = 2027-01-15
+reason = "node-forge vía @expo/cli (@expo/code-signing-certificates): verificación de firmas de EAS Update en la herramienta de desarrollo, que no usamos (updates.enabled = false) y no viaja en la app. Sin versión corregida al 2026-10-21."
+
 # Licencias que osv-scanner no detecta porque el paquete usa el formato antiguo
 # `licenses: [{ type }]` de npm. Verificadas a mano en package.json y LICENSE.
 [[PackageOverrides]]

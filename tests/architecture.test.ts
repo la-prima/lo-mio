@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const FRONTS = new Set(["mobile", "guest-web"]);
-const SERVER_ONLY_LIBS = /^(fastify|@fastify\/|pg$|pg-boss|kysely|node:)/;
+const SERVER_ONLY_LIBS =
+  /^(fastify|@fastify\/|pg$|pg-boss|kysely|node:|@lo-mio\/(server|postgres))/;
 const IMPORT_RE = /(?:from|import|export\s*\*\s*from)\s*\(?\s*["']([^"']+)["']/g;
 
 type Zone = {
@@ -81,7 +82,8 @@ function appViolation(from: Zone, to: Zone | undefined, spec: string): string | 
   if (to?.kind === "app" && to.name !== from.name)
     return "una app no importa de otra: usar packages/";
   if (to?.layer === "server" && from.name !== "api") return "solo apps/api monta capas server";
-  if (FRONTS.has(from.name) && SERVER_ONLY_LIBS.test(spec))
+  // Solo src/ llega al dispositivo; scripts de build y e2e corren en Node.
+  if (FRONTS.has(from.name) && from.layer === "src" && SERVER_ONLY_LIBS.test(spec))
     return `librería de servidor en front: ${spec}`;
   return undefined;
 }
@@ -123,6 +125,33 @@ describe("Límites entre contextos y capas", () => {
         .filter((line) => line && !line.startsWith("//") && !reexport.test(line))
         .map((line) => `${file}: "${line}" (escribirlo en el contrato y correr pnpm contracts)`),
     );
+    expect(errors).toEqual([]);
+  });
+
+  it("el código de runtime solo importa dependencias de producción (la imagen no trae las de desarrollo)", () => {
+    const errors: string[] = [];
+    const isTest =
+      /\.(test|int\.test|flow)\.ts$|\/e2e\/|\/(testing|fixtures|contract-suite)\.ts$|\.config\.ts$/;
+    const runtimeDeps = (pkgDir: string) => {
+      const manifest = JSON.parse(readFileSync(resolve(ROOT, pkgDir, "package.json"), "utf8")) as {
+        dependencies?: Record<string, string>;
+        peerDependencies?: Record<string, string>;
+      };
+      return { ...manifest.dependencies, ...manifest.peerDependencies };
+    };
+    const packageOf = (spec: string) =>
+      spec
+        .split("/")
+        .slice(0, spec.startsWith("@") ? 2 : 1)
+        .join("/");
+    for (const { file, spec } of imports()) {
+      if (isTest.test(file) || spec.startsWith(".") || spec.startsWith("node:")) continue;
+      const pkgDir = file.split("/").slice(0, 2).join("/");
+      const name = packageOf(spec);
+      if (!(name in runtimeDeps(pkgDir))) {
+        errors.push(`${file} → ${name}: no está en dependencies de ${pkgDir}/package.json`);
+      }
+    }
     expect(errors).toEqual([]);
   });
 });

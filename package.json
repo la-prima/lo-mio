@@ -14,12 +14,14 @@
     "test": "vitest run --project unit",
     "deadcode": "knip",
     "spec": "openspec validate --all --strict --no-interactive",
-    "verify": "pnpm contracts:check && pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec",
+    "verify": "pnpm contracts:check && pnpm check && pnpm typecheck && pnpm test && pnpm deadcode && pnpm spec && pnpm --filter @lo-mio/guest-web build",
     "test:int": "vitest run --project integration",
     "contracts": "node scripts/contracts.ts",
     "contracts:check": "node scripts/contracts.ts --check",
     "test:contract": "tests/contract/run.sh",
     "test:flows": "tests/flows/run.sh",
+    "test:e2e": "apps/guest-web/e2e/run.sh",
+    "test:mobile": "apps/mobile/e2e/run.sh",
     "report": "allure generate reports/allure-results"
   },
   "devDependencies": {

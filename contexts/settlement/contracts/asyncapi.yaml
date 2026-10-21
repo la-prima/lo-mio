@@ -1,0 +1,14 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · settlement (eventos)
+  version: 1.0.0
+  description: Eventos que publica el contexto settlement.
+channels:
+  balanceChanged:
+    address: settlement.balance.changed.v1
+    description: Cambió el saldo de un comensal (por un reclamo, un reparto o un pago).
+    messages:
+      balanceChanged:
+        payload: { $ref: "./openapi.yaml#/components/schemas/BalanceChanged" }
+operations:
+  publishBalanceChanged: { action: send, channel: { $ref: "#/channels/balanceChanged" } }

@@ -17,6 +17,10 @@ Una mesa SHALL tener como máximo una sesión abierta a la vez. La sesión MUST 
 - **WHEN** dos meseros intentan abrir la mesa 3 al mismo tiempo
 - **THEN** existe una sola sesión abierta y ambos ven la misma
 
+#### Scenario: Mesas abiertas del local
+- **WHEN** un mesero abre la app
+- **THEN** ve las mesas abiertas de su local, la más reciente primero, con cuántos comensales se unieron, y nunca las de otro local
+
 ### Requirement: Unión de comensales
 Un comensal SHALL poder unirse a la sesión abierta de una mesa escaneando el QR fijo de la mesa o presentando una tarjeta al mesero. Unirse MUST tomar menos de 10 segundos y MUST NOT pedir datos personales.
 

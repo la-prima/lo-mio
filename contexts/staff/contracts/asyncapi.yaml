@@ -1,0 +1,7 @@
+asyncapi: 3.0.0
+info:
+  title: lo-mio · staff (eventos)
+  version: 1.0.0
+  description: El contexto staff no publica eventos por ahora.
+channels: {}
+operations: {}

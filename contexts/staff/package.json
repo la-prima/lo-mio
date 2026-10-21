@@ -1,0 +1,20 @@
+{
+  "name": "@lo-mio/staff",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./domain": "./domain/index.ts",
+    "./contracts": "./contracts/index.ts",
+    "./server": "./server/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@lo-mio/kernel": "workspace:*",
+    "@lo-mio/postgres": "workspace:*",
+    "@lo-mio/server": "workspace:*",
+    "fastify": "^5.12.5",
+    "zod": "^4.6.7"
+  }
+}

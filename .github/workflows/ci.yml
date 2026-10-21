@@ -73,10 +73,14 @@ jobs:
       # Vulnerabilidades de la imagen (SO + dependencias de Node).
       - run: $TRIVY image --quiet --scanners vuln --severity HIGH,CRITICAL --exit-code 1 lo-mio-api:${{ github.sha }}
       - run: $TRIVY image --quiet --format cyclonedx --output sbom-api.cdx.json lo-mio-api:${{ github.sha }}
+      # Sin SO ni paquetes (binario estático sobre scratch): Trivy solo ve el binario.
+      - run: docker build -t lo-mio-guest-web:${{ github.sha }} -f apps/guest-web/Dockerfile .
+      - run: $TRIVY image --quiet --scanners vuln --severity HIGH,CRITICAL --exit-code 1 lo-mio-guest-web:${{ github.sha }}
+      - run: $TRIVY image --quiet --format cyclonedx --output sbom-guest-web.cdx.json lo-mio-guest-web:${{ github.sha }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom
-          path: sbom-api.cdx.json
+          path: sbom-*.cdx.json
       # Chart: lint, esquemas de Kubernetes y malas configuraciones de seguridad.
       - run: helm lint deploy/helm/lo-mio -f deploy/helm/lo-mio/values-local.yaml
       - run: >
@@ -115,10 +119,119 @@ jobs:
           kubectl get pods -A -o wide
           kubectl get events -A --sort-by=.lastTimestamp | tail -50
 
+  guest-web-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: deploy/ci/install-k8s-tools.sh
+      # Chromium cubre los proyectos del PR (escritorio y Pixel emulado).
+      - run: pnpm --filter @lo-mio/guest-web exec playwright install --with-deps chromium
+      - run: ctlptl apply -f deploy/kind/cluster.yaml
+      - run: tilt ci --timeout 25m
+      - run: pnpm test:e2e
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: allure-guest-web-e2e
+          path: reports/allure-results
+          if-no-files-found: ignore
+      - if: failure()
+        run: |
+          kubectl get pods -A -o wide
+          kubectl get events -A --sort-by=.lastTimestamp | tail -50
+
+  mobile-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MAESTRO_VERSION: 2.11.0
+      MAESTRO_SHA256: 5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: pnpm install --frozen-lockfile
+      - run: deploy/ci/install-k8s-tools.sh
+      # El flujo coordinado (mesero en la app, comensales en la web) usa Playwright con Pixel.
+      - run: pnpm --filter @lo-mio/guest-web exec playwright install --with-deps chromium
+      - run: ctlptl apply -f deploy/kind/cluster.yaml
+      - run: tilt ci --timeout 25m
+      # Release con el bundle embebido: el flujo no depende de Metro ni del launcher del dev client.
+      - working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install && cd android && ./gradlew assembleRelease
+      # Versión fija y checksum verificado (sin `curl | bash`).
+      - run: |
+          curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-$MAESTRO_VERSION/maestro.zip"
+          echo "$MAESTRO_SHA256  maestro.zip" | sha256sum -c -
+          unzip -q maestro.zip -d "$HOME" && echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
+      - name: Habilitar KVM para el emulador
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # El sdkmanager del runner no entiende el catálogo actual de Google (XML v4) y a veces no
+      # descarga nada, ni siquiera su propia actualización. Se baja cmdline-tools directo (versión
+      # fija, checksum verificado) y con ese se preinstalan emulador e imagen; la action los reutiliza.
+      - name: SDK de Android al día (emulador e imagen)
+        env:
+          CMDLINE_TOOLS: commandlinetools-linux-15859902_latest.zip
+          CMDLINE_TOOLS_SHA256: 4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583
+        run: |
+          curl -fsSL --retry 5 -o clt.zip "https://dl.google.com/android/repository/$CMDLINE_TOOLS"
+          echo "$CMDLINE_TOOLS_SHA256  clt.zip" | sha256sum -c -
+          rm -rf "$ANDROID_HOME/cmdline-tools/latest" && mkdir -p "$ANDROID_HOME/cmdline-tools"
+          unzip -q clt.zip -d "$ANDROID_HOME/cmdline-tools" && mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+          sdk="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          # Licencias e instalación consultan el catálogo de Google: las dos van con reintentos.
+          for attempt in 1 2 3 4 5; do
+            { yes | "$sdk" --licenses >/dev/null; } &&
+              "$sdk" --install emulator "system-images;android-36;google_apis;x86_64" >/dev/null && break
+            echo "intento $attempt falló; reintento en 20 s" && sleep 20
+          done
+          test -x "$ANDROID_HOME/emulator/emulator"
+      # El runner (4 vCPU) no da abasto con kind, el emulador y Chromium: el emulador se caía a
+      # mitad del flujo ("device offline"). Los mocks (Microcks, una JVM) no se usan en este job.
+      - run: kubectl scale deployment --all --replicas=0 -n mocks
+      - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          ram-size: 4096M
+          script: adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk && pnpm test:mobile
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: allure-mobile-e2e
+          path: reports/allure-results
+          if-no-files-found: ignore
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobile-e2e-debug
+          path: |
+            reports/mobile
+            reports/guest-web/results
+          if-no-files-found: ignore
+
   # Un solo reporte HTML con las evidencias de todos los jobs (ver AGENTS.md, "Evidencias").
   report:
     if: ${{ !cancelled() }}
-    needs: [verify, integration, api-flows]
+    needs: [verify, integration, api-flows, guest-web-e2e, mobile-e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: read

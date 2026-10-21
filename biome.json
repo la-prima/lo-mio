@@ -50,7 +50,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/mobile/app/**", "**/*.config.ts", "allurerc.mjs"],
+      "includes": ["apps/mobile/src/app/**", "**/*.config.ts", "allurerc.mjs"],
       "linter": {
         "rules": {
           "style": {
@@ -60,7 +60,7 @@
       }
     },
     {
-      "includes": ["**/*.test.ts"],
+      "includes": ["**/*.test.ts", "**/*.flow.ts", "**/*.e2e.ts"],
       "linter": {
         "rules": {
           "complexity": {

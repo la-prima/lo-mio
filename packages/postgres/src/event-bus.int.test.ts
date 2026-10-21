@@ -1,9 +1,9 @@
 import { createEvent, type EventEnvelope, newId } from "@lo-mio/kernel";
 import { sql } from "kysely";
-import { PgBoss } from "pg-boss";
+import type { PgBoss } from "pg-boss";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createDb, type Db, migrate, PgBossEventBus } from "./index.ts";
+import { createBoss, createDb, type Db, migrate, PgBossEventBus } from "./index.ts";
 import { startPostgres } from "./testing.ts";
 
 const payload = z.strictObject({ n: z.int() });
@@ -24,7 +24,7 @@ describe("Bus de eventos sobre Postgres", () => {
     db = createDb(pg.url);
     await migrate(db);
     await sql`create table effects (event_id uuid not null)`.execute(db);
-    boss = new PgBoss({ connectionString: pg.url, useListenNotify: true });
+    boss = createBoss(pg.url);
     await boss.start();
     bus = new PgBossEventBus(boss, db, catalog);
   });

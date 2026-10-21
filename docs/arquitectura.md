@@ -86,6 +86,7 @@ Fastify además valida y serializa con JSON Schema compilado (rendimiento y prot
   - Pub/sub con un queue por suscriptor: fan-out por tópico.
   - Idempotencia con tabla `inbox`: el handler corre en una transacción de Kysely junto con el registro (suscriptor, `event.id`); un evento repetido se descarta. Se eligió en vez de los workers transaccionales de pg-boss porque esos abren su propia transacción (no de Kysely) y porque el inbox sigue valiendo con cualquier broker.
   - LISTEN/NOTIFY para entrega inmediata; los reintentos (programados a futuro) los recoge un sondeo cada 5 s.
+  - Los workers toman los eventos **en lotes** (hasta 20): varios eventos publicados juntos generan un solo aviso, y con un job por vez el resto esperaba al sondeo. Cada evento se aplica en su propia transacción con su registro en el inbox.
   - Reintentos con backoff y dead-letter.
 - **Sobre de evento** (`EventEnvelope`, inspirado en CloudEvents): `id` (UUIDv7), `type`, `version`, `venueId`, `aggregateId`, `occurredAt`, `correlationId`, `causationId`, `data`.
 - **Tópicos:** `<contexto>.<agregado>.<hecho-en-pasado>.v<n>`, ej. `claims.item.claimed.v1`. El schema de cada evento vive en el `contracts/` del contexto que lo emite. Un cambio incompatible es una versión nueva, y se publican ambas mientras haya consumidores de la anterior.
@@ -99,7 +100,7 @@ Fastify además valida y serializa con JSON Schema compilado (rendimiento y prot
 
 ### 5. Consistencia: síncrono dentro del agregado, eventual entre contextos
 
-- Un comando modifica **un agregado** en una transacción con control optimista (`version`). Así se resuelven el reclamo simultáneo y la doble apertura de la mesa.
+- Un comando modifica **un agregado** en una transacción corta que toma un **lock de fila** del agregado (`SELECT … FOR UPDATE`): dos comandos sobre el mismo agregado se aplican en orden y el segundo decide sobre el estado ya actualizado (ej. reclamo simultáneo → 409). La `version` se mantiene en cada cambio y la clave única `(agregado, version)` de los eventos es la red de seguridad. La doble apertura de mesa la resuelve un índice único parcial. (Se eligió el lock en vez de control optimista con reintento: igual de correcto en transacciones cortas y más simple.)
 - `claims` guarda sus cambios como **eventos de dominio inmutables** (la auditoría que exige la spec) y una proyección del estado vigente, calculada por una función pura de `claims/domain`.
 - Entre contextos, todo es eventual. Casos donde importa:
   - **Pago vs. saldo:** `settlement` mantiene su propia proyección del saldo con los eventos de `claims`. El comando de pago lleva la versión de saldo que vio el mesero; si cambió, se rechaza y se muestra el saldo actualizado. Nunca se cobra sobre un saldo viejo.

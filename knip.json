@@ -2,13 +2,20 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     "apps/api": {
-      "entry": ["src/migrate.ts"]
+      "entry": ["src/migrate.ts", "src/seed.ts"]
     },
     ".": {
-      "entry": ["allurerc.mjs", "tests/contract/labels.ts"]
+      "entry": [
+        "allurerc.mjs",
+        "tests/contract/labels.ts",
+        "tests/allure/maestro.ts",
+        "scripts/prune-store.ts"
+      ]
+    },
+    "apps/mobile": {
+      "entry": ["plugins/*.js"]
     }
   },
-  "ignoreDependencies": ["@redocly/cli"],
   "ignoreIssues": {
     "**/generated/**": ["exports", "types", "duplicates"]
   }

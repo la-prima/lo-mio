@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses } from './types.gen.ts';
+import type { ClaimItemData, ClaimItemErrors, ClaimItemResponses, CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetItemHistoryData, GetItemHistoryErrors, GetItemHistoryResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinItemData, JoinItemErrors, JoinItemResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListOpenSessionsData, ListOpenSessionsErrors, ListOpenSessionsResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSessionBalancesData, ListSessionBalancesErrors, ListSessionBalancesResponses, ListSessionItemsData, ListSessionItemsErrors, ListSessionItemsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses, ShareItemData, ShareItemErrors, ShareItemResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -27,3 +27,328 @@ export const getLiveness = <ThrowOnError extends boolean = false>(options?: Opti
  * Puede atender tráfico (readiness). Consulta la base de datos.
  */
 export const getReadiness = <ThrowOnError extends boolean = false>(options?: Options<GetReadinessData, ThrowOnError>): RequestResult<GetReadinessResponses, GetReadinessErrors, ThrowOnError> => (options?.client ?? client).get<GetReadinessResponses, GetReadinessErrors, ThrowOnError>({ url: '/health', ...options });
+
+/**
+ * Feed de la mesa, con dueños y partes de cada ítem.
+ *
+ * Para los comensales de esa sesión o el personal del local.
+ */
+export const listSessionItems = <ThrowOnError extends boolean = false>(options: Options<ListSessionItemsData, ThrowOnError>): RequestResult<ListSessionItemsResponses, ListSessionItemsErrors, ThrowOnError> => (options.client ?? client).get<ListSessionItemsResponses, ListSessionItemsErrors, ThrowOnError>({
+    security: [
+        {
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        },
+        {
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        },
+        { scheme: 'bearer', type: 'http' }
+    ],
+    url: '/v1/sessions/{sessionId}/items',
+    ...options
+});
+
+/**
+ * El comensal reclama el ítem completo (lo mío).
+ *
+ * Solo si no tiene dueño; si ya lo tiene, 409 (se puede proponer compartirlo).
+ */
+export const claimItem = <ThrowOnError extends boolean = false>(options: Options<ClaimItemData, ThrowOnError>): RequestResult<ClaimItemResponses, ClaimItemErrors, ThrowOnError> => (options.client ?? client).post<ClaimItemResponses, ClaimItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/items/{itemId}/claim',
+    ...options
+});
+
+/**
+ * El comensal reparte el ítem entre varios (partes iguales o porciones).
+ *
+ * Comparte un dueño del ítem, o cualquiera si no tiene dueño; siempre incluyéndose.
+ */
+export const shareItem = <ThrowOnError extends boolean = false>(options: Options<ShareItemData, ThrowOnError>): RequestResult<ShareItemResponses, ShareItemErrors, ThrowOnError> => (options.client ?? client).post<ShareItemResponses, ShareItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/items/{itemId}/share',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * El comensal se suma a un ítem con dueño (yo también comí).
+ *
+ * Lleva una porción, igual que los demás en partes iguales.
+ */
+export const joinItem = <ThrowOnError extends boolean = false>(options: Options<JoinItemData, ThrowOnError>): RequestResult<JoinItemResponses, JoinItemErrors, ThrowOnError> => (options.client ?? client).post<JoinItemResponses, JoinItemErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/items/{itemId}/join',
+    ...options
+});
+
+/**
+ * Historial completo de un ítem (auditoría), en orden.
+ */
+export const getItemHistory = <ThrowOnError extends boolean = false>(options: Options<GetItemHistoryData, ThrowOnError>): RequestResult<GetItemHistoryResponses, GetItemHistoryErrors, ThrowOnError> => (options.client ?? client).get<GetItemHistoryResponses, GetItemHistoryErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/items/{itemId}/history',
+    ...options
+});
+
+/**
+ * El mesero carga ítems en una mesa (adaptador manual).
+ *
+ * Nombre y precio vienen del catálogo elegido en la app (`listProducts`). Una cantidad de N crea N ítems en la mesa, uno por unidad.
+ */
+export const loadManualItems = <ThrowOnError extends boolean = false>(options: Options<LoadManualItemsData, ThrowOnError>): RequestResult<LoadManualItemsResponses, LoadManualItemsErrors, ThrowOnError> => (options.client ?? client).post<LoadManualItemsResponses, LoadManualItemsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/pos/manual/items',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Saldo de cada comensal de la sesión.
+ *
+ * Para los comensales de esa sesión o el personal del local.
+ */
+export const listSessionBalances = <ThrowOnError extends boolean = false>(options: Options<ListSessionBalancesData, ThrowOnError>): RequestResult<ListSessionBalancesResponses, ListSessionBalancesErrors, ThrowOnError> => (options.client ?? client).get<ListSessionBalancesResponses, ListSessionBalancesErrors, ThrowOnError>({
+    security: [
+        {
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        },
+        {
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        },
+        { scheme: 'bearer', type: 'http' }
+    ],
+    url: '/v1/sessions/{sessionId}/balances',
+    ...options
+});
+
+/**
+ * Inicia sesión del personal (12 horas).
+ *
+ * Un email inexistente y una contraseña incorrecta responden igual y tardan lo mismo, para no revelar qué emails pertenecen al personal. Límite propio de 10 intentos por minuto por IP.
+ */
+export const createStaffSession = <ThrowOnError extends boolean = false>(options: Options<CreateStaffSessionData, ThrowOnError>): RequestResult<CreateStaffSessionResponses, CreateStaffSessionErrors, ThrowOnError> => (options.client ?? client).post<CreateStaffSessionResponses, CreateStaffSessionErrors, ThrowOnError>({
+    url: '/v1/staff/sessions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Cierra la sesión (el token deja de servir de inmediato).
+ */
+export const deleteCurrentStaffSession = <ThrowOnError extends boolean = false>(options?: Options<DeleteCurrentStaffSessionData, ThrowOnError>): RequestResult<DeleteCurrentStaffSessionResponses, DeleteCurrentStaffSessionErrors, ThrowOnError> => (options?.client ?? client).delete<DeleteCurrentStaffSessionResponses, DeleteCurrentStaffSessionErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/staff/sessions/current',
+    ...options
+});
+
+/**
+ * Sesión actual (para saber quién está en el dispositivo y hasta cuándo).
+ */
+export const getCurrentStaffSession = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentStaffSessionData, ThrowOnError>): RequestResult<GetCurrentStaffSessionResponses, GetCurrentStaffSessionErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentStaffSessionResponses, GetCurrentStaffSessionErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/staff/sessions/current',
+    ...options
+});
+
+/**
+ * Abre la mesa (o devuelve la sesión abierta si ya lo estaba).
+ *
+ * Idempotente por naturaleza: dos meseros que abren la misma mesa ven la misma sesión.
+ */
+export const openTableSession = <ThrowOnError extends boolean = false>(options: Options<OpenTableSessionData, ThrowOnError>): RequestResult<OpenTableSessionResponses, OpenTableSessionErrors, ThrowOnError> => (options.client ?? client).post<OpenTableSessionResponses, OpenTableSessionErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/tables/{tableId}/session',
+    ...options
+});
+
+/**
+ * Mesas abiertas del local, con cuántos comensales se unieron.
+ */
+export const listOpenSessions = <ThrowOnError extends boolean = false>(options?: Options<ListOpenSessionsData, ThrowOnError>): RequestResult<ListOpenSessionsResponses, ListOpenSessionsErrors, ThrowOnError> => (options?.client ?? client).get<ListOpenSessionsResponses, ListOpenSessionsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/sessions/open',
+    ...options
+});
+
+/**
+ * El comensal se une a la mesa del QR (abre la sesión si hace falta).
+ *
+ * Sin datos personales. Con la cookie de un comensal de la sesión abierta, devuelve ese mismo comensal (recargar la página no crea otro). Límite propio por IP.
+ */
+export const joinTable = <ThrowOnError extends boolean = false>(options: Options<JoinTableData, ThrowOnError>): RequestResult<JoinTableResponses, JoinTableErrors, ThrowOnError> => (options.client ?? client).post<JoinTableResponses, JoinTableErrors, ThrowOnError>({
+    url: '/v1/join/{qrCode}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * El comensal de este dispositivo.
+ */
+export const getCurrentGuest = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentGuestData, ThrowOnError>): RequestResult<GetCurrentGuestResponses, GetCurrentGuestErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentGuestResponses, GetCurrentGuestErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/guests/me',
+    ...options
+});
+
+/**
+ * El comensal cambia su alias.
+ */
+export const renameCurrentGuest = <ThrowOnError extends boolean = false>(options: Options<RenameCurrentGuestData, ThrowOnError>): RequestResult<RenameCurrentGuestResponses, RenameCurrentGuestErrors, ThrowOnError> => (options.client ?? client).patch<RenameCurrentGuestResponses, RenameCurrentGuestErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_guest',
+            type: 'apiKey'
+        }],
+    url: '/v1/guests/me',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Local del personal autenticado.
+ */
+export const getCurrentVenue = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentVenueData, ThrowOnError>): RequestResult<GetCurrentVenueResponses, GetCurrentVenueErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentVenueResponses, GetCurrentVenueErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/venues/current',
+    ...options
+});
+
+/**
+ * Mesas del local, con el código de su QR.
+ */
+export const listTables = <ThrowOnError extends boolean = false>(options?: Options<ListTablesData, ThrowOnError>): RequestResult<ListTablesResponses, ListTablesErrors, ThrowOnError> => (options?.client ?? client).get<ListTablesResponses, ListTablesErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/venues/current/tables',
+    ...options
+});
+
+/**
+ * Registra una mesa y genera su QR.
+ */
+export const registerTable = <ThrowOnError extends boolean = false>(options: Options<RegisterTableData, ThrowOnError>): RequestResult<RegisterTableResponses, RegisterTableErrors, ThrowOnError> => (options.client ?? client).post<RegisterTableResponses, RegisterTableErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/venues/current/tables',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoca el QR de la mesa y genera uno nuevo (ej. al reimprimirlo).
+ */
+export const rotateTableQr = <ThrowOnError extends boolean = false>(options: Options<RotateTableQrData, ThrowOnError>): RequestResult<RotateTableQrResponses, RotateTableQrErrors, ThrowOnError> => (options.client ?? client).post<RotateTableQrResponses, RotateTableQrErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/venues/current/tables/{tableId}/qr-rotation',
+    ...options
+});
+
+/**
+ * Catálogo del local (lo usa la carga manual de ítems).
+ */
+export const listProducts = <ThrowOnError extends boolean = false>(options?: Options<ListProductsData, ThrowOnError>): RequestResult<ListProductsResponses, ListProductsErrors, ThrowOnError> => (options?.client ?? client).get<ListProductsResponses, ListProductsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/venues/current/products',
+    ...options
+});
+
+/**
+ * Agrega un producto al catálogo.
+ */
+export const registerProduct = <ThrowOnError extends boolean = false>(options: Options<RegisterProductData, ThrowOnError>): RequestResult<RegisterProductResponses, RegisterProductErrors, ThrowOnError> => (options.client ?? client).post<RegisterProductResponses, RegisterProductErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/venues/current/products',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});

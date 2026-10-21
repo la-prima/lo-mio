@@ -1,7 +1,31 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import pg from "pg";
 import { GenericContainer, Wait } from "testcontainers";
+
+/**
+ * Espera a que no quede ningún cliente conectado. `pool.end()` (Kysely, pg-boss) resuelve antes de
+ * que cada socket termine de cerrarse: si el contenedor se apaga en ese hueco, Postgres envía 57P01
+ * a una conexión que ya salió del pool (sin listener) y el test termina con un error no manejado.
+ */
+async function waitForNoClients(url: string, timeoutMs = 5_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const probe = new pg.Client({ connectionString: url });
+    await probe.connect();
+    const { rows } = await probe.query<{ n: number }>(
+      "select count(*)::int as n from pg_stat_activity where backend_type = 'client backend' and pid <> pg_backend_pid()",
+    );
+    // end() resuelve cuando el socket se cerró: la sonda nunca queda colgando.
+    await probe.end();
+    if (rows[0]?.n === 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(
+    "quedaron conexiones abiertas a Postgres al terminar el test: ¿falta un destroy/stop?",
+  );
+}
 
 /**
  * Postgres real y descartable para tests de integración.
@@ -12,6 +36,7 @@ export async function startPostgres(): Promise<{ url: string; stop: () => Promis
   return {
     url: container.getConnectionUri(),
     stop: async () => {
+      await waitForNoClients(container.getConnectionUri());
       await container.stop();
     },
   };
