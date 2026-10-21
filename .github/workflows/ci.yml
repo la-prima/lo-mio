@@ -195,6 +195,14 @@ jobs:
           name: allure-mobile-e2e
           path: reports/allure-results
           if-no-files-found: ignore
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobile-e2e-debug
+          path: |
+            reports/mobile
+            reports/guest-web/results
+          if-no-files-found: ignore
 
   # Un solo reporte HTML con las evidencias de todos los jobs (ver AGENTS.md, "Evidencias").
   report:

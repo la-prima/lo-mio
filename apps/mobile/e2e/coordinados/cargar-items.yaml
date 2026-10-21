@@ -28,7 +28,10 @@ tags: [POS, Carga manual]
 - tapOn: Agregar ${PRODUCTO_2}
 - tapOn:
     id: load-items
-- assertVisible: "En la cuenta: 3 ítems"
+# Los ítems llegan a la cuenta por el bus: la app refresca cada 3 s.
+- extendedWaitUntil:
+    visible: "En la cuenta: 3 ítems"
+    timeout: 15000
 # Vuelve a las mesas abiertas: la recién abierta está arriba (la más reciente primero).
 - back
 - assertVisible: Mesa ${MESA}

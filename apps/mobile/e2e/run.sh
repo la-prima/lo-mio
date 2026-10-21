@@ -11,9 +11,12 @@ mkdir -p "$out"
 # La app habla con http://localhost:3000 (src/api.ts): port-forward a la API y `adb reverse`.
 kube port-forward -n lo-mio svc/lo-mio-api 3000:80 >"$out/port-forward.log" 2>&1 &
 forward=$!
-trap 'kill $forward' EXIT
+trap 'kill "$forward" 2>/dev/null || true' EXIT
 for _ in $(seq 1 30); do curl -fsS -o /dev/null http://localhost:3000/health && break; sleep 1; done
 adb reverse tcp:3000 tcp:3000
+# El emulador trata el puntero como lápiz y Gboard abre su barra de escritura a mano, que se
+# come el texto que escribe Maestro.
+adb shell settings put secure stylus_handwriting_enabled 0
 
 status=0
 maestro test apps/mobile/e2e --format junit --output "$out/junit.xml" \

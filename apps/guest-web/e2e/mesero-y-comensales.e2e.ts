@@ -3,7 +3,7 @@
  * Corre solo donde hay emulador con la app instalada (job mobile-e2e): MAESTRO=1.
  */
 import { execFile } from "node:child_process";
-import { globSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { registerProduct } from "@lo-mio/client";
@@ -55,7 +55,8 @@ test.describe("POS", () => {
 
       await test.step("el mesero abre la mesa en la app y carga 2 schops y unas papas", async () => {
         const output = testInfo.outputPath("maestro");
-        // Si el flujo falla, maestro sale con error y execFile lo lanza (con su salida).
+        // Si el flujo falla, maestro sale con error: se adjuntan su log y sus capturas, y el error
+        // nombra el paso que falló (execFile no incluye la salida en el mensaje).
         await run(
           "maestro",
           [
@@ -72,11 +73,24 @@ test.describe("POS", () => {
             "--flatten-debug-output",
           ],
           { timeout: 4 * 60_000 },
-        ).finally(async () => {
-          for (const video of globSync("**/*.mp4", { cwd: output })) {
-            await testInfo.attach("video del mesero (app)", { path: join(output, video) });
-          }
-        });
+        )
+          .catch(async (error: Error) => {
+            for (const file of globSync("**/*.{log,png}", { cwd: output })) {
+              await testInfo.attach(`maestro: ${file}`, { path: join(output, file) });
+            }
+            const log = globSync("**/maestro.log", { cwd: output })[0];
+            const failed = log
+              ? readFileSync(join(output, log), "utf8").match(
+                  /^.*(FAILED|ElementNotFound).*$/m,
+                )?.[0]
+              : undefined;
+            throw new Error(`el flujo del mesero falló en la app: ${failed ?? error.message}`);
+          })
+          .finally(async () => {
+            for (const video of globSync("**/*.mp4", { cwd: output })) {
+              await testInfo.attach("video del mesero (app)", { path: join(output, video) });
+            }
+          });
       });
 
       await test.step("los ítems llegan en vivo a los tres teléfonos", async () => {

@@ -15,11 +15,17 @@ type Props = { tableId: string; sessionId: string };
 /** Carga manual desde el catálogo del local: el precio sale del catálogo, nunca se escribe. */
 export function LoadItemsScreen({ tableId, sessionId }: Props) {
   const products = useQuery(listProductsOptions());
-  const items = useQuery(listSessionItemsOptions({ path: { sessionId } }));
+  // Los ítems llegan a claims por el bus (eventual): se refresca la cuenta mientras está abierta.
+  // ponytail: sondeo cada 3 s; pasar al feed en vivo (useSessionFeed con Bearer) si pesa.
+  const items = useQuery({
+    ...listSessionItemsOptions({ path: { sessionId } }),
+    refetchInterval: 3_000,
+  });
   const [order, setOrder] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
   const add = (id: string, delta: number) =>
     setOrder((o) => ({ ...o, [id]: Math.max(0, (o[id] ?? 0) + delta) }));
+  const count = items.data?.length ?? 0;
   const chosen = (products.data ?? []).filter((p) => (order[p.id] ?? 0) > 0);
 
   const load = useMutation({
@@ -42,6 +48,20 @@ export function LoadItemsScreen({ tableId, sessionId }: Props) {
   return (
     <View style={styles.screen}>
       <Search label="Buscar producto" value={query} onChange={setQuery} />
+      {/* Arriba y no al pie: con el teclado abierto (edge-to-edge en Android 15+ no achica la
+          vista) el botón quedaría tapado en pantallas chicas. */}
+      {load.isError && <Text accessibilityRole="alert">No se pudo cargar. Intenta de nuevo.</Text>}
+      <Button
+        title="Cargar a la mesa"
+        testID="load-items"
+        disabled={chosen.length === 0 || load.isPending}
+        onPress={() =>
+          load.mutate(chosen.map((product) => ({ product, quantity: order[product.id] ?? 0 })))
+        }
+      />
+      <Text style={styles.muted} testID="loaded-count">
+        En la cuenta: {count === 1 ? "1 ítem" : `${count} ítems`}
+      </Text>
       <FlatList
         keyboardShouldPersistTaps="handled"
         data={(products.data ?? []).filter((p) => matches(p.name, query))}
@@ -60,18 +80,6 @@ export function LoadItemsScreen({ tableId, sessionId }: Props) {
           </View>
         )}
       />
-      {load.isError && <Text accessibilityRole="alert">No se pudo cargar. Intenta de nuevo.</Text>}
-      <Button
-        title="Cargar a la mesa"
-        testID="load-items"
-        disabled={chosen.length === 0 || load.isPending}
-        onPress={() =>
-          load.mutate(chosen.map((product) => ({ product, quantity: order[product.id] ?? 0 })))
-        }
-      />
-      <Text style={styles.muted} testID="loaded-count">
-        En la cuenta: {items.data?.length ?? 0} ítems
-      </Text>
     </View>
   );
 }
