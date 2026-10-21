@@ -22,11 +22,14 @@ Ninguna: todas las capabilities ya las introduce `reclamo-manual`.
 
 ### Modified Capabilities
 
-Se agregan requirements (sin modificar los existentes):
+Se agregan requirements:
 - `venue-config`: herencia local → mesa y modos de operación.
 - `table-session`: salida de comensales y cierre de sesión.
 - `item-claims`: ítems sin dueño y reparto con comensales retirados.
 - `settlement`: registro de pago, comprobantes (boleta, voucher, efectivo) y retención.
+
+Se modifica:
+- `settlement` / Saldo por comensal: el saldo descuenta los pagos registrados.
 
 ## Fuera de alcance
 

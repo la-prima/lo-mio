@@ -21,5 +21,9 @@ El sistema SHALL distinguir los roles `waiter`, `manager` y `admin`, siempre den
 El personal SHALL iniciar sesión en su dispositivo una vez por turno. La sesión MUST expirar tras 12 horas o al cerrarla manualmente.
 
 #### Scenario: Sesión expirada
-- **WHEN** un mesero con la sesión expirada intenta registrar un pago
-- **THEN** se le pide volver a autenticarse y la acción pendiente se conserva para reintentarla
+- **WHEN** un mesero con la sesión expirada intenta operar
+- **THEN** la operación se rechaza como no autenticada, y al abrir la app se le pide iniciar sesión de nuevo
+
+#### Scenario: Cierre de sesión
+- **WHEN** un mesero cierra su sesión
+- **THEN** su token deja de servir de inmediato y cualquier operación con él se rechaza como no autenticada
