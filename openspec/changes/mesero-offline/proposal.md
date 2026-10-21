@@ -18,7 +18,7 @@ Ninguna.
 
 ### Modified Capabilities
 
-- `staff-access`: se agrega el requirement de acciones del personal sin conexión.
+- `staff-access`: se agrega el requirement de acciones del personal sin conexión y se modifica Sesión de dispositivo del personal (con la sesión expirada, la acción pendiente se conserva para reintentarla).
 
 ## Fuera de alcance
 

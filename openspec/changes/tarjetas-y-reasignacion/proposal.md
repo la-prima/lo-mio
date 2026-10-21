@@ -26,6 +26,11 @@ Se agregan requirements:
 - `guest-identity`: identificador físico y transferencia de cuenta.
 - `item-claims`: reasignación con confirmación y override.
 
+Se modifican:
+- `item-claims` / Feed de la mesa: estado "en disputa"; Auditoría de asignaciones: historial con reasignaciones, confirmaciones y overrides.
+- `settlement` / Saldo por comensal: un ítem en disputa sin confirmar no suma (incluye el descuento de pagos de `cobro-con-comprobante`).
+- `table-session` / Unión de comensales: unirse presentando una tarjeta al mesero.
+
 ## Fuera de alcance
 
 - Compra y logística de tarjetas y posavasos (decisión del piloto).

@@ -19,3 +19,11 @@ El sistema SHALL incluir un adaptador manual en el que el mesero carga los ítem
 #### Scenario: Carga manual
 - **WHEN** el mesero agrega 2 cervezas a la mesa 4 en modo manual
 - **THEN** aparecen 2 ítems sin dueño en el feed de la mesa 4 con el precio del catálogo
+
+#### Scenario: Precio en otra moneda
+- **WHEN** se intenta cargar un ítem con un precio en una moneda distinta de la del local
+- **THEN** la carga se rechaza y no aparece ningún ítem
+
+#### Scenario: Mesa de otro local
+- **WHEN** un mesero intenta cargar ítems en una mesa de otro local
+- **THEN** la carga se rechaza como si la mesa no existiera y el intento queda registrado

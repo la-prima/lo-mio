@@ -1,13 +1,13 @@
-# Spec Delta
+# item-claims Specification
 
 ## Purpose
 
 Asignación de cada ítem de la mesa a quien lo consumió: reclamos de los comensales, repartos de ítems compartidos, correcciones del personal y control de ítems sin dueño.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Feed de la mesa
-Cada comensal SHALL ver en tiempo real todos los ítems de su sesión con su estado (sin dueño, reclamado, compartido, en disputa) y quién los tiene.
+Cada comensal SHALL ver en tiempo real todos los ítems de su sesión con su estado (sin dueño, reclamado, compartido) y quién los tiene. Un comensal MUST NOT ver ni modificar los ítems de otra sesión.
 
 #### Scenario: Ítem nuevo
 - **WHEN** el POS informa un ítem nuevo para la mesa
@@ -39,9 +39,17 @@ Un ítem SHALL poder repartirse entre varios comensales en partes iguales o por 
 - **WHEN** un comensal toca "yo también comí" en un ítem compartido entre 2
 - **THEN** el ítem pasa a repartirse entre 3 y los saldos de los 3 se recalculan
 
+#### Scenario: Repartir con alguien que no está en la mesa
+- **WHEN** un comensal intenta repartir un ítem con un comensal de otra sesión
+- **THEN** el reparto se rechaza y el ítem no cambia
+
 ### Requirement: Auditoría de asignaciones
 Toda creación o cambio de una asignación SHALL registrarse como evento inmutable con actor, identificador usado, momento y motivo. El estado vigente MUST poder reconstruirse a partir de los eventos.
 
 #### Scenario: Consulta de historial de un ítem
-- **WHEN** un encargado consulta el historial de un ítem disputado
-- **THEN** ve en orden cada reclamo, reasignación, confirmación u override con su autor
+- **WHEN** un encargado consulta el historial de un ítem que se reclamó, se repartió y al que alguien se sumó
+- **THEN** ve en orden cada cambio con su autor, y el estado vigente coincide con el que resulta de esos eventos
+
+#### Scenario: Reintento del mismo comando
+- **WHEN** un comensal reintenta un reclamo con la misma clave de idempotencia (por ejemplo, tras perder la respuesta)
+- **THEN** recibe el mismo resultado y no se registra un segundo cambio
