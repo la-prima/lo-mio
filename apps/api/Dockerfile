@@ -12,7 +12,8 @@ COPY . .
 # Solo dependencias de producción de la API y de los paquetes del workspace que usa.
 # Los paquetes del workspace quedan como symlinks a su carpeta (fuera de node_modules),
 # porque Node no quita tipos de archivos .ts dentro de node_modules.
-RUN pnpm install --offline --frozen-lockfile --prod --ignore-scripts --filter "@lo-mio/api..."
+RUN pnpm install --offline --frozen-lockfile --prod --ignore-scripts --filter "@lo-mio/api..." \
+  && node scripts/prune-store.ts $(pnpm ls -r --filter "@lo-mio/api..." --depth -1 --parseable)
 
 # Sin shell ni gestor de paquetes; usuario sin privilegios.
 FROM gcr.io/distroless/nodejs24-debian13:nonroot

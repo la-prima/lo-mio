@@ -48,3 +48,6 @@ allowBuilds:
 overrides:
   # GHSA-2883-xcg3-v3hh, GHSA-52cp-r559-cp3m, GHSA-5p4m-2wfm-xmqj (vía @hey-api/openapi-ts).
   "@hey-api/json-schema-ref-parser>js-yaml": ^4.3.2
+  # GHSA-w5hq-g745-h8pq (vía @expo/config-plugins, prebuild de iOS). xcode solo usa
+  # require("uuid").v4, que uuid 11 mantiene en CommonJS.
+  "xcode>uuid": ^11.1.1

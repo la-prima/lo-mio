@@ -72,6 +72,7 @@ local_resource(
 # (igual que en producción), así que cada cambio reconstruye la imagen (con caché de capas).
 docker_build("lo-mio-api", ".", dockerfile="apps/api/Dockerfile", only=[
     "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "apps/api", "packages", "contexts",
+    "scripts/prune-store.ts",
 ])
 docker_build("lo-mio-guest-web", ".", dockerfile="apps/guest-web/Dockerfile", only=[
     "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "tsconfig.base.json", "apps/guest-web",
