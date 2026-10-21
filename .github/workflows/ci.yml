@@ -183,6 +183,21 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # El sdkmanager del runner no entiende el catálogo actual de Google (XML v4) y a veces no
+      # descarga el emulador: se actualiza y se preinstala con reintentos (la action lo reutiliza).
+      - name: SDK de Android al día (emulador e imagen)
+        run: |
+          sdk="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$sdk" --licenses >/dev/null
+          "$sdk" --install "cmdline-tools;latest" >/dev/null
+          # Si latest ya existía, la versión nueva queda en latest-2: se usa la más reciente.
+          sdk=$(ls -d "$ANDROID_HOME"/cmdline-tools/latest*/bin/sdkmanager | sort -V | tail -1)
+          "$sdk" --version
+          for attempt in 1 2 3 4 5; do
+            yes | "$sdk" --install emulator "system-images;android-36;google_apis;x86_64" >/dev/null && break
+            echo "intento $attempt falló; reintento en 20 s" && sleep 20
+          done
+          test -x "$ANDROID_HOME/emulator/emulator"
       - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 36
