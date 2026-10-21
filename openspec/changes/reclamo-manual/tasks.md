@@ -33,7 +33,7 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 
 ## 7. `apps/guest-web`
 
-- [ ] 7.1 React + Vite con `src/features/<ctx>/`, imagen (estático sobre servidor sin root) y componente `guestWeb` en el chart con su HTTPRoute; Playwright con trace y video hacia Allure (Chromium y Pixel en PR, matriz completa nightly) y presupuesto < 150 KB gzip; verificar con un e2e de smoke en kind y agregar el job a los checks requeridos
+- [x] 7.1 React + Vite con `src/features/<ctx>/`, imagen (estático sobre servidor sin root) y componente `guestWeb` en el chart con su HTTPRoute; Playwright con trace y video hacia Allure (Chromium y Pixel en PR, matriz completa nightly) y presupuesto < 150 KB gzip; verificar con un e2e de smoke en kind y agregar el job a los checks requeridos
 - [x] 7.2 Unirse, feed en vivo, lo mío / compartir / yo también, ver saldo; verificar con un e2e de 3 comensales concurrentes y axe sin violaciones serias
 
 ## 8. `apps/mobile` (personal)
