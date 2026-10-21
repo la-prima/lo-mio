@@ -196,13 +196,17 @@ jobs:
           rm -rf "$ANDROID_HOME/cmdline-tools/latest" && mkdir -p "$ANDROID_HOME/cmdline-tools"
           unzip -q clt.zip -d "$ANDROID_HOME/cmdline-tools" && mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
           sdk="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          # Licencias e instalación consultan el catálogo de Google: las dos van con reintentos.
+          # Licencias e instalación consultan el catálogo de Google y fallan de forma intermitente.
+          # sdkmanager sale con 0 aunque no descargue nada: se reintenta hasta que estén instalados.
+          image="$ANDROID_HOME/system-images/android-36/google_apis/x86_64"
+          installed() { test -x "$ANDROID_HOME/emulator/emulator" && test -f "$image/system.img"; }
           for attempt in 1 2 3 4 5; do
-            { yes | "$sdk" --licenses >/dev/null; } &&
-              "$sdk" --install emulator "system-images;android-36;google_apis;x86_64" >/dev/null && break
-            echo "intento $attempt falló; reintento en 20 s" && sleep 20
+            yes | "$sdk" --licenses >/dev/null || true
+            "$sdk" --install emulator "system-images;android-36;google_apis;x86_64" >/dev/null || true
+            installed && break
+            echo "intento $attempt: falta el emulador o la imagen; reintento en 20 s" && sleep 20
           done
-          test -x "$ANDROID_HOME/emulator/emulator"
+          installed
       # El runner (4 vCPU) no da abasto con kind, el emulador y Chromium: el emulador se caía a
       # mitad del flujo ("device offline"). Los mocks (Microcks, una JVM) no se usan en este job.
       - run: kubectl scale deployment --all --replicas=0 -n mocks
