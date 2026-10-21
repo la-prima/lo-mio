@@ -5,7 +5,10 @@
       "entry": ["src/migrate.ts", "src/seed.ts"]
     },
     ".": {
-      "entry": ["allurerc.mjs", "tests/contract/labels.ts"]
+      "entry": ["allurerc.mjs", "tests/contract/labels.ts", "tests/allure/maestro.ts"]
+    },
+    "apps/mobile": {
+      "entry": ["plugins/*.js"]
     }
   },
   "ignoreIssues": {

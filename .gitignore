@@ -9,3 +9,8 @@ coverage/
 playwright-report/
 test-results/
 reports/
+
+# Expo CNG: android/ e ios/ se generan con `expo prebuild` (no se versionan).
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/.expo/

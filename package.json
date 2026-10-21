@@ -21,6 +21,7 @@
     "test:contract": "tests/contract/run.sh",
     "test:flows": "tests/flows/run.sh",
     "test:e2e": "apps/guest-web/e2e/run.sh",
+    "test:mobile": "apps/mobile/e2e/run.sh",
     "report": "allure generate reports/allure-results"
   },
   "devDependencies": {

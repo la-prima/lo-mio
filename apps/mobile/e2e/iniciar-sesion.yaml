@@ -1,0 +1,34 @@
+# Personal → Iniciar sesión (ver e2e/run.sh). Video del flujo hacia Allure.
+appId: cl.lomio.staff
+name: El mesero inicia sesión y la sesión sobrevive a cerrar la app
+tags: [Personal, Iniciar sesión]
+---
+- launchApp:
+    clearState: true
+- startRecording: iniciar-sesion
+- tapOn:
+    id: login-email
+- inputText: admin@lo-mio.localhost
+- tapOn:
+    id: login-password
+- inputText: contraseña-incorrecta
+- hideKeyboard
+- tapOn:
+    id: login-submit
+- assertVisible: Correo o contraseña incorrectos.
+- tapOn:
+    id: login-password
+- eraseText
+- inputText: admin-local-123
+- hideKeyboard
+- tapOn:
+    id: login-submit
+- assertVisible: Hola, Administración local
+- stopApp
+- launchApp
+- assertVisible: Hola, Administración local
+- tapOn:
+    id: logout
+- assertVisible:
+    id: login-email
+- stopRecording

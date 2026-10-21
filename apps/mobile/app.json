@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "lo-mio",
+    "slug": "lo-mio",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "lomio",
+    "ios": {
+      "bundleIdentifier": "cl.lomio.staff",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "cl.lomio.staff",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      }
+    },
+    "plugins": ["expo-router", "expo-secure-store", "./plugins/cleartext-localhost.js"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "updates": {
+      "enabled": false
+    }
+  }
+}

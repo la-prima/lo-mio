@@ -8,6 +8,19 @@ packages:
 # Supply chain: no instalar versiones publicadas hace menos de 7 días
 # (ventana típica en que se detectan paquetes comprometidos).
 minimumReleaseAge: 10080
+# Excepción temporal (decisión del 2026-10-20): Expo SDK 58 exige React Native 0.88.0, publicado el
+# 2026-10-15. Solo esa versión exacta de Meta. QUITAR el 2026-10-22, cuando cumple los 7 días.
+minimumReleaseAgeExclude:
+  - react-native@0.88.0
+  - "@react-native/asset-utils@0.88.0"
+  - "@react-native/codegen@0.88.0"
+  - "@react-native/community-cli-plugin@0.88.0"
+  - "@react-native/debugger-frontend@0.88.0"
+  - "@react-native/debugger-shell@0.88.0"
+  - "@react-native/dev-middleware@0.88.0"
+  - "@react-native/gradle-plugin@0.88.0"
+  - "@react-native/normalize-colors@0.88.0"
+  - "@react-native/virtualized-lists@0.88.0"
 
 # Dependencias transitivas solo desde el registry (nunca git ni URLs).
 blockExoticSubdeps: true
@@ -15,6 +28,11 @@ blockExoticSubdeps: true
 # Rechaza una versión que llegue con menos garantías de procedencia que la anterior
 # (patrón típico de un paquete secuestrado).
 trustPolicy: no-downgrade
+# Versiones viejas de una rama anterior a la provenance de npm: no son una baja de confianza real.
+# Cada una verificada (publicador e integrity) y fijada a la versión exacta.
+trustPolicyExclude:
+  # Parche de la rama 6 (CVE-2022-25883), lukekarrys/npm, 2023-07-10. Vía @babel/core (expo).
+  - semver@6.3.1
 
 # Scripts de instalación bloqueados salvo lista explícita.
 allowBuilds:
