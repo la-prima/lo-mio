@@ -202,11 +202,15 @@ jobs:
             echo "intento $attempt falló; reintento en 20 s" && sleep 20
           done
           test -x "$ANDROID_HOME/emulator/emulator"
+      # El runner (4 vCPU) no da abasto con kind, el emulador y Chromium: el emulador se caía a
+      # mitad del flujo ("device offline"). Los mocks (Microcks, una JVM) no se usan en este job.
+      - run: kubectl scale deployment --all --replicas=0 -n mocks
       - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 36
           arch: x86_64
           target: google_apis
+          ram-size: 4096M
           script: adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk && pnpm test:mobile
       - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
