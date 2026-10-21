@@ -49,6 +49,22 @@ async function actorFor(
     : undefined;
 }
 
+/** Comensales desde tables (la fuente) con su saldo de settlement; sin saldo aún, cero. */
+async function snapshotBalances(db: Db, actor: Actor, sessionId: string) {
+  const guests = await tablesService.sessionGuests(db, sessionId);
+  const amounts = new Map(
+    (await settlementService.sessionBalances(db, actor, sessionId))?.map((b) => [
+      b.guestId,
+      b.balance,
+    ]),
+  );
+  return guests.map(({ guestId, alias, currency }) => ({
+    guestId,
+    alias,
+    balance: amounts.get(guestId) ?? { amount: 0, currency },
+  }));
+}
+
 export async function registerRealtime(app: FastifyInstance, { db, bus, connectionString }: Deps) {
   const sockets = new Map<string, Set<(message: string) => void>>();
 
@@ -96,7 +112,7 @@ export async function registerRealtime(app: FastifyInstance, { db, bus, connecti
       sockets.set(sessionId, subscribers);
       socket.on("close", () => subscribers.delete(deliver));
       const items = await claimsService.sessionFeed(db, actor, sessionId);
-      const balances = await settlementService.sessionBalances(db, actor, sessionId);
+      const balances = await snapshotBalances(db, actor, sessionId);
       socket.send(JSON.stringify({ type: "snapshot", items, balances }));
       send = (message) => socket.send(message);
       for (const message of pending) socket.send(message);

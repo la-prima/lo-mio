@@ -130,3 +130,35 @@ export const sessionById = (tx: Db, sessionId: string) =>
     .select(["id", "venue_id"])
     .where("id", "=", sessionId)
     .executeTakeFirst();
+
+/** Sesiones abiertas del local con su mesa y cuántos comensales se unieron. */
+export async function openSessions(tx: Db, venueId: string) {
+  return db(tx)
+    .selectFrom("table_sessions as s")
+    .innerJoin("tables_registry as t", "t.table_id", "s.table_id")
+    .leftJoin("guests as g", "g.session_id", "s.id")
+    .select((eb) => [
+      "s.id",
+      "s.table_id",
+      "t.label",
+      "s.opened_at",
+      eb.fn.count<string>("g.id").as("guests"),
+    ])
+    .where("s.venue_id", "=", venueId)
+    .where("s.closed_at", "is", null)
+    .groupBy(["s.id", "t.label"])
+    .orderBy("s.opened_at", "desc")
+    .execute();
+}
+
+/** Comensales de la sesión con la moneda del local, por orden de alias. */
+export async function sessionGuests(tx: Db, sessionId: string) {
+  return db(tx)
+    .selectFrom("guests as g")
+    .innerJoin("table_sessions as s", "s.id", "g.session_id")
+    .innerJoin("tables_registry as t", "t.table_id", "s.table_id")
+    .select(["g.id", "g.alias", "t.currency"])
+    .where("g.session_id", "=", sessionId)
+    .orderBy("g.alias")
+    .execute();
+}

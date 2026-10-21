@@ -80,6 +80,20 @@ describe("Sesiones de mesa y comensales", () => {
     expect(aliases).toEqual(["Comensal 2", "Comensal 3", "Comensal 4", "Comensal 5", "Comensal 6"]);
   });
 
+  it("el mesero ve las mesas abiertas de su local con sus comensales, nunca las de otro local", async () => {
+    const { tableId, qrCode } = await newTable("20");
+    await service.joinTable(deps(), qrCode, {}, undefined);
+    await service.joinTable(deps(), qrCode, {}, undefined);
+    const mine = await service.openSessions(db, waiter());
+    expect(mine[0], "la más reciente primero").toMatchObject({
+      tableId,
+      tableLabel: "20",
+      guests: 2,
+    });
+    const other = { ...waiter(), venueId: newId() };
+    expect(await service.openSessions(db, other)).toEqual([]);
+  });
+
   it("el primer ítem del POS abre la mesa y cada unidad queda en la sesión", async () => {
     const { tableId } = await newTable("4");
     await emit("pos.item.received", {

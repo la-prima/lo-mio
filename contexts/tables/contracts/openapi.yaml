@@ -38,6 +38,25 @@ paths:
         "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
         "404": { $ref: "../../../contracts/common.yaml#/components/responses/NotFound" }
         "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
+  /v1/sessions/open:
+    get:
+      operationId: listOpenSessions
+      tags: [tables]
+      summary: Mesas abiertas del local, con cuántos comensales se unieron.
+      security: [{ staffCookie: [waiter, manager, admin] }, { staffBearer: [waiter, manager, admin] }]
+      x-microcks-operation: *defaultExample
+      responses:
+        "200":
+          description: Sesiones abiertas, la más reciente primero.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/OpenSession" } }
+              examples:
+                ok:
+                  value: [{ id: 0199f0a0-0000-7000-8000-0000000000e1, tableId: 0199f0a0-0000-7000-8000-000000000005, tableLabel: "5", openedAt: "2026-10-20T21:00:00.000Z", guests: 3 }]
+        "401": { $ref: "../../../contracts/common.yaml#/components/responses/Unauthenticated" }
+        "403": { $ref: "../../../contracts/common.yaml#/components/responses/Forbidden" }
+        "429": { $ref: "../../../contracts/common.yaml#/components/responses/RateLimited" }
   /v1/join/{qrCode}:
     post:
       operationId: joinTable
@@ -123,6 +142,16 @@ components:
         id: { type: string, format: uuid }
         tableId: { type: string, format: uuid }
         openedAt: { type: string, format: date-time }
+    OpenSession:
+      type: object
+      additionalProperties: false
+      required: [id, tableId, tableLabel, openedAt, guests]
+      properties:
+        id: { type: string, format: uuid }
+        tableId: { type: string, format: uuid }
+        tableLabel: { type: string }
+        openedAt: { type: string, format: date-time }
+        guests: { type: integer, minimum: 0, description: Comensales que se unieron. }
     JoinRequest:
       type: object
       additionalProperties: false

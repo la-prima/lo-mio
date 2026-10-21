@@ -10,6 +10,17 @@ export type TableSession = {
     openedAt: string;
 };
 
+export type OpenSession = {
+    id: string;
+    tableId: string;
+    tableLabel: string;
+    openedAt: string;
+    /**
+     * Comensales que se unieron.
+     */
+    guests: number;
+};
+
 export type JoinRequest = {
     alias?: Alias;
 };
@@ -148,6 +159,39 @@ export type OpenTableSessionResponses = {
 };
 
 export type OpenTableSessionResponse = OpenTableSessionResponses[keyof OpenTableSessionResponses];
+
+export type ListOpenSessionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/sessions/open';
+};
+
+export type ListOpenSessionsErrors = {
+    /**
+     * Falta la sesión o no es válida.
+     */
+    401: Problem;
+    /**
+     * La sesión no tiene permiso para esta operación.
+     */
+    403: Problem;
+    /**
+     * Se superó el límite de solicitudes.
+     */
+    429: Problem;
+};
+
+export type ListOpenSessionsError = ListOpenSessionsErrors[keyof ListOpenSessionsErrors];
+
+export type ListOpenSessionsResponses = {
+    /**
+     * Sesiones abiertas, la más reciente primero.
+     */
+    200: Array<OpenSession>;
+};
+
+export type ListOpenSessionsResponse = ListOpenSessionsResponses[keyof ListOpenSessionsResponses];
 
 export type JoinTableData = {
     body: JoinRequest;

@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.ts';
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client/index.ts';
-import type { ClaimItemData, ClaimItemErrors, ClaimItemResponses, CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetItemHistoryData, GetItemHistoryErrors, GetItemHistoryResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinItemData, JoinItemErrors, JoinItemResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSessionBalancesData, ListSessionBalancesErrors, ListSessionBalancesResponses, ListSessionItemsData, ListSessionItemsErrors, ListSessionItemsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses, ShareItemData, ShareItemErrors, ShareItemResponses } from './types.gen.ts';
+import type { ClaimItemData, ClaimItemErrors, ClaimItemResponses, CreateStaffSessionData, CreateStaffSessionErrors, CreateStaffSessionResponses, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionErrors, DeleteCurrentStaffSessionResponses, GetCurrentGuestData, GetCurrentGuestErrors, GetCurrentGuestResponses, GetCurrentStaffSessionData, GetCurrentStaffSessionErrors, GetCurrentStaffSessionResponses, GetCurrentVenueData, GetCurrentVenueErrors, GetCurrentVenueResponses, GetItemHistoryData, GetItemHistoryErrors, GetItemHistoryResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, JoinItemData, JoinItemErrors, JoinItemResponses, JoinTableData, JoinTableErrors, JoinTableResponses, ListOpenSessionsData, ListOpenSessionsErrors, ListOpenSessionsResponses, ListProductsData, ListProductsErrors, ListProductsResponses, ListSessionBalancesData, ListSessionBalancesErrors, ListSessionBalancesResponses, ListSessionItemsData, ListSessionItemsErrors, ListSessionItemsResponses, ListTablesData, ListTablesErrors, ListTablesResponses, LoadManualItemsData, LoadManualItemsErrors, LoadManualItemsResponses, OpenTableSessionData, OpenTableSessionErrors, OpenTableSessionResponses, RegisterProductData, RegisterProductErrors, RegisterProductResponses, RegisterTableData, RegisterTableErrors, RegisterTableResponses, RenameCurrentGuestData, RenameCurrentGuestErrors, RenameCurrentGuestResponses, RotateTableQrData, RotateTableQrErrors, RotateTableQrResponses, ShareItemData, ShareItemErrors, ShareItemResponses } from './types.gen.ts';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -207,6 +207,19 @@ export const openTableSession = <ThrowOnError extends boolean = false>(options: 
             type: 'apiKey'
         }, { scheme: 'bearer', type: 'http' }],
     url: '/v1/tables/{tableId}/session',
+    ...options
+});
+
+/**
+ * Mesas abiertas del local, con cuántos comensales se unieron.
+ */
+export const listOpenSessions = <ThrowOnError extends boolean = false>(options?: Options<ListOpenSessionsData, ThrowOnError>): RequestResult<ListOpenSessionsResponses, ListOpenSessionsErrors, ThrowOnError> => (options?.client ?? client).get<ListOpenSessionsResponses, ListOpenSessionsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'lomio_staff',
+            type: 'apiKey'
+        }, { scheme: 'bearer', type: 'http' }],
+    url: '/v1/sessions/open',
     ...options
 });
 

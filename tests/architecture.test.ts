@@ -131,7 +131,7 @@ describe("Límites entre contextos y capas", () => {
   it("el código de runtime solo importa dependencias de producción (la imagen no trae las de desarrollo)", () => {
     const errors: string[] = [];
     const isTest =
-      /\.(test|int\.test|flow|e2e)\.ts$|\/(testing|fixtures|contract-suite)\.ts$|\.config\.ts$/;
+      /\.(test|int\.test|flow)\.ts$|\/e2e\/|\/(testing|fixtures|contract-suite)\.ts$|\.config\.ts$/;
     const runtimeDeps = (pkgDir: string) => {
       const manifest = JSON.parse(readFileSync(resolve(ROOT, pkgDir, "package.json"), "utf8")) as {
         dependencies?: Record<string, string>;

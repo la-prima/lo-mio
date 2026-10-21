@@ -327,6 +327,9 @@ importers:
       '@lo-mio/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@lo-mio/kernel':
+        specifier: workspace:*
+        version: link:../../packages/kernel
       '@tanstack/react-query':
         specifier: ^5.104.2
         version: 5.104.2(react@19.3.0)
@@ -336,6 +339,9 @@ importers:
       expo-constants:
         specifier: ~58.0.11
         version: 58.0.11(expo@58.0.9)(react-native@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2)
+      expo-crypto:
+        specifier: ~58.0.6
+        version: 58.0.6(expo@58.0.9)
       expo-dev-client:
         specifier: ~58.0.13
         version: 58.0.13(expo@58.0.9)(react-native@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))
@@ -3560,6 +3566,11 @@ packages:
     peerDependencies:
       expo: '*'
       react-native: '*'
+
+  expo-crypto@58.0.6:
+    resolution: {integrity: sha512-sN3xnfp809g6xpyIjfJ+7ITPggmhkVW6WPCHfXRhGmniZdgjQeb57CpyY0mUup8ZJGfSqkWXxMhuOMZMctQMDA==}
+    peerDependencies:
+      expo: '*'
 
   expo-dev-client@58.0.13:
     resolution: {integrity: sha512-2Ot6Sec/OYPTIfcAwesDUPea30gyFr49OdB/8yB3zpUMCtYf7dQyuHnPo7qGyhSxnActwJVW1KKAUJ134Ehrwg==}
@@ -9566,6 +9577,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  expo-crypto@58.0.6(expo@58.0.9):
+    dependencies:
+      expo: 58.0.9(@babel/core@7.29.7(supports-color@8.1.1))(@expo/metro-runtime@58.0.14)(expo-router@58.0.18)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1))(react-native@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(supports-color@8.1.1)(typescript@7.0.2)
 
   expo-dev-client@58.0.13(expo@58.0.9)(react-native@0.88.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.87.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1)):
     dependencies:

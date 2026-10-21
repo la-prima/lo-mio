@@ -39,4 +39,4 @@ Cada tarea de `server` empieza por su contrato (`openapi.yaml` / `asyncapi.yaml`
 ## 8. `apps/mobile` (personal)
 
 - [x] 8.1 Expo Router con development build, login y `src/features/<ctx>/`; Maestro en CI (Android en PR) con video de cada flujo hacia Allure; verificar con un flujo de smoke
-- [ ] 8.2 Mesas abiertas, abrir mesa y carga manual de ítems; verificar con un flujo Maestro coordinado con el e2e de 7.2 (el mesero carga y los comensales reclaman)
+- [x] 8.2 Mesas abiertas, abrir mesa y carga manual de ítems; verificar con un flujo Maestro coordinado con el e2e de 7.2 (el mesero carga y los comensales reclaman)

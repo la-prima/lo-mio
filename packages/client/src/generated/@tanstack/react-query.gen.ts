@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.ts';
-import { claimItem, createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getItemHistory, getLiveness, getReadiness, joinItem, joinTable, listProducts, listSessionBalances, listSessionItems, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr, shareItem } from '../sdk.gen.ts';
-import type { ClaimItemData, ClaimItemError, ClaimItemResponse, CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetItemHistoryData, GetItemHistoryError, GetItemHistoryResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinItemData, JoinItemError, JoinItemResponse, JoinTableData, JoinTableError, JoinTableResponse, ListProductsData, ListProductsError, ListProductsResponse, ListSessionBalancesData, ListSessionBalancesError, ListSessionBalancesResponse, ListSessionItemsData, ListSessionItemsError, ListSessionItemsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse, ShareItemData, ShareItemError, ShareItemResponse } from '../types.gen.ts';
+import { claimItem, createStaffSession, deleteCurrentStaffSession, getCurrentGuest, getCurrentStaffSession, getCurrentVenue, getItemHistory, getLiveness, getReadiness, joinItem, joinTable, listOpenSessions, listProducts, listSessionBalances, listSessionItems, listTables, loadManualItems, openTableSession, type Options, registerProduct, registerTable, renameCurrentGuest, rotateTableQr, shareItem } from '../sdk.gen.ts';
+import type { ClaimItemData, ClaimItemError, ClaimItemResponse, CreateStaffSessionData, CreateStaffSessionError, CreateStaffSessionResponse, DeleteCurrentStaffSessionData, DeleteCurrentStaffSessionError, DeleteCurrentStaffSessionResponse, GetCurrentGuestData, GetCurrentGuestError, GetCurrentGuestResponse, GetCurrentStaffSessionData, GetCurrentStaffSessionError, GetCurrentStaffSessionResponse, GetCurrentVenueData, GetCurrentVenueError, GetCurrentVenueResponse, GetItemHistoryData, GetItemHistoryError, GetItemHistoryResponse, GetLivenessData, GetLivenessError, GetLivenessResponse, GetReadinessData, GetReadinessError, GetReadinessResponse, JoinItemData, JoinItemError, JoinItemResponse, JoinTableData, JoinTableError, JoinTableResponse, ListOpenSessionsData, ListOpenSessionsError, ListOpenSessionsResponse, ListProductsData, ListProductsError, ListProductsResponse, ListSessionBalancesData, ListSessionBalancesError, ListSessionBalancesResponse, ListSessionItemsData, ListSessionItemsError, ListSessionItemsResponse, ListTablesData, ListTablesError, ListTablesResponse, LoadManualItemsData, LoadManualItemsError, LoadManualItemsResponse, OpenTableSessionData, OpenTableSessionError, OpenTableSessionResponse, RegisterProductData, RegisterProductError, RegisterProductResponse, RegisterTableData, RegisterTableError, RegisterTableResponse, RenameCurrentGuestData, RenameCurrentGuestError, RenameCurrentGuestResponse, RotateTableQrData, RotateTableQrError, RotateTableQrResponse, ShareItemData, ShareItemError, ShareItemResponse } from '../types.gen.ts';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -281,6 +281,24 @@ export const openTableSessionMutation = (options?: Partial<Options<OpenTableSess
     };
     return mutationOptions;
 };
+
+export const listOpenSessionsQueryKey = (options?: Options<ListOpenSessionsData>) => createQueryKey('listOpenSessions', options);
+
+/**
+ * Mesas abiertas del local, con cuántos comensales se unieron.
+ */
+export const listOpenSessionsOptions = (options?: Options<ListOpenSessionsData>) => queryOptions<ListOpenSessionsResponse, ListOpenSessionsError, ListOpenSessionsResponse, ReturnType<typeof listOpenSessionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listOpenSessions({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listOpenSessionsQueryKey(options)
+});
 
 /**
  * El comensal se une a la mesa del QR (abre la sesión si hace falta).

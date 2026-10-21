@@ -3,7 +3,11 @@
  * guardado en el llavero del dispositivo (expo-secure-store), enviado como Bearer.
  */
 import { client } from "@lo-mio/client";
+import { getRandomValues } from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
+
+// Hermes no trae Web Crypto: newId (kernel, UUIDv7) lo necesita para las claves de idempotencia.
+globalThis.crypto ??= { getRandomValues } as unknown as Crypto;
 
 const TOKEN_KEY = "lomio_staff";
 // ponytail: en desarrollo y e2e la app habla con la API por port-forward + `adb reverse` (sin el

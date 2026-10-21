@@ -19,4 +19,10 @@ status=0
 maestro test apps/mobile/e2e --format junit --output "$out/junit.xml" \
   --debug-output "$out" --flatten-debug-output || status=$?
 node tests/allure/maestro.ts apps/mobile/e2e "$out/junit.xml" "$out" reports/allure-results
+
+# Mesero en la app y comensales en la web sobre la misma mesa (Playwright lanza el flujo Maestro).
+ca="$out/ca.crt"
+kube get secret lo-mio-local-ca -n cert-manager -o jsonpath='{.data.ca\.crt}' | base64 -d >"$ca"
+(cd apps/guest-web && MAESTRO=1 NODE_EXTRA_CA_CERTS="$PWD/../../$ca" \
+  pnpm exec playwright test mesero-y-comensales --project pixel) || status=$?
 exit "$status"

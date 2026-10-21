@@ -23,6 +23,7 @@ export const tablesHandlers = (deps: service.TablesDeps) => ({
     const session = await service.openTableSession(deps, staffOf(req), req.params.tableId, req.log);
     return session ?? sendProblem(reply, 404, "not-found", "Recurso no encontrado");
   },
+  listOpenSessions: async (req: FastifyRequest) => service.openSessions(deps.db, staffOf(req)),
   joinTable: {
     // Público: frena el escaneo masivo de códigos de QR.
     rateLimit: { max: 30, timeWindow: "1 minute" },

@@ -107,6 +107,18 @@ export async function openTableSession(
   });
 }
 
+/** Mesas abiertas del local del actor (nunca las de otro local). */
+export async function openSessions(db: Db, actor: Extract<Actor, { kind: "staff" }>) {
+  const rows = await repo.openSessions(db, actor.venueId);
+  return rows.map((r) => ({
+    id: r.id,
+    tableId: r.table_id,
+    tableLabel: r.label,
+    openedAt: r.opened_at.toISOString(),
+    guests: Number(r.guests),
+  }));
+}
+
 /** Comensal del dispositivo, si su token sigue vigente (sesión abierta). */
 async function guestOfToken(db: Db, token: string | undefined) {
   const guest = token ? await repo.guestByTokenHash(db, hashToken(token)) : undefined;
@@ -205,6 +217,16 @@ export async function renameGuest(
 }
 
 /** Local al que pertenece una sesión (lo usa el tiempo real para validar al personal). */
+/**
+ * Comensales de la sesión, desde la fuente (se confirman con la unión). El snapshot del feed los
+ * toma de aquí y no de la proyección de settlement: si la proyección aún no llegó, el aviso en
+ * vivo de ese comensal pudo salir antes de suscribirse, y no aparecería nunca.
+ */
+export async function sessionGuests(db: Db, sessionId: string) {
+  const rows = await repo.sessionGuests(db, sessionId);
+  return rows.map((g) => ({ guestId: g.id, alias: g.alias, currency: g.currency }));
+}
+
 export async function sessionVenue(db: Db, sessionId: string): Promise<string | undefined> {
   return (await repo.sessionById(db, sessionId))?.venue_id;
 }

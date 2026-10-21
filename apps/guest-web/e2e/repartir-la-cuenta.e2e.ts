@@ -1,32 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { loadManualItems } from "@lo-mio/client";
-import type { Browser, Page, TestInfo } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { expect, idempotency, test } from "../../../tests/flows/fixtures.ts";
-
-/** Otro comensal con su propio teléfono: contexto aparte (su cookie) con las opciones del proyecto. */
-async function phone(browser: Browser, testInfo: TestInfo, name: string) {
-  const { baseURL, ignoreHTTPSErrors, locale, viewport, userAgent, isMobile, hasTouch } =
-    testInfo.project.use;
-  const context = await browser.newContext({
-    baseURL,
-    ignoreHTTPSErrors,
-    locale,
-    viewport,
-    userAgent,
-    isMobile,
-    hasTouch,
-    recordVideo: { dir: testInfo.outputPath(`video-${name}`) },
-  });
-  const page = await context.newPage();
-  return {
-    page,
-    close: async () => {
-      const video = page.video();
-      await context.close();
-      if (video) await testInfo.attach(`video de ${name}`, { path: await video.path() });
-    },
-  };
-}
+import { phone } from "./phone.ts";
 
 const item = (page: Page, name: string) => page.getByRole("listitem").filter({ hasText: name });
 const myBalance = (page: Page) => page.getByText("Tu saldo:");

@@ -16,14 +16,9 @@ tags: [Personal, Iniciar sesión]
 - tapOn:
     id: login-submit
 - assertVisible: Correo o contraseña incorrectos.
-- tapOn:
-    id: login-password
-- eraseText
-- inputText: admin-local-123
-- hideKeyboard
-- tapOn:
-    id: login-submit
-- assertVisible: Hola, Administración local
+- launchApp:
+    clearState: true
+- runFlow: subflows/login.yaml
 - stopApp
 - launchApp
 - assertVisible: Hola, Administración local

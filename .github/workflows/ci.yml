@@ -166,6 +166,8 @@ jobs:
           java-version: "17"
       - run: pnpm install --frozen-lockfile
       - run: deploy/ci/install-k8s-tools.sh
+      # El flujo coordinado (mesero en la app, comensales en la web) usa Playwright con Pixel.
+      - run: pnpm --filter @lo-mio/guest-web exec playwright install --with-deps chromium
       - run: ctlptl apply -f deploy/kind/cluster.yaml
       - run: tilt ci --timeout 25m
       # Release con el bundle embebido: el flujo no depende de Metro ni del launcher del dev client.
