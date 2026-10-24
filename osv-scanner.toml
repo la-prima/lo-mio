@@ -10,6 +10,31 @@ id = "GHSA-86w9-cpqp-85rv"
 ignoreUntil = 2027-01-15
 reason = "node-forge vía @expo/cli (@expo/code-signing-certificates): verificación de firmas de EAS Update en la herramienta de desarrollo, que no usamos (updates.enabled = false) y no viaja en la app. Sin versión corregida al 2026-10-21."
 
+[[IgnoredVulns]]
+id = "GHSA-333x-w4r6-6crp"
+ignoreUntil = 2026-10-28
+reason = "fast-uri vía ajv (validación de requests de la API). Las versiones corregidas 3.1.9 y 4.2.3 salieron el 2026-10-19: se suben al cumplir los 7 días de minimumReleaseAge (2026-10-26)."
+
+[[IgnoredVulns]]
+id = "GHSA-w74x-v6f9-j3xg"
+ignoreUntil = 2026-10-28
+reason = "fast-uri, mismo caso que GHSA-333x-w4r6-6crp."
+
+[[IgnoredVulns]]
+id = "GHSA-wjr9-j795-jxcr"
+ignoreUntil = 2026-10-28
+reason = "fast-uri, mismo caso que GHSA-333x-w4r6-6crp."
+
+[[IgnoredVulns]]
+id = "GHSA-xhq7-xmqj-769h"
+ignoreUntil = 2026-10-28
+reason = "fast-uri, mismo caso que GHSA-333x-w4r6-6crp."
+
+[[IgnoredVulns]]
+id = "GHSA-mrhx-c7xc-m3w5"
+ignoreUntil = 2027-01-15
+reason = "zod 3.25.76 solo vía @expo/cli (herramienta de desarrollo; no viaja en la app ni en la API, que usan zod 4.6.7, ya corregido). Sin versión corregida en la rama 3 al 2026-10-24."
+
 # Licencias que osv-scanner no detecta porque el paquete usa el formato antiguo
 # `licenses: [{ type }]` de npm. Verificadas a mano en package.json y LICENSE.
 [[PackageOverrides]]
