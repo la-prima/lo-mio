@@ -14,7 +14,7 @@
     "@lo-mio/kernel": "workspace:*",
     "@lo-mio/postgres": "workspace:*",
     "@lo-mio/server": "workspace:*",
-    "fastify": "^5.12.5",
+    "fastify": "^5.12.7",
     "zod": "^4.6.7"
   }
 }

@@ -8,19 +8,6 @@ packages:
 # Supply chain: no instalar versiones publicadas hace menos de 7 días
 # (ventana típica en que se detectan paquetes comprometidos).
 minimumReleaseAge: 10080
-# Excepción temporal (decisión del 2026-10-20): Expo SDK 58 exige React Native 0.88.0, publicado el
-# 2026-10-15. Solo esa versión exacta de Meta. QUITAR el 2026-10-22, cuando cumple los 7 días.
-minimumReleaseAgeExclude:
-  - react-native@0.88.0
-  - "@react-native/asset-utils@0.88.0"
-  - "@react-native/codegen@0.88.0"
-  - "@react-native/community-cli-plugin@0.88.0"
-  - "@react-native/debugger-frontend@0.88.0"
-  - "@react-native/debugger-shell@0.88.0"
-  - "@react-native/dev-middleware@0.88.0"
-  - "@react-native/gradle-plugin@0.88.0"
-  - "@react-native/normalize-colors@0.88.0"
-  - "@react-native/virtualized-lists@0.88.0"
 
 # Dependencias transitivas solo desde el registry (nunca git ni URLs).
 blockExoticSubdeps: true

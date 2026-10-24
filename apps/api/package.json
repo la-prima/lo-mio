@@ -23,7 +23,7 @@
     "@lo-mio/venues": "workspace:*",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
-    "fastify": "^5.12.5",
+    "fastify": "^5.12.7",
     "fastify-openapi-glue": "^4.11.5",
     "kysely": "^0.29.6",
     "pg": "^8.23.1",
