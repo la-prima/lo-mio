@@ -1,4 +1,10 @@
-import type { FastifyError, FastifyInstance, FastifyReply, HTTPMethods } from "fastify";
+import type {
+  FastifyError,
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+  HTTPMethods,
+} from "fastify";
 
 const BASE = "https://lo-mio.cl/problems";
 
@@ -12,6 +18,20 @@ export function sendProblem(
 ) {
   const body = { type: `${BASE}/${slug}`, title, status, ...(detail ? { detail } : {}) };
   return reply.code(status).type("application/problem+json").send(body);
+}
+
+/**
+ * Errores del router (antes de llegar a una ruta): URL mal formada o un parámetro de ruta más
+ * largo que el permitido. No pasan por `setErrorHandler`; sin esto Fastify responde 400/414 con
+ * su propio formato, fuera del contrato. Para el contrato son una solicitud inválida.
+ * Se pasa como opción `frameworkErrors` al crear la instancia.
+ */
+export function frameworkErrorProblem(
+  error: FastifyError,
+  _req: FastifyRequest,
+  reply: FastifyReply,
+) {
+  return sendProblem(reply, 400, "invalid-request", "Solicitud inválida", error.message);
 }
 
 /** Todo error que sale de la API (validación, 404, rate limit, inesperados) es un Problem. */

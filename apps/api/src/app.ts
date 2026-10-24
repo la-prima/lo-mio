@@ -4,7 +4,11 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import { registerMethodNotAllowed, registerProblemHandlers } from "@lo-mio/server";
+import {
+  frameworkErrorProblem,
+  registerMethodNotAllowed,
+  registerProblemHandlers,
+} from "@lo-mio/server";
 import Fastify, { type FastifyInstance, type RouteOptions } from "fastify";
 import openapiGlue from "fastify-openapi-glue";
 import { parse } from "yaml";
@@ -75,6 +79,7 @@ export async function buildApp(env: Env, options: AppOptions): Promise<FastifyIn
       level: env.LOG_LEVEL,
       redact: ["req.headers.authorization", "req.headers.cookie", 'res.headers["set-cookie"]'],
     },
+    frameworkErrors: frameworkErrorProblem,
   });
   registerProblemHandlers(app);
   registerContractValidation(app);
