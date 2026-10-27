@@ -25,18 +25,18 @@
     "report": "allure generate reports/allure-results"
   },
   "devDependencies": {
-    "@asyncapi/parser": "^3.6.4",
+    "@asyncapi/parser": "^3.6.6",
     "@biomejs/biome": "^2.5.15",
-    "@fission-ai/openspec": "^1.14.1",
-    "@redocly/cli": "^2.63.0",
+    "@fission-ai/openspec": "^1.14.3",
+    "@redocly/cli": "^2.65.1",
     "@types/node": "^26.6.5",
-    "allure": "^3.20.1",
-    "allure-js-commons": "^3.13.0",
-    "allure-vitest": "^3.13.0",
-    "knip": "^6.41.0",
+    "allure": "^3.21.0",
+    "allure-js-commons": "^3.14.0",
+    "allure-vitest": "^3.14.0",
+    "knip": "^6.42.1",
     "lefthook": "^2.2.1",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.4",
+    "vitest": "^5.0.5",
     "yaml": "^2.9.1"
   }
 }
