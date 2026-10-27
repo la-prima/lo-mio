@@ -264,8 +264,8 @@ importers:
         specifier: ^5.12.5
         version: 5.12.5
       fastify-openapi-glue:
-        specifier: ^4.11.5
-        version: 4.11.5
+        specifier: ^4.12.0
+        version: 4.12.0
       kysely:
         specifier: ^0.29.6
         version: 0.29.6
@@ -3800,8 +3800,8 @@ packages:
     resolution: {integrity: sha512-R9iDuNrQYeQut46cn2r2wHKn4HYzVDvDm5J1wW+koZewykv0yuO2HChTYeZtrULyHIDM9cj9TUXloCsueCQUog==}
     hasBin: true
 
-  fastify-openapi-glue@4.11.5:
-    resolution: {integrity: sha512-T8+JRBrWSc1OWruD4dSvjow6OzLraL1Oi9PpgKF6mQ6MbDflQ9AX15cfJnmIhzRqWVWsUp1/bw0OXTOs4CwKpw==}
+  fastify-openapi-glue@4.12.0:
+    resolution: {integrity: sha512-CJzPPr5iL/+agZvg1ozd4I70pp0Z9v9gPYI0Q2tNaSsFpzv2oOP9ijg/ry2twV4QweYxq/SwKYyEUn9NPiF5Ng==}
     engines: {node: '>=20.0.0'}
     hasBin: true
 
@@ -9842,7 +9842,7 @@ snapshots:
       strnum: 2.5.1
       xml-naming: 0.3.0
 
-  fastify-openapi-glue@4.11.5:
+  fastify-openapi-glue@4.12.0:
     dependencies:
       '@seriousme/openapi-schema-validator': 2.11.0
       fastify-plugin: 6.0.1
